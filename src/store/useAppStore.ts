@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import type { SourceConfig, ProxyGroup, RuleProvider, Rule, Proxy, ClashGlobalSettings, DnsConfig, DnsFallbackFilter } from '../types/clash'
+import type { SourceConfig, ProxyGroup, RuleProvider, Rule, Proxy, ClashConfig, ClashGlobalSettings, DnsConfig, DnsFallbackFilter } from '../types/clash'
 import { PRESET_RULE_PROVIDERS, BLACKMATRIX7_RULE_PROVIDERS, DEFAULT_GLOBAL_SETTINGS } from '../types/clash'
 
 interface AppState {
@@ -51,6 +51,8 @@ interface AppState {
 
   getAllProxies: () => Proxy[]
   getAllProxyNames: () => string[]
+
+  importFullConfig: (config: ClashConfig) => void
 }
 
 function generateId() {
@@ -350,6 +352,87 @@ export const useAppStore = create<AppState>()(
       const proxies = get().sources.flatMap((s) => s.proxies.map((p) => p.name))
       const groupNames = get().proxyGroups.map((g) => g.name)
       return [...new Set([...proxies, ...groupNames, 'DIRECT', 'REJECT'])]
+    },
+
+    importFullConfig: (config) => {
+      set((state) => {
+        // 1. Proxies → new source
+        if (Array.isArray(config.proxies) && config.proxies.length > 0) {
+          state.sources.push({
+            id: generateId(),
+            name: '导入的配置',
+            url: '',
+            status: 'success',
+            proxies: config.proxies,
+          })
+        }
+
+        // 2. Proxy groups
+        if (Array.isArray(config['proxy-groups'])) {
+          state.proxyGroups = config['proxy-groups'].map((g) => ({
+            id: generateId(),
+            name: g.name,
+            type: (g.type as ProxyGroup['type']) || 'select',
+            proxies: Array.isArray(g.proxies) ? g.proxies : [],
+            url: g.url,
+            interval: g.interval,
+            tolerance: g.tolerance,
+            lazy: g.lazy,
+          }))
+        }
+
+        // 3. Rule providers
+        if (config['rule-providers'] && typeof config['rule-providers'] === 'object') {
+          state.ruleProviders = Object.entries(config['rule-providers']).map(([name, rp]: [string, { type: string; behavior: string; url?: string; path?: string; interval?: number }]) => ({
+            id: generateId(),
+            name,
+            type: (rp.type as RuleProvider['type']) || 'http',
+            behavior: (rp.behavior as RuleProvider['behavior']) || 'domain',
+            url: rp.url,
+            path: rp.path ?? `./ruleset/${name}.yaml`,
+            interval: rp.interval ?? 86400,
+            target: 'DIRECT',
+            enabled: true,
+          }))
+        }
+
+        // 4. Rules — RULE-SET entries update ruleProvider targets; others become Rule objects
+        if (Array.isArray(config.rules)) {
+          const rules: Rule[] = []
+          for (const ruleStr of config.rules) {
+            const parts = (ruleStr as string).split(',').map((s) => s.trim())
+            const type = parts[0]
+            if (type === 'RULE-SET') {
+              const rp = state.ruleProviders.find((p) => p.name === parts[1])
+              if (rp) {
+                rp.target = parts[2] || 'DIRECT'
+                if (parts[3] === 'no-resolve') rp.noResolve = true
+              }
+            } else if (type === 'MATCH') {
+              rules.push({ id: generateId(), type: 'MATCH', payload: '', target: parts[1] || 'DIRECT' })
+            } else {
+              const noResolve = parts[parts.length - 1] === 'no-resolve'
+              rules.push({
+                id: generateId(),
+                type,
+                payload: parts[1] || '',
+                target: noResolve ? parts[2] || 'DIRECT' : parts[parts.length - 1] || 'DIRECT',
+                ...(noResolve ? { noResolve: true } : {}),
+              })
+            }
+          }
+          state.rules = rules
+        }
+
+        // 5. Global settings — only override fields present in the config
+        if (config['mixed-port'] !== undefined) state.globalSettings['mixed-port'] = config['mixed-port']
+        if (config['allow-lan'] !== undefined) state.globalSettings['allow-lan'] = config['allow-lan']
+        if (config['bind-address']) state.globalSettings['bind-address'] = config['bind-address']
+        if (config.mode) state.globalSettings.mode = config.mode
+        if (config['log-level']) state.globalSettings['log-level'] = config['log-level']
+        if (config['external-controller']) state.globalSettings['external-controller'] = config['external-controller']
+        if (config.dns) Object.assign(state.globalSettings.dns, config.dns)
+      })
     },
   }))
 )

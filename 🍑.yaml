@@ -1,0 +1,415 @@
+mixed-port: 7890
+allow-lan: true
+bind-address: '*'
+mode: rule
+log-level: info
+external-controller: 127.0.0.1:9090
+dns:
+  enable: true
+  ipv6: false
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+    - 114.114.114.114
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  use-hosts: true
+  respect-rules: true
+  proxy-server-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+    - 114.114.114.114
+  nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+    - 114.114.114.114
+  fallback:
+    - 1.1.1.1
+    - 8.8.8.8
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    geosite:
+      - gfw
+    ipcidr:
+      - 240.0.0.0/4
+    domain:
+      - +.google.com
+      - +.facebook.com
+      - +.youtube.com
+proxies:
+  - {name: 所有节点为IEPL专线, type: anytls, server: 14.17.78.187, port: 23327, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-82b68197-1043-d84a-6742-afa3cff430ce.csair.com, skip-cert-verify: true}
+  - {name: '邮箱客服: christchen517@gmail.com', type: anytls, server: 14.17.78.187, port: 23327, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-82b68197-1043-d84a-6742-afa3cff430ce.csair.com, skip-cert-verify: true}
+  - {name: 支持AI:新日美台港, type: anytls, server: 14.17.78.187, port: 23327, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-82b68197-1043-d84a-6742-afa3cff430ce.csair.com, skip-cert-verify: true}
+  - {name: 🇭🇰 香港 01, type: anytls, server: 14.17.78.187, port: 23327, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-82b68197-1043-d84a-6742-afa3cff430ce.csair.com, skip-cert-verify: true}
+  - {name: 🇭🇰 香港 02, type: anytls, server: 14.17.78.187, port: 23340, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-45929a5f-f302-c4ab-8f81-a1fd86df23fd.csair.com, skip-cert-verify: true}
+  - {name: 🇭🇰 香港 03, type: anytls, server: 14.17.78.187, port: 23342, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-b3053c9d-18be-3d85-c7ce-6756c8c44f3e.csair.com, skip-cert-verify: true}
+  - {name: 🇭🇰 香港 04, type: anytls, server: 14.17.78.187, port: 23327, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-82b68197-1043-d84a-6742-afa3cff430ce.csair.com, skip-cert-verify: true}
+  - {name: 🇭🇰 香港 05, type: anytls, server: 14.17.78.187, port: 23340, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-45929a5f-f302-c4ab-8f81-a1fd86df23fd.csair.com, skip-cert-verify: true}
+  - {name: 🇭🇰 香港 06, type: anytls, server: 14.17.78.187, port: 23342, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-b3053c9d-18be-3d85-c7ce-6756c8c44f3e.csair.com, skip-cert-verify: true}
+  - {name: 🇸🇬 新加坡 01, type: anytls, server: 14.17.78.187, port: 23331, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-499507eb-d1ff-e180-dd5c-cf10515eeafd.csair.com, skip-cert-verify: true}
+  - {name: 🇸🇬 新加坡 02, type: anytls, server: 14.17.78.187, port: 23325, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-652ef568-4721-9dc3-09bd-1fd99c1c7fa1.csair.com, skip-cert-verify: true}
+  - {name: 🇸🇬 新加坡 03, type: anytls, server: 14.17.78.187, port: 23331, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-499507eb-d1ff-e180-dd5c-cf10515eeafd.csair.com, skip-cert-verify: true}
+  - {name: 🇸🇬 新加坡 04, type: anytls, server: 14.17.78.187, port: 23325, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-652ef568-4721-9dc3-09bd-1fd99c1c7fa1.csair.com, skip-cert-verify: true}
+  - {name: 🇹🇼 台湾 01, type: anytls, server: 14.17.78.187, port: 23322, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-dadc5cb4-67f2-4b8d-d2cb-5b44ab6876cd.csair.com, skip-cert-verify: true}
+  - {name: 🇹🇼 台湾 02, type: anytls, server: 14.17.78.187, port: 23336, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-76b9c7ef-c0eb-6c92-7a82-865334c6f29b.csair.com, skip-cert-verify: true}
+  - {name: 🇹🇼 台湾 03, type: anytls, server: 14.17.78.187, port: 23322, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-dadc5cb4-67f2-4b8d-d2cb-5b44ab6876cd.csair.com, skip-cert-verify: true}
+  - {name: 🇹🇼 台湾 04, type: anytls, server: 14.17.78.187, port: 23336, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-76b9c7ef-c0eb-6c92-7a82-865334c6f29b.csair.com, skip-cert-verify: true}
+  - {name: 🇯🇵 日本 01, type: anytls, server: 14.17.78.187, port: 23335, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-2e3d0c5e-2267-763f-cbc6-c6daaf6cdf3c.csair.com, skip-cert-verify: true}
+  - {name: 🇯🇵 日本 02, type: anytls, server: 14.17.78.187, port: 23326, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-e2dd5120-5edd-c7bb-3f6e-1f8c12ae1cd4.csair.com, skip-cert-verify: true}
+  - {name: 🇰🇷 韩国 01, type: anytls, server: 14.17.78.187, port: 23341, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-0623a168-5b0c-bf73-9b70-9f4a4e8a8031.csair.com, skip-cert-verify: true}
+  - {name: 🇰🇷 韩国 02, type: anytls, server: 14.17.78.187, port: 23341, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-0623a168-5b0c-bf73-9b70-9f4a4e8a8031.csair.com, skip-cert-verify: true}
+  - {name: 🇺🇸 美国 01, type: anytls, server: 14.17.78.187, port: 23321, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-2203f2c7-5709-f0ad-2c6c-b5591588daa1.csair.com, skip-cert-verify: true}
+  - {name: 🇺🇸 美国 02, type: anytls, server: 14.17.78.187, port: 23323, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-193c2a19-70f3-2ffc-8517-26083bf73e61.csair.com, skip-cert-verify: true}
+  - {name: 🇲🇾 马来西亚 01, type: anytls, server: 14.17.78.187, port: 23344, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-a909eb1b-35d9-d2e1-4df9-5202c237e205.csair.com, skip-cert-verify: true}
+  - {name: 🇨🇦 加拿大 01, type: anytls, server: 14.17.78.187, port: 23337, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-a549bf38-cc19-bd26-8094-15a6c6e37409.qchwnd.moe}
+  - {name: 🇩🇪 德国 01, type: anytls, server: 14.17.78.187, port: 23329, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-76e56c3a-35c7-3e54-c5e1-52a78c0de7f8.qchwnd.moe}
+  - {name: 🇬🇧 英国 01, type: anytls, server: 14.17.78.187, port: 23334, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-76f4589d-0e7b-e204-3841-0c4d069abc59.qchwnd.moe}
+  - {name: 🇫🇷 法国 01, type: anytls, server: 14.17.78.187, port: 23333, password: 44ba4df1-a4e0-4842-911d-8d38a85754c4, udp: true, sni: moe233-skylinx-6167faa8-40e9-4a63-55d6-23b362e23ef1.qchwnd.moe}
+  - {name: 剩余流量：48.76 GB, type: ss, server: hkiplc.511y.eu.cc, port: 53638, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 套餐到期：长期有效, type: ss, server: hkiplc.511y.eu.cc, port: 53638, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇭🇰深港移联专线 HK, type: ss, server: hkiplc.511y.eu.cc, port: 53638, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇭🇰深港移电专线 HK, type: ss, server: heyuanla.qoc9.com, port: 25644, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇭🇰深圳移动专线 HK, type: ss, server: hklc.511y.eu.cc, port: 46951, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇭🇰深圳BGP HK, type: ss, server: hklc.511y.eu.cc, port: 46951, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇭🇰东莞电信 HK, type: ss, server: hklc.511y.eu.cc, port: 46951, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇭🇰东莞三线 HK, type: ss, server: hklc.511y.eu.cc, port: 46951, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇯🇵深港移联专线 JP, type: ss, server: heyuanla.qoc9.com, port: 25644, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇯🇵深圳三网专线 JP, type: ss, server: hkiplc.511y.eu.cc, port: 55776, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇯🇵深圳移动专线 JP, type: ss, server: hkiplc.511y.eu.cc, port: 25357, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇯🇵深港移电专线 JP, type: ss, server: heyuanla.qoc9.com, port: 25644, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇹🇼深圳联通专线 TW, type: ss, server: hklc.511y.eu.cc, port: 29282, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇹🇼东莞电信专线 TW, type: ss, server: hklc.511y.eu.cc, port: 29282, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇹🇼深圳BGP专线 TW, type: ss, server: hklc.511y.eu.cc, port: 29282, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇹🇼深港移联专线 TW, type: ss, server: heyuanla.qoc9.com, port: 14525, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇹🇼深港电信专线 TW, type: ss, server: hklc.511y.eu.cc, port: 29282, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇸🇬深圳移动专线 SG, type: ss, server: heyuanla.qoc9.com, port: 23753, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇸🇬东莞电信三线 SG, type: ss, server: heyuanla.qoc9.com, port: 35113, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇸🇬深港移联专线 SG, type: ss, server: heyuanla.qoc9.com, port: 23753, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇸🇬深港移电专线 SG, type: ss, server: hklc.511y.eu.cc, port: 45067, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇸🇬深港移电信专线 SG, type: ss, server: heyuanla.qoc9.com, port: 35113, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇺🇸广州电信专线 US, type: ss, server: hklc.511y.eu.cc, port: 40457, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇺🇸东莞电信专线 US, type: ss, server: hklc.511y.eu.cc, port: 40457, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇺🇸深港电信专线 US, type: ss, server: hklc.511y.eu.cc, port: 40457, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 🇺🇸深港联通专线 US, type: ss, server: hklc.511y.eu.cc, port: 40457, cipher: aes-256-gcm, password: d442bae0-8cf6-4cc1-bc9c-73b7c538d5ae, udp: true}
+  - {name: 剩余流量：978.98 GB, type: vless, server: 127.0.0.1, port: 35248, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: IGsSxC0wgn7wLy0NM0QN_yOREDKT_814Y_3_rbgDoTc, short-id: c8c0f951}}
+  - {name: 距离下次重置剩余：25 天, type: vless, server: 127.0.0.1, port: 35248, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: IGsSxC0wgn7wLy0NM0QN_yOREDKT_814Y_3_rbgDoTc, short-id: c8c0f951}}
+  - {name: 套餐到期：2027-09-04, type: vless, server: 127.0.0.1, port: 35248, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: IGsSxC0wgn7wLy0NM0QN_yOREDKT_814Y_3_rbgDoTc, short-id: c8c0f951}}
+  - {name: 🇭🇰香港高速01|BGP|流媒体, type: vless, server: aws-link1.liangxin1.xyz, port: 35248, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: IGsSxC0wgn7wLy0NM0QN_yOREDKT_814Y_3_rbgDoTc, short-id: c8c0f951}}
+  - {name: 🇭🇰香港高速02|BGP|流媒体, type: vless, server: aws-link2.liangxin1.xyz, port: 38725, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: HvwnLBMMKsmvghGX5yVPq3J2HWxwr1GGQB2WIvbPvAY, short-id: 8f6ca378}}
+  - {name: 🇭🇰香港高速03|BGP|流媒体, type: vless, server: aws-link3.liangxin1.xyz, port: 27758, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: EYa4ic3GAxqznV61U-OOww-WKsu5wuQQptyS3fw7czM, short-id: c50db39f}}
+  - {name: 🇭🇰香港高速04|BGP|流媒体, type: vless, server: aws-link4.liangxin1.xyz, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: 3FPGTaxkfOM3nEUWUyCiqkH5oJGsOx-WxPJfADi1QWY, short-id: 7f369e14}}
+  - {name: 🇸🇬新加坡高速01|BGP|流媒体, type: vless, server: aws-link7.liangxin1.xyz, port: 48574, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.sg, reality-opts: {public-key: lmxSayN8tUg2Dag2MPXrdqZ2SQK9K3OjlaKk8wVCRnc, short-id: f8f18902}}
+  - {name: 🇸🇬新加坡高速02|BGP|流媒体, type: vless, server: aws-link8.liangxin1.xyz, port: 39645, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: iosapps.itunes.apple.com, reality-opts: {public-key: x7VqpFP7_PrY4ebNw8hi8Ec5Tm5Upmt5JOdrN1M9VnQ, short-id: 2b3b0b93}}
+  - {name: 🇸🇬新加坡高速03|BGP|流媒体, type: vless, server: aws-link9.liangxin1.xyz, port: 23587, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: iosapps.itunes.apple.com, reality-opts: {public-key: H66PLLf6HkZwHk4oFqisfTawIvw2cxkEwk8Ue8sHZgA, short-id: 19b580ae}}
+  - {name: 🇸🇬新加坡高速04|BGP|流媒体, type: vless, server: aws-link10.liangxin1.xyz, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.sg, reality-opts: {public-key: xQO7CBh6ymSW9qfw9OGHykh7PLTzWQZjxDT-H4ul2AE, short-id: 2bb6da88}}
+  - {name: 🇸🇬新加坡高速05|BGP|流媒体, type: vless, server: aws-link11.liangxin1.xyz, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.sg, reality-opts: {public-key: 7DC8gg_Ui9i3tScu-60AxeniPPW3h3VWvvQjblOrwEs, short-id: 18180d97}}
+  - {name: 🇯🇵日本高速01|BGP|流媒体, type: vless, server: aws-link13.liangxin1.xyz, port: 36574, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.apple.com.cn, reality-opts: {public-key: sDG-KQk1BF7V83-xnmrWDouXxpPd_ZSxKcHrJJzbols, short-id: 32a3650d}}
+  - {name: 🇯🇵日本高速02|BGP|流媒体, type: vless, server: aws-link14.liangxin1.xyz, port: 25485, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.apple.com.cn, reality-opts: {public-key: VOFSjjWT0wIH3Q0ntyEZd8WwksrIAb5gPt_3PBnEASg, short-id: 9c5b8c53}}
+  - {name: 🇯🇵日本高速03|BGP|流媒体, type: vless, server: aws-link15.liangxin1.xyz, port: 35457, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.apple.com.cn, reality-opts: {public-key: 3gb-aG6qLCJpEOFrEPZ9qKqLvVPA_ovlu0X1PvjcE0k, short-id: 05288db3}}
+  - {name: 🇯🇵日本高速04|BGP|流媒体, type: vless, server: cfyes.lxy1015.top, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: '', client-fingerprint: chrome, servername: lxs1jp.lxy1015.top, network: ws, ws-opts: {path: /liangxin/jp1, headers: {Host: lx-1jp.lxy1015.top}}}
+  - {name: 🇯🇵日本高速05|BGP|流媒体, type: vless, server: cfyes.lxy1015.top, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: '', client-fingerprint: chrome, servername: lxs1jp.lxy1015.top, network: ws, ws-opts: {path: /liangxin/jp1, headers: {Host: lx-1jp.lxy1015.top}}}
+  - {name: 🇯🇵日本高速06|BGP|流媒体, type: vless, server: cfyes.lxy1015.top, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: '', client-fingerprint: chrome, servername: lxs1jp.lxy1015.top, network: ws, ws-opts: {path: /liangxin/jp1, headers: {Host: lx-1jp.lxy1015.top}}}
+  - {name: 🇺🇸美国高速01|流媒体, type: vless, server: aws-link19.liangxin1.xyz, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: download-porter.hoyoverse.com, reality-opts: {public-key: QE5l0RUqs4OsH3j3u_xHm06-4NlILmQivZUJqiEx11o, short-id: '6314e825'}}
+  - {name: 🇺🇸美国高速03|流媒体, type: vless, server: cfyes.lxy1015.top, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: '', client-fingerprint: chrome, servername: lx-us1.lxy1015.top, network: ws, ws-opts: {path: /liangxin/us, headers: {Host: lx-us1.lxy1015.top}}}
+  - {name: 🇺🇸美国高速04|流媒体, type: vless, server: cfyes.lxy1015.top, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: '', client-fingerprint: chrome, servername: lx-us1.lxy1015.top, network: ws, ws-opts: {path: /liangxin/us, headers: {Host: lx-us1.lxy1015.top}}}
+  - {name: 🇰🇷韩国高速01|BGP|流媒体, type: vless, server: aws-link25.liangxin1.xyz, port: 34578, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: download-porter.hoyoverse.com, reality-opts: {public-key: PSn2s5TN4e7n0LkzPunu2IA1hSmOoPYFu3d_psl2Nmc, short-id: e534c8be}}
+  - {name: 🇨🇳台湾高速01|BGP|流媒体, type: vless, server: aws-link27.liangxin1.xyz, port: 443, uuid: 41518a8f-3b98-4c07-9357-54ee84b7fee4, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: download-porter.hoyoverse.com, reality-opts: {public-key: a9I2uA3NNZA6uBAe3Tui9vZ8CG5MrMaYOifWrAdc0zg, short-id: a8609be8}}
+  - {name: 🇭🇰香港专线01|BGP|流媒体, server: aws-linkhy1.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: iosapps.itunes.apple.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇭🇰香港专线02|BGP|流媒体, server: aws-linkhy2.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: iosapps.itunes.apple.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇭🇰香港专线03|BGP|流媒体, server: aws-linkhy3.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: iosapps.itunes.apple.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇸🇬新加坡专线02|BGP|流媒体, server: aws-linkhy10.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: iosapps.itunes.apple.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇸🇬新加坡专线03|BGP|流媒体, server: aws-linkhy11.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: iosapps.itunes.apple.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇯🇵日本专线01|BGP|流媒体, server: aws-linkhy15.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: bilibili-jp.biliimg.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇯🇵日本专线02|BGP|流媒体, server: aws-linkhy16.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: bilibili-jp2.biliimg.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇯🇵日本专线03|BGP|流媒体, server: aws-linkhy17.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: bilibili-jp3.biliimg.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇰🇷韩国专线01|BGP|流媒体, server: aws-linkhy21.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: bilibili-kr.biliimg.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇨🇳台湾专线01|BGP|流媒体, server: aws-linkhy23.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: bilibili-tw.biliimg.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇺🇸美国01|流媒体, server: 203.10.97.121, port: 443, udp: true, skip-cert-verify: true, sni: www.apple.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: 🇺🇸美国02|流媒体, server: aws-linkhy27.liangxin1.xyz, port: 443, udp: true, skip-cert-verify: true, sni: www.apple.com, type: hysteria2, password: 41518a8f-3b98-4c07-9357-54ee84b7fee4}
+  - {name: '🇭🇰 [CDN/0.2x] HK', type: vless, server: anycast-1.twcc.eu.org, port: 443, uuid: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, alterId: 0, cipher: auto, udp: true, flow: null, tls: true, skip-cert-verify: false, client-fingerprint: chrome, servername: cdnqz-3cl.twcc.eu.org, smux: {enabled: true}, network: ws, ws-opts: {path: /user?ed=4096, headers: {Host: hk-user.twcc.eu.org}}}
+  - {name: '🇭🇰 [A] HK 1 移动*', type: anytls, server: vl-hk-1.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇭🇰 [A] HK 2 家宽', type: anytls, server: vl-hk-2.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇭🇰 [H] HK 1 移动', server: smrt4-hk-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇭🇰 [H] HK 2 家宽', server: smrt4-hk-2.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇸🇬 [A/0.6x] SG 联通移动*', type: anytls, server: vl-sg-1.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇸🇬 [A/0.5x] SG 移动', type: anytls, server: vl-sg-2.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇸🇬 [H] SG 联通*', server: smrt4-sg-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇸🇬 [CDN/0.2x] SG 电信', type: vless, server: anycast-1.twcc.eu.org, port: 443, uuid: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, alterId: 0, cipher: auto, udp: true, flow: null, tls: true, skip-cert-verify: false, client-fingerprint: chrome, servername: cdnqz-3cl.twcc.eu.org, smux: {enabled: true}, network: ws, ws-opts: {path: /user?ed=4096, headers: {Host: sg-user.twcc.eu.org}}}
+  - {name: '🇹🇼 [A] TW 家宽', type: anytls, server: vl-tw-1.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇹🇼 [H] TW 家宽', server: smrt4-tw-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇰🇷 [A/0.6x] KR', type: anytls, server: vl-kr-1.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇯🇵 [A] JP 1 联通移动*', type: anytls, server: vl-jp-1.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇯🇵 [A] JP 2 Sakura', type: anytls, server: vl-jp-2.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇯🇵 [H] JP 1 联通*', server: smrt4-jp-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇺🇸 [H/0.4x] US RS', server: stable-usw-3.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇺🇸 [A/0.4x] US RS', type: anytls, server: stable-usw-3.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇺🇸 [A/0.1x] US OVH', type: anytls, server: stable-usw-1.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇺🇸 [H/0.1x] US OVH', server: stable-usw-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇺🇸 [CDN/0.1x] US 下载', type: vless, server: anycast-us.twcc.eu.org, port: 443, uuid: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, alterId: 0, cipher: auto, udp: true, flow: null, tls: true, skip-cert-verify: false, client-fingerprint: chrome, servername: cdnqz-3cl.twcc.eu.org, smux: {enabled: true}, network: ws, ws-opts: {path: /user?ed=4096, headers: {Host: uswest1-user.twcc.eu.org}}}
+  - {name: '🇨🇦 [H/0.1x] CA OVH', server: stable-ca-2.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇨🇦 [A/0.1x] CA OVH', type: anytls, server: stable-ca-2.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇫🇷 [A/0.1x] FR OVH', type: anytls, server: stable-fr-1.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇫🇷 [H/0.1x] FR OVH', server: stable-fr-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇩🇪 [A/0.1x] DE OVH', type: anytls, server: stable-de-1.twcc.eu.org, port: 18003, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: audio.itunes.apple.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇩🇪 [H/0.1x] DE OVH', server: stable-de-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇭🇰 [中转] HK 1', type: anytls, server: nn-1.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48001.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇭🇰 [中转] HK 2 家宽', type: anytls, server: nn-1.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48002.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇭🇰 [中转] HK 3', type: anytls, server: nn-1.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48003.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇭🇰 [中转] HK 4', type: anytls, server: nn-1.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48004.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇹🇼 [中转] TW 1 家宽', type: anytls, server: nn-1.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48011.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇹🇼 [中转] TW 2', type: anytls, server: nn-1.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48012.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇸🇬 [中转] SG 1', type: anytls, server: nn-1.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48021.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇸🇬 [中转] SG 2', type: anytls, server: nn-1.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48022.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇯🇵 [中转] JP 1', type: anytls, server: nn-2.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48031.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇯🇵 [中转] JP 2', type: anytls, server: nn-2.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48032.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇯🇵 [中转] JP 3', type: anytls, server: nn-2.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48033.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇰🇷 [中转] KR', type: anytls, server: nn-2.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48041.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇺🇸 [中转] US', type: anytls, server: nn-2.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48051.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇨🇦 [中转] CA', type: anytls, server: nn-2.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48052.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇩🇪 [中转] 德国', type: anytls, server: nn-3.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48107.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇬🇧 [中转] 英国', type: anytls, server: nn-3.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48100.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇫🇷 [中转] 法国', type: anytls, server: nn-3.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48101.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇹🇭 [中转] 泰国', type: anytls, server: nn-3.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48103.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇮🇳 [中转] 印度', type: anytls, server: nn-3.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48104.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇮🇩 [中转] 印尼', type: anytls, server: nn-3.twcc.eu.org, port: 48484, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d, udp: true, sni: d1--cn-gotcha48106.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome}
+  - {name: '🇭🇰 [H6] AWS 移动联通*', server: smrt6-hk-2.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇸🇬 [H6] AWS 移动联通*', server: smrt6-sg-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇯🇵 [H6] AWS 移动联通*', server: smrt6-jp-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇺🇸 [H6/0.1x] US OVH', server: smrt6-us-1.twcc.eu.org, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇨🇦 [H6/0.1x] CA OVH', server: 2607:5300:205:200::7996, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇩🇪 [H6/0.1x] DE OVH', server: 2001:41d0:701:1100::64a2, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🇫🇷 [H6/0.1x] FR OVH', server: 2001:41d0:305:2100::3967, port: 18004, skip-cert-verify: true, sni: i0.hdslb.com, type: hysteria2, password: 71db5d6c-8a6f-4e72-af64-0090d700dd8d}
+  - {name: '🌊|美国01[免费]0.0x', type: anytls, server: us01.shanhai.click, port: 18888, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: us01.shanhai.click, skip-cert-verify: false}
+  - {name: '🌊|美国02[免费]0.0x', type: anytls, server: us02.shanhai.click, port: 18888, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: us02.shanhai.click, skip-cert-verify: false}
+  - {name: '🌊|台湾01[优化]0.1x', type: anytls, server: tw01.shanhai.click, port: 18888, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: tw01.shanhai.click, skip-cert-verify: false}
+  - {name: '🌊|美国03[4837]0.3x', type: anytls, server: us03.shanhai.click, port: 18888, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: us03.shanhai.click, skip-cert-verify: false}
+  - {name: '🌊|香港01[专线]1.0x', type: anytls, server: hk01.shanhai.cfd, port: 11101, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: hk01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|香港02[专线]1.0x', type: anytls, server: hk02.shanhai.cfd, port: 21101, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: hk02.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|台湾01[专线]1.0x', type: anytls, server: tw01.shanhai.cfd, port: 11102, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: tw01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|日本01[专线]1.0x', type: anytls, server: jp01.shanhai.cfd, port: 11103, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: jp01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|日本02[专线]1.0x', type: anytls, server: jp02.shanhai.cfd, port: 21103, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: jp02.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|美国01[专线]1.0x', type: anytls, server: us01.shanhai.cfd, port: 11104, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: us01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|美国02[专线]1.0x', type: anytls, server: us02.shanhai.cfd, port: 21104, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: us02.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|美国03[专线]1.0x', type: anytls, server: us03.shanhai.cfd, port: 31104, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: us03.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|英国01[专线]1.0x', type: anytls, server: gb01.shanhai.cfd, port: 11105, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: gb01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|越南01[专线]1.0x', type: anytls, server: vn01.shanhai.cfd, port: 11106, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: vn01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|澳门01[专线]1.0x', type: anytls, server: mo01.shanhai.cfd, port: 11107, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: mo01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|德国01[专线]1.0x', type: anytls, server: de01.shanhai.cfd, port: 11108, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: de01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|泰国01[专线]1.0x', type: anytls, server: th01.shanhai.cfd, port: 11109, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: th01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|韩国01[专线]1.0x', type: anytls, server: kr01.shanhai.cfd, port: 11110, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: kr01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|印度01[专线]1.0x', type: anytls, server: in01.shanhai.cfd, port: 11111, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: in01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|埃及01[专线]1.0x', type: anytls, server: eg01.shanhai.cfd, port: 11113, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: eg01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|蒙古01[专线]1.0x', type: anytls, server: mn01.shanhai.cfd, port: 11114, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: mn01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|老挝01[专线]1.0x', type: anytls, server: la01.shanhai.cfd, port: 11115, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: la01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|缅甸01[专线]1.0x', type: anytls, server: mm01.shanhai.cfd, port: 11116, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: mm01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|文莱01[专线]1.0x', type: anytls, server: bn01.shanhai.cfd, port: 11117, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: bn01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|新加坡01[专线]1.0x', type: anytls, server: sg01.shanhai.cfd, port: 12201, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: sg01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|新加坡02[专线]1.0x', type: anytls, server: sg02.shanhai.cfd, port: 22201, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: sg02.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|菲律宾01[专线]1.0x', type: anytls, server: ph01.shanhai.cfd, port: 12202, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: ph01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|加拿大01[专线]1.0x', type: anytls, server: ca01.shanhai.cfd, port: 12203, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: ca01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|土耳其01[专线]1.0x', type: anytls, server: tr01.shanhai.cfd, port: 12204, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: tr01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|柬埔寨01[专线]1.0x', type: anytls, server: kh01.shanhai.cfd, port: 12205, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: kh01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|澳大利亚01[专线]1.0x', type: anytls, server: au01.shanhai.cfd, port: 13301, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: au01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|巴基斯坦01[专线]1.0x', type: anytls, server: pk01.shanhai.cfd, port: 13302, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: pk01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|马来西亚01[专线]1.0x', type: anytls, server: my01.shanhai.cfd, port: 13303, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: my01.shanhai.sbs, skip-cert-verify: false}
+  - {name: '🌊|印度尼西亚01[专线]1.0x', type: anytls, server: id01.shanhai.cfd, port: 14401, password: 4fbb11a7-00eb-4d81-8d7a-ef3f8950ae56, client-fingerprint: chrome, udp: true, alpn: [h2, http/1.1], sni: id01.shanhai.sbs, skip-cert-verify: false}
+  - {name: 🐟|🇭🇰 香港 01, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30001, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: 6tGFo2nHJiqJQwPhv2b5Ylo1V2Or8iaRukDNUrYPlAI, short-id: 43a92db4}}
+  - {name: 🐟|🇭🇰 香港 02, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30002, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: i4cnv6HStlzElV8GQz9IimBZA7WkckVOdw3izJCmDh8, short-id: f7b7150d}}
+  - {name: 🐟|🇭🇰 香港 03, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30003, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: gzicuAN5qFK8mpytp2YOu8oce0F0jK2SyDsBcwpi-kA, short-id: 9996ad32}}
+  - {name: 🐟|🇭🇰 香港 04, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30004, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.hk, reality-opts: {public-key: oGnL4bQeflzhiu-VwsaHegWjjsZ3ysfmkfFB9zLFoG8, short-id: de2d5a8e}}
+  - {name: 🐟|🇹🇼 台湾 01, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30011, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: download-porter.hoyoverse.com, reality-opts: {public-key: MrdQ24TVsvwnPhc7rNu_V_22gwiKHpR4InbDG2gEY2k, short-id: 8750f137}}
+  - {name: 🐟|🇹🇼 台湾 02, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30012, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: download-porter.hoyoverse.com, reality-opts: {public-key: KeyFfD6g-h6D8iNkHwSJ7h_SheP4bI4pecr22ltTsQE, short-id: 96517f28}}
+  - {name: 🐟|🇸🇬 狮城 01, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30021, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.sg, reality-opts: {public-key: foC1IcRT62X7TBxMbA6kMWuq3YFt7QKY9GGLRbCCnmo, short-id: d16d0105}}
+  - {name: 🐟|🇸🇬 狮城 02, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30022, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.lamer.com.sg, reality-opts: {public-key: fccw4pBdnzn1OLHIl079QCnCxsUWQ4SxsjzXeoNUmD0, short-id: 41a85ab8}}
+  - {name: 🐟|🇯🇵 日本 01, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30031, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.apple.com.cn, reality-opts: {public-key: k05glT_ejWUuXhqWhZXpMyly2TfG6w-hdExai_g3iSM, short-id: 12e19efe}}
+  - {name: 🐟|🇯🇵 日本 02, type: vless, server: 81a1719c3c14bb5a.cszwfw.cn, port: 30032, uuid: b889dd26-deae-47f3-b885-b758b645ed81, udp: true, tls: true, skip-cert-verify: false, flow: xtls-rprx-vision, client-fingerprint: chrome, servername: www.apple.com.cn, reality-opts: {public-key: muILwC1BQaxFLukL-BptgjYJ6qi3DmhRoW418xSdjzQ, short-id: fded0fd6}}
+  - {name: 🐟|🇺🇸 美国 01, type: ss, server: 7f242c1bbff17854.huaweidns.cn, port: 30041, cipher: aes-128-gcm, password: b889dd26-deae-47f3-b885-b758b645ed81, udp: true}
+  - {name: 🐟|🇺🇸 美国 02, type: ss, server: 7f242c1bbff17854.huaweidns.cn, port: 30042, cipher: aes-128-gcm, password: b889dd26-deae-47f3-b885-b758b645ed81, udp: true}
+  - {name: 🐟|🇨🇦 加拿大 01, type: ss, server: 7f242c1bbff17854.huaweidns.cn, port: 30046, cipher: aes-128-gcm, password: b889dd26-deae-47f3-b885-b758b645ed81, udp: true}
+  - {name: 🐟|🇨🇦 加拿大 02, type: ss, server: 7f242c1bbff17854.huaweidns.cn, port: 30047, cipher: aes-128-gcm, password: b889dd26-deae-47f3-b885-b758b645ed81, udp: true}
+  - {name: 🐟|🇰🇷 韩国 01, type: ss, server: 345e3731eb26ddfc.huaweidns.cn, port: 30051, cipher: aes-128-gcm, password: b889dd26-deae-47f3-b885-b758b645ed81, udp: true}
+  - {name: 🐟|🇹🇭 泰国 01, type: ss, server: 345e3731eb26ddfc.huaweidns.cn, port: 30052, cipher: aes-128-gcm, password: b889dd26-deae-47f3-b885-b758b645ed81, udp: true}
+  - {name: 🐟|🇩🇪 德国 01, type: ss, server: 345e3731eb26ddfc.huaweidns.cn, port: 30061, cipher: aes-128-gcm, password: b889dd26-deae-47f3-b885-b758b645ed81, udp: true}
+  - {name: 🐟|🇬🇧 英国 01, type: ss, server: 345e3731eb26ddfc.huaweidns.cn, port: 30062, cipher: aes-128-gcm, password: b889dd26-deae-47f3-b885-b758b645ed81, udp: true}
+proxy-groups:
+  - {name: 🍇🍑 Claude 专用, type: select, proxies: [🇯🇵 日本 01, 🇯🇵 日本 02, 🇯🇵深港移联专线 JP, 🇯🇵深圳三网专线 JP, 🇯🇵深圳移动专线 JP, 🇯🇵深港移电专线 JP, '🇯🇵 [A] JP 1 联通移动*', '🇯🇵 [A] JP 2 Sakura', '🇯🇵 [H] JP 1 联通*', 🐟|🇯🇵 日本 01, '🌊|日本01[专线]1.0x', '🌊|日本02[专线]1.0x'], url: http://www.gstatic.com/generate_204, interval: 300}
+  - {name: ♻️ 自动选择, type: url-test, proxies: [所有节点为IEPL专线, '邮箱客服: christchen517@gmail.com', 支持AI:新日美台港, 🇭🇰 香港 01, 🇭🇰 香港 02, 🇭🇰 香港 03, 🇭🇰 香港 04, 🇭🇰 香港 05, 🇭🇰 香港 06, 🇸🇬 新加坡 01, 🇸🇬 新加坡 02, 🇸🇬 新加坡 03, 🇸🇬 新加坡 04, 🇹🇼 台湾 01, 🇹🇼 台湾 02, 🇹🇼 台湾 03, 🇹🇼 台湾 04, 🇯🇵 日本 01, 🇯🇵 日本 02, 🇰🇷 韩国 01, 🇰🇷 韩国 02, 🇺🇸 美国 01, 🇺🇸 美国 02, 🇲🇾 马来西亚 01, 🇨🇦 加拿大 01, 🇩🇪 德国 01, 🇬🇧 英国 01, 🇫🇷 法国 01, 🇭🇰深港移联专线 HK, 🇭🇰深港移电专线 HK, 🇭🇰深圳移动专线 HK, 🇭🇰深圳BGP HK, 🇭🇰东莞电信 HK, 🇭🇰东莞三线 HK, 🇯🇵深港移联专线 JP, 🇯🇵深圳三网专线 JP, 🇯🇵深圳移动专线 JP, 🇯🇵深港移电专线 JP, 🇹🇼深圳联通专线 TW, 🇹🇼东莞电信专线 TW, 🇹🇼深圳BGP专线 TW, 🇹🇼深港移联专线 TW, 🇹🇼深港电信专线 TW, 🇸🇬深圳移动专线 SG, 🇸🇬东莞电信三线 SG, 🇸🇬深港移联专线 SG, 🇸🇬深港移电专线 SG, 🇸🇬深港移电信专线 SG, 🇺🇸广州电信专线 US, 🇺🇸东莞电信专线 US, 🇺🇸深港电信专线 US, 🇺🇸深港联通专线 US, 🇭🇰香港高速01|BGP|流媒体, 🇭🇰香港高速02|BGP|流媒体, 🇭🇰香港高速03|BGP|流媒体, 🇭🇰香港高速04|BGP|流媒体, 🇸🇬新加坡高速01|BGP|流媒体, 🇸🇬新加坡高速02|BGP|流媒体, 🇸🇬新加坡高速03|BGP|流媒体, 🇸🇬新加坡高速04|BGP|流媒体, 🇸🇬新加坡高速05|BGP|流媒体, 🇯🇵日本高速01|BGP|流媒体, 🇯🇵日本高速02|BGP|流媒体, 🇯🇵日本高速03|BGP|流媒体, 🇯🇵日本高速04|BGP|流媒体, 🇯🇵日本高速05|BGP|流媒体, 🇯🇵日本高速06|BGP|流媒体, 🇺🇸美国高速01|流媒体, 🇺🇸美国高速03|流媒体, 🇺🇸美国高速04|流媒体, 🇰🇷韩国高速01|BGP|流媒体, 🇨🇳台湾高速01|BGP|流媒体, 🇭🇰香港专线01|BGP|流媒体, 🇭🇰香港专线02|BGP|流媒体, 🇭🇰香港专线03|BGP|流媒体, 🇸🇬新加坡专线02|BGP|流媒体, 🇸🇬新加坡专线03|BGP|流媒体, 🇯🇵日本专线01|BGP|流媒体, 🇯🇵日本专线02|BGP|流媒体, 🇯🇵日本专线03|BGP|流媒体, 🇰🇷韩国专线01|BGP|流媒体, 🇨🇳台湾专线01|BGP|流媒体, 🇺🇸美国01|流媒体, 🇺🇸美国02|流媒体, '🇭🇰 [CDN/0.2x] HK', '🇭🇰 [A] HK 1 移动*', '🇭🇰 [A] HK 2 家宽', '🇭🇰 [H] HK 1 移动', '🇭🇰 [H] HK 2 家宽', '🇸🇬 [A/0.6x] SG 联通移动*', '🇸🇬 [A/0.5x] SG 移动', '🇸🇬 [H] SG 联通*', '🇸🇬 [CDN/0.2x] SG 电信', '🇹🇼 [A] TW 家宽', '🇹🇼 [H] TW 家宽', '🇰🇷 [A/0.6x] KR', '🇯🇵 [A] JP 1 联通移动*', '🇯🇵 [A] JP 2 Sakura', '🇯🇵 [H] JP 1 联通*', '🇺🇸 [H/0.4x] US RS', '🇺🇸 [A/0.4x] US RS', '🇺🇸 [A/0.1x] US OVH', '🇺🇸 [H/0.1x] US OVH', '🇺🇸 [CDN/0.1x] US 下载', '🇨🇦 [H/0.1x] CA OVH', '🇨🇦 [A/0.1x] CA OVH', '🇫🇷 [A/0.1x] FR OVH', '🇫🇷 [H/0.1x] FR OVH', '🇩🇪 [A/0.1x] DE OVH', '🇩🇪 [H/0.1x] DE OVH', '🇭🇰 [中转] HK 1', '🇭🇰 [中转] HK 2 家宽', '🇭🇰 [中转] HK 3', '🇭🇰 [中转] HK 4', '🇹🇼 [中转] TW 1 家宽', '🇹🇼 [中转] TW 2', '🇸🇬 [中转] SG 1', '🇸🇬 [中转] SG 2', '🇯🇵 [中转] JP 1', '🇯🇵 [中转] JP 2', '🇯🇵 [中转] JP 3', '🇰🇷 [中转] KR', '🇺🇸 [中转] US', '🇨🇦 [中转] CA', '🇩🇪 [中转] 德国', '🇬🇧 [中转] 英国', '🇫🇷 [中转] 法国', '🇹🇭 [中转] 泰国', '🇮🇳 [中转] 印度', '🇮🇩 [中转] 印尼', '🇭🇰 [H6] AWS 移动联通*', '🇸🇬 [H6] AWS 移动联通*', '🇯🇵 [H6] AWS 移动联通*', '🇺🇸 [H6/0.1x] US OVH', '🇨🇦 [H6/0.1x] CA OVH', '🇩🇪 [H6/0.1x] DE OVH', '🇫🇷 [H6/0.1x] FR OVH', '🌊|美国01[免费]0.0x', '🌊|美国02[免费]0.0x', '🌊|台湾01[优化]0.1x', '🌊|美国03[4837]0.3x', '🌊|香港01[专线]1.0x', '🌊|香港02[专线]1.0x', '🌊|台湾01[专线]1.0x', '🌊|日本01[专线]1.0x', '🌊|日本02[专线]1.0x', '🌊|美国01[专线]1.0x', '🌊|美国02[专线]1.0x', '🌊|美国03[专线]1.0x', '🌊|英国01[专线]1.0x', '🌊|越南01[专线]1.0x', '🌊|澳门01[专线]1.0x', '🌊|德国01[专线]1.0x', '🌊|泰国01[专线]1.0x', '🌊|韩国01[专线]1.0x', '🌊|印度01[专线]1.0x', '🌊|埃及01[专线]1.0x', '🌊|蒙古01[专线]1.0x', '🌊|老挝01[专线]1.0x', '🌊|缅甸01[专线]1.0x', '🌊|文莱01[专线]1.0x', '🌊|新加坡01[专线]1.0x', '🌊|新加坡02[专线]1.0x', '🌊|菲律宾01[专线]1.0x', '🌊|加拿大01[专线]1.0x', '🌊|土耳其01[专线]1.0x', '🌊|柬埔寨01[专线]1.0x', '🌊|澳大利亚01[专线]1.0x', '🌊|巴基斯坦01[专线]1.0x', '🌊|马来西亚01[专线]1.0x', '🌊|印度尼西亚01[专线]1.0x', 🐟|🇭🇰 香港 01, 🐟|🇭🇰 香港 02, 🐟|🇭🇰 香港 03, 🐟|🇭🇰 香港 04, 🐟|🇹🇼 台湾 01, 🐟|🇹🇼 台湾 02, 🐟|🇸🇬 狮城 01, 🐟|🇸🇬 狮城 02, 🐟|🇯🇵 日本 01, 🐟|🇯🇵 日本 02, 🐟|🇺🇸 美国 01, 🐟|🇺🇸 美国 02, 🐟|🇨🇦 加拿大 01, 🐟|🇨🇦 加拿大 02, 🐟|🇰🇷 韩国 01, 🐟|🇹🇭 泰国 01, 🐟|🇩🇪 德国 01, 🐟|🇬🇧 英国 01], url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50}
+  - {name: 🧚 AI, type: url-test, proxies: [🇺🇸 美国 01, 🇺🇸 美国 02, 🇺🇸广州电信专线 US, 🇺🇸东莞电信专线 US, 🇺🇸深港电信专线 US, 🇺🇸深港联通专线 US, 🇺🇸美国高速01|流媒体, 🇺🇸美国高速03|流媒体, 🇺🇸美国高速04|流媒体, 🇺🇸美国01|流媒体, 🇺🇸美国02|流媒体, '🇺🇸 [H/0.4x] US RS', '🇺🇸 [A/0.4x] US RS', '🇺🇸 [A/0.1x] US OVH', '🇺🇸 [H/0.1x] US OVH', '🇺🇸 [CDN/0.1x] US 下载', '🇺🇸 [中转] US', '🇺🇸 [H6/0.1x] US OVH', 🐟|🇺🇸 美国 01, 🐟|🇺🇸 美国 02, 🇯🇵 日本 01, 🇯🇵 日本 02, 🇯🇵日本高速01|BGP|流媒体, 🇯🇵日本高速02|BGP|流媒体, 🇯🇵日本高速03|BGP|流媒体, 🇯🇵日本高速04|BGP|流媒体, 🇯🇵日本高速05|BGP|流媒体, 🇯🇵日本高速06|BGP|流媒体, 🇯🇵日本专线01|BGP|流媒体, 🇯🇵日本专线02|BGP|流媒体, 🇯🇵日本专线03|BGP|流媒体, '🌊|日本01[专线]1.0x', '🌊|日本02[专线]1.0x', 🐟|🇯🇵 日本 01, 🐟|🇯🇵 日本 02], url: http://www.gstatic.com/generate_204, interval: 300}
+  - {name: 🌐 节点选择, type: select, proxies: [♻️ 自动选择, 🇭🇰 香港 01, 🇭🇰 香港 02, 🇭🇰 香港 03, 🇭🇰 香港 04, 🇭🇰 香港 05, 🇭🇰 香港 06, 🇸🇬 新加坡 01, 🇸🇬 新加坡 02, 🇸🇬 新加坡 03, 🇸🇬 新加坡 04, 🇹🇼 台湾 01, 🇹🇼 台湾 02, 🇹🇼 台湾 03, 🇹🇼 台湾 04, 🇯🇵 日本 01, 🇯🇵 日本 02, 🇰🇷 韩国 01, 🇰🇷 韩国 02, 🇺🇸 美国 01, 🇺🇸 美国 02, 🇲🇾 马来西亚 01, 🇨🇦 加拿大 01, 🇩🇪 德国 01, 🇬🇧 英国 01, 🇫🇷 法国 01, 🇭🇰深港移联专线 HK, 🇭🇰深港移电专线 HK, 🇭🇰深圳移动专线 HK, 🇭🇰深圳BGP HK, 🇭🇰东莞电信 HK, 🇭🇰东莞三线 HK, 🇯🇵深港移联专线 JP, 🇯🇵深圳三网专线 JP, 🇯🇵深圳移动专线 JP, 🇯🇵深港移电专线 JP, 🇹🇼深圳联通专线 TW, 🇹🇼东莞电信专线 TW, 🇹🇼深圳BGP专线 TW, 🇹🇼深港移联专线 TW, 🇹🇼深港电信专线 TW, 🇸🇬深圳移动专线 SG, 🇸🇬东莞电信三线 SG, 🇸🇬深港移联专线 SG, 🇸🇬深港移电专线 SG, 🇸🇬深港移电信专线 SG, 🇺🇸广州电信专线 US, 🇺🇸东莞电信专线 US, 🇺🇸深港电信专线 US, 🇺🇸深港联通专线 US, 🇭🇰香港高速01|BGP|流媒体, 🇭🇰香港高速02|BGP|流媒体, 🇭🇰香港高速03|BGP|流媒体, 🇭🇰香港高速04|BGP|流媒体, 🇸🇬新加坡高速01|BGP|流媒体, 🇸🇬新加坡高速02|BGP|流媒体, 🇸🇬新加坡高速03|BGP|流媒体, 🇸🇬新加坡高速04|BGP|流媒体, 🇸🇬新加坡高速05|BGP|流媒体, 🇯🇵日本高速01|BGP|流媒体, 🇯🇵日本高速02|BGP|流媒体, 🇯🇵日本高速03|BGP|流媒体, 🇯🇵日本高速04|BGP|流媒体, 🇯🇵日本高速05|BGP|流媒体, 🇯🇵日本高速06|BGP|流媒体, 🇺🇸美国高速01|流媒体, 🇺🇸美国高速03|流媒体, 🇺🇸美国高速04|流媒体, 🇰🇷韩国高速01|BGP|流媒体, 🇨🇳台湾高速01|BGP|流媒体, 🇭🇰香港专线01|BGP|流媒体, 🇭🇰香港专线02|BGP|流媒体, 🇭🇰香港专线03|BGP|流媒体, 🇸🇬新加坡专线02|BGP|流媒体, 🇸🇬新加坡专线03|BGP|流媒体, 🇯🇵日本专线01|BGP|流媒体, 🇯🇵日本专线02|BGP|流媒体, 🇯🇵日本专线03|BGP|流媒体, 🇰🇷韩国专线01|BGP|流媒体, 🇨🇳台湾专线01|BGP|流媒体, 🇺🇸美国01|流媒体, 🇺🇸美国02|流媒体, '🇭🇰 [CDN/0.2x] HK', '🇭🇰 [A] HK 1 移动*', '🇭🇰 [A] HK 2 家宽', '🇭🇰 [H] HK 1 移动', '🇭🇰 [H] HK 2 家宽', '🇸🇬 [A/0.6x] SG 联通移动*', '🇸🇬 [A/0.5x] SG 移动', '🇸🇬 [H] SG 联通*', '🇸🇬 [CDN/0.2x] SG 电信', '🇹🇼 [A] TW 家宽', '🇹🇼 [H] TW 家宽', '🇰🇷 [A/0.6x] KR', '🇯🇵 [A] JP 1 联通移动*', '🇯🇵 [A] JP 2 Sakura', '🇯🇵 [H] JP 1 联通*', '🇺🇸 [H/0.4x] US RS', '🇺🇸 [A/0.4x] US RS', '🇺🇸 [A/0.1x] US OVH', '🇺🇸 [H/0.1x] US OVH', '🇺🇸 [CDN/0.1x] US 下载', '🇨🇦 [H/0.1x] CA OVH', '🇨🇦 [A/0.1x] CA OVH', '🇫🇷 [A/0.1x] FR OVH', '🇫🇷 [H/0.1x] FR OVH', '🇩🇪 [A/0.1x] DE OVH', '🇩🇪 [H/0.1x] DE OVH', '🇭🇰 [中转] HK 1', '🇭🇰 [中转] HK 2 家宽', '🇭🇰 [中转] HK 3', '🇭🇰 [中转] HK 4', '🇹🇼 [中转] TW 1 家宽', '🇹🇼 [中转] TW 2', '🇸🇬 [中转] SG 1', '🇸🇬 [中转] SG 2', '🇯🇵 [中转] JP 1', '🇯🇵 [中转] JP 2', '🇯🇵 [中转] JP 3', '🇰🇷 [中转] KR', '🇺🇸 [中转] US', '🇨🇦 [中转] CA', '🇩🇪 [中转] 德国', '🇬🇧 [中转] 英国', '🇫🇷 [中转] 法国', '🇹🇭 [中转] 泰国', '🇮🇳 [中转] 印度', '🇮🇩 [中转] 印尼', '🇭🇰 [H6] AWS 移动联通*', '🇸🇬 [H6] AWS 移动联通*', '🇯🇵 [H6] AWS 移动联通*', '🇺🇸 [H6/0.1x] US OVH', '🇨🇦 [H6/0.1x] CA OVH', '🇩🇪 [H6/0.1x] DE OVH', '🇫🇷 [H6/0.1x] FR OVH', '🌊|美国01[免费]0.0x', '🌊|美国02[免费]0.0x', '🌊|台湾01[优化]0.1x', '🌊|美国03[4837]0.3x', '🌊|香港01[专线]1.0x', '🌊|香港02[专线]1.0x', '🌊|台湾01[专线]1.0x', '🌊|日本01[专线]1.0x', '🌊|日本02[专线]1.0x', '🌊|美国01[专线]1.0x', '🌊|美国02[专线]1.0x', '🌊|美国03[专线]1.0x', '🌊|英国01[专线]1.0x', '🌊|越南01[专线]1.0x', '🌊|澳门01[专线]1.0x', '🌊|德国01[专线]1.0x', '🌊|泰国01[专线]1.0x', '🌊|韩国01[专线]1.0x', '🌊|印度01[专线]1.0x', '🌊|埃及01[专线]1.0x', '🌊|蒙古01[专线]1.0x', '🌊|老挝01[专线]1.0x', '🌊|缅甸01[专线]1.0x', '🌊|文莱01[专线]1.0x', '🌊|新加坡01[专线]1.0x', '🌊|新加坡02[专线]1.0x', '🌊|菲律宾01[专线]1.0x', '🌊|加拿大01[专线]1.0x', '🌊|土耳其01[专线]1.0x', '🌊|柬埔寨01[专线]1.0x', '🌊|澳大利亚01[专线]1.0x', '🌊|巴基斯坦01[专线]1.0x', '🌊|马来西亚01[专线]1.0x', '🌊|印度尼西亚01[专线]1.0x', 🐟|🇭🇰 香港 01, 🐟|🇭🇰 香港 02, 🐟|🇭🇰 香港 03, 🐟|🇭🇰 香港 04, 🐟|🇹🇼 台湾 01, 🐟|🇹🇼 台湾 02, 🐟|🇸🇬 狮城 01, 🐟|🇸🇬 狮城 02, 🐟|🇯🇵 日本 01, 🐟|🇯🇵 日本 02, 🐟|🇺🇸 美国 01, 🐟|🇺🇸 美国 02, 🐟|🇨🇦 加拿大 01, 🐟|🇨🇦 加拿大 02, 🐟|🇰🇷 韩国 01, 🐟|🇹🇭 泰国 01, 🐟|🇩🇪 德国 01, 🐟|🇬🇧 英国 01], url: http://www.gstatic.com/generate_204, interval: 300}
+  - {name: 📺 YouTube, type: url-test, proxies: [🇭🇰香港高速01|BGP|流媒体, 🇭🇰香港高速02|BGP|流媒体, 🇭🇰香港高速03|BGP|流媒体, 🇭🇰香港高速04|BGP|流媒体, 🇸🇬新加坡高速01|BGP|流媒体, 🇸🇬新加坡高速02|BGP|流媒体, 🇸🇬新加坡高速03|BGP|流媒体, 🇸🇬新加坡高速04|BGP|流媒体, 🇸🇬新加坡高速05|BGP|流媒体, 🇯🇵日本高速01|BGP|流媒体, 🇯🇵日本高速02|BGP|流媒体, 🇯🇵日本高速03|BGP|流媒体, 🇯🇵日本高速04|BGP|流媒体, 🇯🇵日本高速05|BGP|流媒体, 🇯🇵日本高速06|BGP|流媒体, 🇺🇸美国高速01|流媒体, 🇺🇸美国高速03|流媒体, 🇺🇸美国高速04|流媒体, 🇰🇷韩国高速01|BGP|流媒体, 🇨🇳台湾高速01|BGP|流媒体, 🇭🇰香港专线01|BGP|流媒体, 🇭🇰香港专线02|BGP|流媒体, 🇭🇰香港专线03|BGP|流媒体, 🇸🇬新加坡专线02|BGP|流媒体, 🇸🇬新加坡专线03|BGP|流媒体, 🇯🇵日本专线01|BGP|流媒体, 🇯🇵日本专线02|BGP|流媒体, 🇯🇵日本专线03|BGP|流媒体, 🇰🇷韩国专线01|BGP|流媒体, 🇨🇳台湾专线01|BGP|流媒体, 🇺🇸美国01|流媒体, 🇺🇸美国02|流媒体], url: http://www.gstatic.com/generate_204, interval: 300}
+  - {name: 🛡️ 故障转移, type: select, proxies: [🇭🇰 香港 01, 🇭🇰 香港 02, 🇭🇰 香港 03, 🇭🇰 香港 04, 🇭🇰 香港 05, 🇭🇰 香港 06, 🇸🇬 新加坡 01, 🇸🇬 新加坡 02, 🇸🇬 新加坡 03, 🇸🇬 新加坡 04, 🇹🇼 台湾 01, 🇹🇼 台湾 02, 🇹🇼 台湾 03, 🇹🇼 台湾 04, 🇯🇵 日本 01, 🇯🇵 日本 02, 🇰🇷 韩国 01, 🇰🇷 韩国 02, 🇺🇸 美国 01, 🇺🇸 美国 02, 🇲🇾 马来西亚 01, 🇨🇦 加拿大 01, 🇩🇪 德国 01, 🇬🇧 英国 01, 🇫🇷 法国 01, 🇭🇰深港移联专线 HK, 🇭🇰深港移电专线 HK, 🇭🇰深圳移动专线 HK, 🇭🇰深圳BGP HK, 🇭🇰东莞电信 HK, 🇭🇰东莞三线 HK, 🇯🇵深港移联专线 JP, 🇯🇵深圳三网专线 JP, 🇯🇵深圳移动专线 JP, 🇯🇵深港移电专线 JP, 🇹🇼深圳联通专线 TW, 🇹🇼东莞电信专线 TW, 🇹🇼深圳BGP专线 TW, 🇹🇼深港移联专线 TW, 🇹🇼深港电信专线 TW, 🇸🇬深圳移动专线 SG, 🇸🇬东莞电信三线 SG, 🇸🇬深港移联专线 SG, 🇸🇬深港移电专线 SG, 🇸🇬深港移电信专线 SG, 🇺🇸广州电信专线 US, 🇺🇸东莞电信专线 US, 🇺🇸深港电信专线 US, 🇺🇸深港联通专线 US, 🇭🇰香港高速01|BGP|流媒体, 🇭🇰香港高速02|BGP|流媒体, 🇭🇰香港高速03|BGP|流媒体, 🇭🇰香港高速04|BGP|流媒体, 🇸🇬新加坡高速01|BGP|流媒体, 🇸🇬新加坡高速02|BGP|流媒体, 🇸🇬新加坡高速03|BGP|流媒体, 🇸🇬新加坡高速04|BGP|流媒体, 🇸🇬新加坡高速05|BGP|流媒体, 🇯🇵日本高速01|BGP|流媒体, 🇯🇵日本高速02|BGP|流媒体, 🇯🇵日本高速03|BGP|流媒体, 🇯🇵日本高速04|BGP|流媒体, 🇯🇵日本高速05|BGP|流媒体, 🇯🇵日本高速06|BGP|流媒体, 🇺🇸美国高速01|流媒体, 🇺🇸美国高速03|流媒体, 🇺🇸美国高速04|流媒体, 🇰🇷韩国高速01|BGP|流媒体, 🇨🇳台湾高速01|BGP|流媒体, 🇭🇰香港专线01|BGP|流媒体, 🇭🇰香港专线02|BGP|流媒体, 🇭🇰香港专线03|BGP|流媒体, 🇸🇬新加坡专线02|BGP|流媒体, 🇸🇬新加坡专线03|BGP|流媒体, 🇯🇵日本专线01|BGP|流媒体, 🇯🇵日本专线02|BGP|流媒体, 🇯🇵日本专线03|BGP|流媒体, 🇰🇷韩国专线01|BGP|流媒体, 🇨🇳台湾专线01|BGP|流媒体, 🇺🇸美国01|流媒体, 🇺🇸美国02|流媒体, '🇭🇰 [CDN/0.2x] HK', '🇭🇰 [A] HK 1 移动*', '🇭🇰 [A] HK 2 家宽', '🇭🇰 [H] HK 1 移动', '🇭🇰 [H] HK 2 家宽', '🇸🇬 [A/0.6x] SG 联通移动*', '🇸🇬 [A/0.5x] SG 移动', '🇸🇬 [H] SG 联通*', '🇸🇬 [CDN/0.2x] SG 电信', '🇹🇼 [A] TW 家宽', '🇹🇼 [H] TW 家宽', '🇰🇷 [A/0.6x] KR', '🇯🇵 [A] JP 1 联通移动*', '🇯🇵 [A] JP 2 Sakura', '🇯🇵 [H] JP 1 联通*', '🇺🇸 [H/0.4x] US RS', '🇺🇸 [A/0.4x] US RS', '🇺🇸 [A/0.1x] US OVH', '🇺🇸 [H/0.1x] US OVH', '🇺🇸 [CDN/0.1x] US 下载', '🇨🇦 [H/0.1x] CA OVH', '🇨🇦 [A/0.1x] CA OVH', '🇫🇷 [A/0.1x] FR OVH', '🇫🇷 [H/0.1x] FR OVH', '🇩🇪 [A/0.1x] DE OVH', '🇩🇪 [H/0.1x] DE OVH', '🇭🇰 [中转] HK 1', '🇭🇰 [中转] HK 2 家宽', '🇭🇰 [中转] HK 3', '🇭🇰 [中转] HK 4', '🇹🇼 [中转] TW 1 家宽', '🇹🇼 [中转] TW 2', '🇸🇬 [中转] SG 1', '🇸🇬 [中转] SG 2', '🇯🇵 [中转] JP 1', '🇯🇵 [中转] JP 2', '🇯🇵 [中转] JP 3', '🇰🇷 [中转] KR', '🇺🇸 [中转] US', '🇨🇦 [中转] CA', '🇩🇪 [中转] 德国', '🇬🇧 [中转] 英国', '🇫🇷 [中转] 法国', '🇹🇭 [中转] 泰国', '🇮🇳 [中转] 印度', '🇮🇩 [中转] 印尼', '🇭🇰 [H6] AWS 移动联通*', '🇸🇬 [H6] AWS 移动联通*', '🇯🇵 [H6] AWS 移动联通*', '🇺🇸 [H6/0.1x] US OVH', '🇨🇦 [H6/0.1x] CA OVH', '🇩🇪 [H6/0.1x] DE OVH', '🇫🇷 [H6/0.1x] FR OVH', '🌊|美国01[免费]0.0x', '🌊|美国02[免费]0.0x', '🌊|台湾01[优化]0.1x', '🌊|美国03[4837]0.3x', '🌊|香港01[专线]1.0x', '🌊|香港02[专线]1.0x', '🌊|台湾01[专线]1.0x', '🌊|日本01[专线]1.0x', '🌊|日本02[专线]1.0x', '🌊|美国01[专线]1.0x', '🌊|美国02[专线]1.0x', '🌊|美国03[专线]1.0x', '🌊|英国01[专线]1.0x', '🌊|越南01[专线]1.0x', '🌊|澳门01[专线]1.0x', '🌊|德国01[专线]1.0x', '🌊|泰国01[专线]1.0x', '🌊|韩国01[专线]1.0x', '🌊|印度01[专线]1.0x', '🌊|埃及01[专线]1.0x', '🌊|蒙古01[专线]1.0x', '🌊|老挝01[专线]1.0x', '🌊|缅甸01[专线]1.0x', '🌊|文莱01[专线]1.0x', '🌊|新加坡01[专线]1.0x', '🌊|新加坡02[专线]1.0x', '🌊|菲律宾01[专线]1.0x', '🌊|加拿大01[专线]1.0x', '🌊|土耳其01[专线]1.0x', '🌊|柬埔寨01[专线]1.0x', '🌊|澳大利亚01[专线]1.0x', '🌊|巴基斯坦01[专线]1.0x', '🌊|马来西亚01[专线]1.0x', '🌊|印度尼西亚01[专线]1.0x', 🐟|🇭🇰 香港 01, 🐟|🇭🇰 香港 02, 🐟|🇭🇰 香港 03, 🐟|🇭🇰 香港 04, 🐟|🇹🇼 台湾 01, 🐟|🇹🇼 台湾 02, 🐟|🇸🇬 狮城 01, 🐟|🇸🇬 狮城 02, 🐟|🇯🇵 日本 01, 🐟|🇯🇵 日本 02, 🐟|🇺🇸 美国 01, 🐟|🇺🇸 美国 02, 🐟|🇨🇦 加拿大 01, 🐟|🇨🇦 加拿大 02, 🐟|🇰🇷 韩国 01, 🐟|🇹🇭 泰国 01, 🐟|🇩🇪 德国 01, 🐟|🇬🇧 英国 01], url: http://www.gstatic.com/generate_204, interval: 300}
+  - {name: 🐦 社交媒体, type: url-test, proxies: [🧚 AI], url: http://www.gstatic.com/generate_204, interval: 300}
+rule-providers:
+  reject:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt
+    path: ./ruleset/reject.yaml
+    interval: 86400
+  private:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt
+    path: ./ruleset/private.yaml
+    interval: 86400
+  google:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt
+    path: ./ruleset/google.yaml
+    interval: 86400
+  proxy:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt
+    path: ./ruleset/proxy.yaml
+    interval: 86400
+  direct:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt
+    path: ./ruleset/direct.yaml
+    interval: 86400
+  gfw:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/gfw.txt
+    path: ./ruleset/gfw.yaml
+    interval: 86400
+  tld-not-cn:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/tld-not-cn.txt
+    path: ./ruleset/tld-not-cn.yaml
+    interval: 86400
+  telegramcidr:
+    type: http
+    behavior: ipcidr
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/telegramcidr.txt
+    path: ./ruleset/telegramcidr.yaml
+    interval: 86400
+  cncidr:
+    type: http
+    behavior: ipcidr
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/cncidr.txt
+    path: ./ruleset/cncidr.yaml
+    interval: 86400
+  lancidr:
+    type: http
+    behavior: ipcidr
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt
+    path: ./ruleset/lancidr.yaml
+    interval: 86400
+  cn:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/China/China.yaml
+    path: ./ruleset/cn.yaml
+    interval: 86400
+  openai:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml
+    path: ./ruleset/openai.yaml
+    interval: 86400
+  claude:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Claude/Claude.yaml
+    path: ./ruleset/claude.yaml
+    interval: 86400
+  gemini:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Gemini/Gemini.yaml
+    path: ./ruleset/gemini.yaml
+    interval: 86400
+  copilot:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Copilot/Copilot.yaml
+    path: ./ruleset/copilot.yaml
+    interval: 86400
+  youtube:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTube/YouTube.yaml
+    path: ./ruleset/youtube.yaml
+    interval: 86400
+  telegram:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml
+    path: ./ruleset/telegram.yaml
+    interval: 1209600
+  twitter:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Twitter/Twitter.yaml
+    path: ./ruleset/twitter.yaml
+    interval: 1209600
+  tiktok:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/TikTok/TikTok.yaml
+    path: ./ruleset/tiktok.yaml
+    interval: 1209600
+  linkedin:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/LinkedIn/LinkedIn.yaml
+    path: ./ruleset/linkedin.yaml
+    interval: 1209600
+  docker:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Docker/Docker.yaml
+    path: ./ruleset/docker.yaml
+    interval: 1209600
+  youtube-music:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTubeMusic/YouTubeMusic.yaml
+    path: ./ruleset/youtube-music.yaml
+    interval: 1209600
+  GoogleFCM:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GoogleFCM/GoogleFCM.yaml
+    path: ./ruleset/GoogleFCM.yaml
+    interval: 1209600
+rules:
+  - DOMAIN,clash.razord.top,DIRECT
+  - DOMAIN,yacd.haishan.me,DIRECT
+  - DOMAIN-SUFFIX,local,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT
+  - GEOIP,LAN,DIRECT,no-resolve
+  - GEOIP,CN,DIRECT,no-resolve
+  - RULE-SET,reject,REJECT
+  - RULE-SET,private,DIRECT
+  - RULE-SET,google,♻️ 自动选择
+  - RULE-SET,proxy,♻️ 自动选择
+  - RULE-SET,direct,DIRECT
+  - RULE-SET,gfw,♻️ 自动选择
+  - RULE-SET,tld-not-cn,♻️ 自动选择
+  - RULE-SET,telegramcidr,♻️ 自动选择,no-resolve
+  - RULE-SET,cncidr,DIRECT,no-resolve
+  - RULE-SET,lancidr,DIRECT,no-resolve
+  - RULE-SET,cn,DIRECT
+  - RULE-SET,openai,🍇🍑 Claude 专用
+  - RULE-SET,claude,🍇🍑 Claude 专用
+  - RULE-SET,gemini,🧚 AI
+  - RULE-SET,copilot,♻️ 自动选择
+  - RULE-SET,youtube,📺 YouTube
+  - RULE-SET,telegram,🐦 社交媒体
+  - RULE-SET,twitter,🐦 社交媒体
+  - RULE-SET,tiktok,🐦 社交媒体
+  - RULE-SET,linkedin,🐦 社交媒体
+  - RULE-SET,docker,♻️ 自动选择
+  - RULE-SET,youtube-music,📺 YouTube
+  - RULE-SET,GoogleFCM,♻️ 自动选择
+  - MATCH,♻️ 自动选择

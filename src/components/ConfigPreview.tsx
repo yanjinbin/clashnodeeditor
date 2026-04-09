@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Copy, Download, Check, FileText, ChevronRight, CheckCircle, XCircle } from 'lucide-react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { Copy, Download, Check, FileText, ChevronRight, CheckCircle, XCircle, Upload, X } from 'lucide-react'
 import yaml from 'js-yaml'
 import { useAppStore } from '../store/useAppStore'
 import { generateClashConfig } from '../utils/parseYaml'
-import type { DnsConfig, DnsFallbackFilter } from '../types/clash'
+import type { ClashConfig, DnsConfig, DnsFallbackFilter } from '../types/clash'
 
 // ── Tiny helpers ──────────────────────────────────────────────────────────────
 
@@ -249,13 +249,166 @@ function SettingsPanel() {
   )
 }
 
+// ── ImportModal ───────────────────────────────────────────────────────────────
+function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (config: ClashConfig) => void }) {
+  const [tab, setTab] = useState<'file' | 'paste'>('file')
+  const [pasteText, setPasteText] = useState('')
+  const [dragOver, setDragOver] = useState(false)
+  const [preview, setPreview] = useState<{ proxies: number; groups: number; rules: number; providers: number } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [parsed, setParsed] = useState<ClashConfig | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function parseConfig(text: string) {
+    try {
+      const config = yaml.load(text) as ClashConfig
+      if (!config || typeof config !== 'object') throw new Error('不是有效的 YAML 对象')
+      setParsed(config)
+      setError(null)
+      setPreview({
+        proxies: Array.isArray(config.proxies) ? config.proxies.length : 0,
+        groups: Array.isArray(config['proxy-groups']) ? config['proxy-groups'].length : 0,
+        rules: Array.isArray(config.rules) ? config.rules.length : 0,
+        providers: config['rule-providers'] ? Object.keys(config['rule-providers']).length : 0,
+      })
+    } catch (e) {
+      setParsed(null)
+      setPreview(null)
+      setError((e as Error).message)
+    }
+  }
+
+  function handleFile(file: File) {
+    const reader = new FileReader()
+    reader.onload = (e) => parseConfig(e.target?.result as string)
+    reader.readAsText(file)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleFile(file)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div
+        className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-[520px] max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">导入配置</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
+          {(['file', 'paste'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => { setTab(t); setParsed(null); setPreview(null); setError(null) }}
+              className={`px-5 py-2.5 text-xs font-medium transition-colors ${
+                tab === t
+                  ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+            >
+              {t === 'file' ? '上传文件' : '粘贴文本'}
+            </button>
+          ))}
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
+          {tab === 'file' ? (
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => fileRef.current?.click()}
+              className={`flex flex-col items-center justify-center gap-3 h-40 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
+                dragOver
+                  ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              <Upload size={24} className="text-gray-400" />
+              <div className="text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-300">拖拽 YAML 文件到此处，或点击选择</p>
+                <p className="text-xs text-gray-400 mt-1">.yaml / .yml</p>
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".yaml,.yml"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
+              />
+            </div>
+          ) : (
+            <textarea
+              value={pasteText}
+              onChange={(e) => { setPasteText(e.target.value); if (e.target.value.trim()) { parseConfig(e.target.value) } else { setParsed(null); setPreview(null); setError(null) } }}
+              placeholder="将 Clash/Mihomo YAML 配置粘贴到这里..."
+              className="w-full h-52 text-xs font-mono px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+            />
+          )}
+
+          {/* Parse preview */}
+          {preview && (
+            <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 space-y-1">
+              <p className="text-xs font-medium text-green-700 dark:text-green-400">解析成功，将导入：</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-green-600 dark:text-green-500">
+                <span>节点 <strong>{preview.proxies}</strong> 个</span>
+                <span>代理组 <strong>{preview.groups}</strong> 个</span>
+                <span>规则 <strong>{preview.rules}</strong> 条</span>
+                <span>规则集 <strong>{preview.providers}</strong> 个</span>
+              </div>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">⚠️ 导入将覆盖当前的代理组、规则和规则集，节点将追加为新订阅源</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
+              <p className="text-xs text-red-600 dark:text-red-400">解析失败：{error}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            取消
+          </button>
+          <button
+            disabled={!parsed}
+            onClick={() => { if (parsed) { onImport(parsed); onClose() } }}
+            className="px-4 py-1.5 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors"
+          >
+            确认导入
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── ConfigPreview ─────────────────────────────────────────────────────────────
 export default function ConfigPreview() {
-  const { sources, proxyGroups, ruleProviders, rules, globalSettings } = useAppStore()
+  const { sources, proxyGroups, ruleProviders, rules, globalSettings, importFullConfig } = useAppStore()
   const [copied, setCopied] = useState(false)
   const [filename, setFilename] = useState('config.yaml')
   const [editingFilename, setEditingFilename] = useState(false)
   const [softWrap, setSoftWrap] = useState(false)
+  const [flowArrays, setFlowArrays] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   const allProxies = sources.flatMap((s) => s.proxies)
   const enabledProviders = ruleProviders.filter((p) => p.enabled)
@@ -275,7 +428,8 @@ export default function ConfigPreview() {
     })),
     ruleProviders,
     rules.map((r) => ({ type: r.type, payload: r.payload, target: r.target, noResolve: r.noResolve })),
-    globalSettings
+    globalSettings,
+    flowArrays
   )
 
   // Validate generated YAML by re-parsing it
@@ -307,6 +461,7 @@ export default function ConfigPreview() {
 
   return (
     <div className="flex h-full min-h-0">
+      {showImport && <ImportModal onClose={() => setShowImport(false)} onImport={importFullConfig} />}
       {/* Left: settings panel */}
       <div className="w-72 shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700">
         <div className="shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
@@ -356,7 +511,27 @@ export default function ConfigPreview() {
             soft wrap
           </button>
 
+          {/* Flow arrays toggle */}
+          <button
+            onClick={() => setFlowArrays((v) => !v)}
+            className={`text-xs px-2 py-1 rounded border transition-colors ${
+              flowArrays
+                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400'
+            }`}
+            title={flowArrays ? '当前：行内压缩模式，点击切换为展开模式' : '当前：展开模式，点击切换为行内压缩模式'}
+          >
+            {flowArrays ? '行内压缩' : '展开模式'}
+          </button>
+
           <div className="flex gap-2 ml-auto">
+            <button
+              onClick={() => setShowImport(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+            >
+              <Upload size={13} />
+              导入配置
+            </button>
             <button
               onClick={handleCopy}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"

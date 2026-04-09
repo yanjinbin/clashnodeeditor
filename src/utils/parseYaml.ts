@@ -101,7 +101,8 @@ export function generateClashConfig(
     target: string
     noResolve?: boolean
   }>,
-  settings: ClashGlobalSettings = DEFAULT_GLOBAL_SETTINGS
+  settings: ClashGlobalSettings = DEFAULT_GLOBAL_SETTINGS,
+  flowArrays = false
 ): string {
   const config: ClashConfig = {
     'mixed-port': settings['mixed-port'],
@@ -159,5 +160,7 @@ export function generateClashConfig(
     // contain special chars (commas, braces, colons) that break mihomo's parser
     lineWidth: -1,
     noRefs: true,
+    // flowArrays: depth >= 2 uses flow (inline) style, compressing array items to one line each
+    ...(flowArrays ? { flowLevel: 2 } : {}),
   })
 }
