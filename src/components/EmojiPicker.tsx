@@ -95,7 +95,6 @@ export default function EmojiPicker({ onSelect, inputRef, value, onChange }: Emo
       } else {
         onSelect(emoji)
       }
-      setOpen(false)
     },
     [inputRef, value, onChange, onSelect]
   )

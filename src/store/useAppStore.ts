@@ -137,7 +137,22 @@ export const useAppStore = create<AppState>()(
     updateProxyGroup: (id, updates) => {
       set((state) => {
         const idx = state.proxyGroups.findIndex((g) => g.id === id)
-        if (idx !== -1) Object.assign(state.proxyGroups[idx], updates)
+        if (idx === -1) return
+        const oldName = state.proxyGroups[idx].name
+        Object.assign(state.proxyGroups[idx], updates)
+        const newName = state.proxyGroups[idx].name
+        // 名称变更时级联更新所有引用
+        if (updates.name && oldName !== newName) {
+          for (const g of state.proxyGroups) {
+            g.proxies = g.proxies.map((p) => (p === oldName ? newName : p))
+          }
+          for (const r of state.rules) {
+            if (r.target === oldName) r.target = newName
+          }
+          for (const rp of state.ruleProviders) {
+            if (rp.target === oldName) rp.target = newName
+          }
+        }
       })
     },
 
@@ -145,10 +160,17 @@ export const useAppStore = create<AppState>()(
       set((state) => {
         const removed = state.proxyGroups.find((g) => g.id === id)
         state.proxyGroups = state.proxyGroups.filter((g) => g.id !== id)
-        // Cascade: remove the deleted group's name from all other groups
         if (removed) {
+          // 从其他代理组的成员列表中删除
           for (const g of state.proxyGroups) {
             g.proxies = g.proxies.filter((p) => p !== removed.name)
+          }
+          // 规则和规则集中若目标指向此组，重置为 DIRECT
+          for (const r of state.rules) {
+            if (r.target === removed.name) r.target = 'DIRECT'
+          }
+          for (const rp of state.ruleProviders) {
+            if (rp.target === removed.name) rp.target = 'DIRECT'
           }
         }
       })
