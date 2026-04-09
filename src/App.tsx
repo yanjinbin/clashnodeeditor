@@ -22,8 +22,8 @@ export default function App() {
       {/* Header：shrink-0 固定高度，不参与 flex 伸缩 */}
       <header className="shrink-0 flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="text-xl leading-none select-none">🚀🌍</span>
-          <h1 className="text-sm font-bold text-gray-900 dark:text-gray-100">Clash Node Editor</h1>
+          <span className="text-xl leading-none select-none">⚙️</span>
+          <h1 className="text-sm font-bold text-gray-900 dark:text-gray-100">Mihomo Config Editor</h1>
           <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
             {new Date(__BUILD_TIME__).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}
           </span>

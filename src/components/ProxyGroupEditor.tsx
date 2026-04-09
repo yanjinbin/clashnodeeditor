@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -29,11 +29,14 @@ import {
   Users,
   CheckSquare,
   Square,
+  Loader,
+  Globe,
 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import type { ProxyGroup, ProxyGroupType } from '../types/clash'
 import { BUILT_IN_PROXIES } from '../types/clash'
 import EmojiPicker from './EmojiPicker'
+import { resolveToIp, fetchIpInfoBatch, type IpData } from '../utils/ipUtils'
 
 const GROUP_TYPES: { value: ProxyGroupType; label: string; desc: string }[] = [
   { value: 'select', label: 'select', desc: '手动选择' },
@@ -207,11 +210,72 @@ function GroupCard({
   onDragOver,
   onDragEnd,
 }: GroupCardProps) {
+  const { sources } = useAppStore()
   const [proxySearch, setProxySearch] = useState('')
   const [showProxyPicker, setShowProxyPicker] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
   const [nameDraft, setNameDraft] = useState(group.name)
   const [nameError, setNameError] = useState('')
+
+  // IP 数据相关
+  const [ipDataMap, setIpDataMap] = useState<Record<string, IpData>>({})
+  const [ipFetchState, setIpFetchState] = useState<'idle' | 'loading' | 'done'>('idle')
+  const [filterCountry, setFilterCountry] = useState('')
+  const [filterType, setFilterType] = useState<'all' | 'hosting' | 'proxy' | 'residential'>('all')
+
+  // proxy name → server 地址的查找表
+  const serverByName = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const src of sources) {
+      for (const p of src.proxies) {
+        if (p.server) map.set(p.name, String(p.server))
+      }
+    }
+    return map
+  }, [sources])
+
+  // 批量解析 IP 并拉取 ip-api 数据
+  const handleFetchIps = async (proxyNames: string[]) => {
+    setIpFetchState('loading')
+    try {
+      // 1. 并发解析域名 → IP
+      const resolveResults = await Promise.allSettled(
+        proxyNames.map(async (name) => {
+          const server = serverByName.get(name) ?? ''
+          const ip = await resolveToIp(server)
+          return { name, ip }
+        })
+      )
+      // 2. 建立 IP → [proxyName] 的映射（同一 IP 可能多个节点）
+      const ipToNames = new Map<string, string[]>()
+      for (const r of resolveResults) {
+        if (r.status === 'fulfilled') {
+          const { name, ip } = r.value
+          ipToNames.set(ip, [...(ipToNames.get(ip) ?? []), name])
+        }
+      }
+      const ips = [...ipToNames.keys()]
+      if (ips.length === 0) { setIpFetchState('idle'); return }
+      // 3. 批量拉取 ip-api 数据（每批最多 100）
+      const all: IpData[] = []
+      for (let i = 0; i < ips.length; i += 100) {
+        const batch = ips.slice(i, i + 100)
+        const data = await fetchIpInfoBatch(batch)
+        all.push(...data)
+      }
+      // 4. 写回 ipDataMap（按 proxy name 索引）
+      setIpDataMap((prev) => {
+        const next = { ...prev }
+        all.forEach((info, idx) => {
+          for (const name of ipToNames.get(ips[idx]) ?? []) next[name] = info
+        })
+        return next
+      })
+      setIpFetchState('done')
+    } catch {
+      setIpFetchState('idle')
+    }
+  }
 
   // 编辑面板打开时重置草稿，避免上次未提交的内容残留
   useEffect(() => {
@@ -296,7 +360,23 @@ function GroupCard({
   const filteredSections = proxySections
     .map((s) => ({
       ...s,
-      items: s.items.filter((n) => n !== group.name && !group.proxies.includes(n) && (!q || n.toLowerCase().includes(q))),
+      items: s.items.filter((n) => {
+        if (n === group.name || group.proxies.includes(n)) return false
+        if (q && !n.toLowerCase().includes(q)) return false
+        const ipd = ipDataMap[n]
+        // 国家过滤（有 IP 数据才生效）
+        if (ipd && filterCountry) {
+          const cc = ipd.countryCode?.toUpperCase() ?? ''
+          if (cc !== filterCountry.toUpperCase()) return false
+        }
+        // 类型过滤（有 IP 数据才生效）
+        if (ipd && filterType !== 'all') {
+          if (filterType === 'hosting' && !ipd.hosting) return false
+          if (filterType === 'proxy' && !ipd.proxy) return false
+          if (filterType === 'residential' && (ipd.hosting || ipd.proxy)) return false
+        }
+        return true
+      }),
     }))
     .filter((s) => s.items.length > 0)
 
@@ -480,6 +560,49 @@ function GroupCard({
                   </button>
                 </div>
 
+                {/* IP 过滤条件 */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Globe size={11} className="text-gray-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={filterCountry}
+                    onChange={(e) => setFilterCountry(e.target.value.toUpperCase().slice(0, 2))}
+                    placeholder="国家 CC"
+                    maxLength={2}
+                    className="w-16 text-xs px-1.5 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono uppercase"
+                  />
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value as typeof filterType)}
+                    className="text-xs px-1.5 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="all">全部类型</option>
+                    <option value="residential">住宅 IP</option>
+                    <option value="hosting">数据中心</option>
+                    <option value="proxy">代理/VPN</option>
+                  </select>
+                  {(filterCountry || filterType !== 'all') && (
+                    <button
+                      onClick={() => { setFilterCountry(''); setFilterType('all') }}
+                      className="text-xs text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={11} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      const allNames = proxySections.flatMap((s) => s.items).filter((n) => serverByName.has(n))
+                      handleFetchIps(allNames)
+                    }}
+                    disabled={ipFetchState === 'loading'}
+                    className="ml-auto flex items-center gap-1 text-xs px-2 py-1 rounded border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 disabled:opacity-50 transition-colors shrink-0"
+                  >
+                    {ipFetchState === 'loading'
+                      ? <><Loader size={10} className="animate-spin" />查询中…</>
+                      : <><Globe size={10} />{ipFetchState === 'done' ? '重新查询 IP' : '批量查询 IP'}</>}
+                  </button>
+                </div>
+
                 {/* Toolbar: select all filtered + add */}
                 <div className="flex items-center gap-2 px-0.5">
                   <button
@@ -538,6 +661,7 @@ function GroupCard({
                         </div>
                         {section.items.map((name) => {
                           const checked = pickerSelected.has(name)
+                          const ipd = ipDataMap[name]
                           return (
                             <div
                               key={name}
@@ -552,6 +676,23 @@ function GroupCard({
                                 ? <CheckSquare size={12} className="shrink-0 text-blue-500" />
                                 : <Square size={12} className="shrink-0 text-gray-300" />}
                               <span className="flex-1 truncate">{name}</span>
+                              {/* IP 信息徽章 */}
+                              {ipd?.status === 'success' && (
+                                <span className="flex items-center gap-1 shrink-0">
+                                  {ipd.countryCode && (
+                                    <span className="font-mono text-gray-400 dark:text-gray-500">{ipd.countryCode}</span>
+                                  )}
+                                  {ipd.hosting && (
+                                    <span className="px-1 py-0.5 rounded text-[10px] bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">DC</span>
+                                  )}
+                                  {ipd.proxy && (
+                                    <span className="px-1 py-0.5 rounded text-[10px] bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">VPN</span>
+                                  )}
+                                  {!ipd.hosting && !ipd.proxy && (
+                                    <span className="px-1 py-0.5 rounded text-[10px] bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">住宅</span>
+                                  )}
+                                </span>
+                              )}
                             </div>
                           )
                         })}

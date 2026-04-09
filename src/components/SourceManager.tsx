@@ -1,8 +1,9 @@
 import { useState, useRef, useMemo } from 'react'
+import { resolveToIp, IP_RE } from '../utils/ipUtils'
 import {
   Plus, Trash2, RefreshCw, CheckCircle, XCircle, Loader, Globe,
   Upload, AlertTriangle, ChevronDown, ChevronRight, ShieldCheck,
-  Pencil, Check, X, Tag, Layers,
+  Pencil, Check, X, Tag, Layers, ExternalLink,
 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { fetchAndParseYaml, parseYamlFull } from '../utils/parseYaml'
@@ -329,6 +330,7 @@ function SourceCard({
               const realIdx = source.proxies.indexOf(proxy)
               return (
                 <ProxyRow key={realIdx} name={proxy.name} type={String(proxy.type ?? '')}
+                  server={String(proxy.server ?? '')}
                   onChange={(n) => updateProxy(source.id, realIdx, { name: n })} />
               )
             })}
@@ -396,15 +398,39 @@ function SourceCard({
   )
 }
 
+// ── IP 质量检测 ───────────────────────────────────────────────────────────────
+
 // ── Proxy Row ─────────────────────────────────────────────────────────────────
-function ProxyRow({ name, type, onChange }: { name: string; type: string; onChange: (n: string) => void }) {
+function ProxyRow({ name, type, server, onChange }: {
+  name: string
+  type: string
+  server?: string
+  onChange: (n: string) => void
+}) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(name)
+  const [ipState, setIpState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [resolvedIp, setResolvedIp] = useState<string>('')
 
   const commit = () => {
     const t = draft.trim()
     if (t && t !== name) onChange(t); else setDraft(name)
     setEditing(false)
+  }
+
+  const handleCheckIp = async () => {
+    if (!server || ipState === 'loading') return
+    setIpState('loading')
+    try {
+      const ip = await resolveToIp(server)
+      setResolvedIp(ip)
+      setIpState('done')
+      window.open(`https://ippure.com/?ip=${encodeURIComponent(ip)}`, '_blank', 'noopener,noreferrer')
+    } catch {
+      setIpState('error')
+      // 解析失败时直接用 server 原值兜底
+      if (server) window.open(`https://ippure.com/?ip=${encodeURIComponent(server)}`, '_blank', 'noopener,noreferrer')
+    }
   }
 
   const TYPE_COLOR: Record<string, string> = {
@@ -434,6 +460,27 @@ function ProxyRow({ name, type, onChange }: { name: string; type: string; onChan
       ) : (
         <>
           <span className="flex-1 min-w-0 text-xs text-gray-700 dark:text-gray-300 truncate">{name}</span>
+          {/* 解析后的 IP 标签 */}
+          {ipState === 'done' && resolvedIp && !IP_RE.test(server ?? '') && (
+            <span className="text-xs font-mono text-gray-400 dark:text-gray-500 shrink-0">{resolvedIp}</span>
+          )}
+          {/* IP 质量查询按钮 */}
+          {server && (
+            <button
+              onClick={handleCheckIp}
+              disabled={ipState === 'loading'}
+              title={ipState === 'done' ? `IP: ${resolvedIp} — 点击重新查询` : `查询 IP 质量（${server}）`}
+              className={`opacity-0 group-hover:opacity-100 p-0.5 transition-all shrink-0 ${
+                ipState === 'error' ? 'text-red-400' :
+                ipState === 'done'  ? 'text-green-500 opacity-100' :
+                'text-gray-400 hover:text-purple-500'
+              }`}
+            >
+              {ipState === 'loading'
+                ? <Loader size={11} className="animate-spin" />
+                : <ExternalLink size={11} />}
+            </button>
+          )}
           <button onClick={() => { setDraft(name); setEditing(true) }}
             className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-blue-500 transition-all shrink-0">
             <Pencil size={11} />
