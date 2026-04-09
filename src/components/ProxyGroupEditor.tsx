@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -141,6 +141,7 @@ export default function ProxyGroupEditor() {
             expanded={expandedGroups.has(group.id)}
             editing={editingGroup === group.id}
             proxySections={proxySections}
+            existingNames={proxyGroups.filter((g) => g.id !== group.id).map((g) => g.name)}
             onToggleExpand={() => toggleExpand(group.id)}
             onEdit={() => setEditingGroup(editingGroup === group.id ? null : group.id)}
             onRemove={() => removeProxyGroup(group.id)}
@@ -171,6 +172,8 @@ interface GroupCardProps {
   expanded: boolean
   editing: boolean
   proxySections: ProxySection[]
+  /** 其他代理组的名称列表，用于重名校验 */
+  existingNames: string[]
   onToggleExpand: () => void
   onEdit: () => void
   onRemove: () => void
@@ -191,6 +194,7 @@ function GroupCard({
   expanded,
   editing,
   proxySections,
+  existingNames,
   onToggleExpand,
   onEdit,
   onRemove,
@@ -206,6 +210,32 @@ function GroupCard({
   const [proxySearch, setProxySearch] = useState('')
   const [showProxyPicker, setShowProxyPicker] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const [nameDraft, setNameDraft] = useState(group.name)
+  const [nameError, setNameError] = useState('')
+
+  // 编辑面板打开时重置草稿，避免上次未提交的内容残留
+  useEffect(() => {
+    if (editing) {
+      setNameDraft(group.name)
+      setNameError('')
+    }
+  }, [editing, group.name])
+
+  const commitName = () => {
+    const trimmed = nameDraft.trim()
+    if (!trimmed) {
+      setNameError('名称不能为空')
+      setNameDraft(group.name)
+      setNameError('')
+      return
+    }
+    if (existingNames.includes(trimmed)) {
+      setNameError(`"${trimmed}" 已被其他代理组使用`)
+      return
+    }
+    setNameError('')
+    if (trimmed !== group.name) onUpdate({ name: trimmed })
+  }
   // Batch select for picker (add)
   const [pickerSelected, setPickerSelected] = useState<Set<string>>(new Set())
   // Batch select for existing proxies (remove)
@@ -308,17 +338,29 @@ function GroupCard({
                 <input
                   ref={nameInputRef}
                   type="text"
-                  value={group.name}
-                  onChange={(e) => onUpdate({ name: e.target.value })}
-                  className="flex-1 text-sm px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={nameDraft}
+                  onChange={(e) => { setNameDraft(e.target.value); setNameError('') }}
+                  onBlur={commitName}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); commitName() }
+                    if (e.key === 'Escape') { setNameDraft(group.name); setNameError(''); nameInputRef.current?.blur() }
+                  }}
+                  className={`flex-1 text-sm px-2 py-1.5 rounded border bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 ${
+                    nameError
+                      ? 'border-red-400 focus:ring-red-400'
+                      : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+                  }`}
                 />
                 <EmojiPicker
                   inputRef={nameInputRef}
-                  value={group.name}
-                  onChange={(v) => onUpdate({ name: v })}
-                  onSelect={(e) => onUpdate({ name: group.name + e })}
+                  value={nameDraft}
+                  onChange={(v) => { setNameDraft(v); setNameError('') }}
+                  onSelect={(e) => { setNameDraft((d) => d + e); setNameError('') }}
                 />
               </div>
+              {nameError && (
+                <p className="text-xs text-red-500 mt-1">{nameError}</p>
+              )}
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">类型</label>
