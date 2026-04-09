@@ -481,19 +481,33 @@ function SortableProviderRow({
         </span>
 
         {/* Target selector */}
-        <select
-          value={provider.target}
-          onChange={(e) => onUpdate({ target: e.target.value })}
-          className={`text-xs px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700 bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 shrink-0 font-medium ${
-            targetColor[provider.target] ?? 'text-purple-600 dark:text-purple-400'
-          }`}
-        >
-          {allTargets.map((t) => (
-            <option key={t} value={t} className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800">
-              {t}
-            </option>
-          ))}
-        </select>
+        {(() => {
+          const targetInList = allTargets.includes(provider.target)
+          const selectOptions = targetInList ? allTargets : [...allTargets, provider.target]
+          return (
+            <div className="flex items-center gap-0.5 shrink-0">
+              <select
+                value={provider.target}
+                onChange={(e) => onUpdate({ target: e.target.value })}
+                className={`text-xs px-1.5 py-0.5 rounded border focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium bg-transparent ${
+                  !targetInList
+                    ? 'border-red-400 text-red-500 dark:text-red-400'
+                    : `border-gray-200 dark:border-gray-700 ${targetColor[provider.target] ?? 'text-purple-600 dark:text-purple-400'}`
+                }`}
+                title={!targetInList ? `代理组 "${provider.target}" 不存在，Clash 加载时会报 proxy not found` : undefined}
+              >
+                {selectOptions.map((t) => (
+                  <option key={t} value={t} className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800">
+                    {t}
+                  </option>
+                ))}
+              </select>
+              {!targetInList && (
+                <span className="text-red-500 text-xs" title={`代理组 "${provider.target}" 不存在`}>⚠</span>
+              )}
+            </div>
+          )
+        })()}
 
         {/* no-resolve toggle */}
         <button
@@ -564,7 +578,7 @@ function ManualRulesSection() {
   const [newRule, setNewRule] = useState({
     type: 'DOMAIN',
     payload: '',
-    target: 'PROXY',
+    target: proxyGroups[0]?.name ?? 'DIRECT',
     noResolve: false,
   })
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -580,7 +594,7 @@ function ManualRulesSection() {
   const handleAddRule = () => {
     if (newRule.type !== 'MATCH' && !newRule.payload.trim()) return
     addRule({ ...newRule })
-    setNewRule({ type: 'DOMAIN', payload: '', target: 'PROXY', noResolve: false })
+    setNewRule({ type: 'DOMAIN', payload: '', target: allTargets[2] ?? allTargets[0] ?? 'DIRECT', noResolve: false })
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -674,6 +688,7 @@ function ManualRulesSection() {
                     rule={rule}
                     index={index}
                     active={activeId === rule.id}
+                    allTargets={allTargets}
                     onRemove={() => removeRule(rule.id)}
                   />
                 ))}
@@ -697,11 +712,13 @@ function SortableRuleItem({
   rule,
   index,
   active,
+  allTargets,
   onRemove,
 }: {
   rule: Rule
   index: number
   active: boolean
+  allTargets: string[]
   onRemove: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -717,8 +734,9 @@ function SortableRuleItem({
   const targetColor: Record<string, string> = {
     DIRECT: 'text-green-600 dark:text-green-400',
     REJECT: 'text-red-600 dark:text-red-400',
-    PROXY:  'text-blue-600 dark:text-blue-400',
   }
+
+  const targetValid = allTargets.includes(rule.target)
 
   return (
     <div
@@ -736,8 +754,15 @@ function SortableRuleItem({
       )}
       {!rule.payload && <span className="flex-1" />}
       {rule.noResolve && <span className="text-xs text-gray-400 shrink-0">no-res</span>}
-      <span className={`text-xs font-medium shrink-0 ${targetColor[rule.target] ?? 'text-purple-600 dark:text-purple-400'}`}>
-        → {rule.target}
+      <span
+        className={`text-xs font-medium shrink-0 ${
+          !targetValid
+            ? 'text-red-500 dark:text-red-400'
+            : (targetColor[rule.target] ?? 'text-purple-600 dark:text-purple-400')
+        }`}
+        title={!targetValid ? `代理组 "${rule.target}" 不存在，Clash 加载时会报 proxy not found` : undefined}
+      >
+        → {rule.target}{!targetValid && ' ⚠'}
       </span>
       <button
         onClick={onRemove}

@@ -27,6 +27,8 @@ import {
   ChevronRight,
   X,
   Users,
+  CheckSquare,
+  Square,
 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import type { ProxyGroup, ProxyGroupType } from '../types/clash'
@@ -54,11 +56,13 @@ export default function ProxyGroupEditor() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  const allProxyNames = [
-    ...BUILT_IN_PROXIES,
-    ...proxyGroups.map((g) => g.name),
-    ...sources.flatMap((s) => s.proxies.map((p) => p.name)),
-  ]
+  // Grouped sections for the proxy picker — no built-in presets
+  const proxySections = [
+    { label: '代理组', items: proxyGroups.map((g) => g.name) },
+    ...sources
+      .filter((s) => s.proxies.length > 0)
+      .map((s) => ({ label: s.name, items: s.proxies.map((p) => p.name) })),
+  ].filter((s) => s.items.length > 0)
 
   const toggleExpand = (id: string) => {
     setExpandedGroups((prev) => {
@@ -68,14 +72,21 @@ export default function ProxyGroupEditor() {
     })
   }
 
+  const listRef = useRef<HTMLDivElement>(null)
+
   const handleAddGroup = () => {
-    addProxyGroup({
+    const id = addProxyGroup({
       name: `Group${proxyGroups.length + 1}`,
       type: 'select',
-      proxies: ['DIRECT'],
+      proxies: [],
       url: 'http://www.gstatic.com/generate_204',
       interval: 300,
     })
+    setExpandedGroups((prev) => new Set([...prev, id]))
+    setEditingGroup(id)
+    setTimeout(() => {
+      listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
+    }, 50)
   }
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -116,7 +127,7 @@ export default function ProxyGroupEditor() {
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
         {proxyGroups.length === 0 && (
           <div className="text-center py-8 text-gray-400 text-sm">
             <Users size={32} className="mx-auto mb-2 opacity-30" />
@@ -129,7 +140,7 @@ export default function ProxyGroupEditor() {
             group={group}
             expanded={expandedGroups.has(group.id)}
             editing={editingGroup === group.id}
-            allProxyNames={allProxyNames}
+            proxySections={proxySections}
             onToggleExpand={() => toggleExpand(group.id)}
             onEdit={() => setEditingGroup(editingGroup === group.id ? null : group.id)}
             onRemove={() => removeProxyGroup(group.id)}
@@ -150,11 +161,16 @@ export default function ProxyGroupEditor() {
   )
 }
 
+interface ProxySection {
+  label: string
+  items: string[]
+}
+
 interface GroupCardProps {
   group: ProxyGroup
   expanded: boolean
   editing: boolean
-  allProxyNames: string[]
+  proxySections: ProxySection[]
   onToggleExpand: () => void
   onEdit: () => void
   onRemove: () => void
@@ -174,7 +190,7 @@ function GroupCard({
   group,
   expanded,
   editing,
-  allProxyNames,
+  proxySections,
   onToggleExpand,
   onEdit,
   onRemove,
@@ -190,6 +206,53 @@ function GroupCard({
   const [proxySearch, setProxySearch] = useState('')
   const [showProxyPicker, setShowProxyPicker] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
+  // Batch select for picker (add)
+  const [pickerSelected, setPickerSelected] = useState<Set<string>>(new Set())
+  // Batch select for existing proxies (remove)
+  const [removeSelected, setRemoveSelected] = useState<Set<string>>(new Set())
+
+  const togglePickerItem = (name: string) => {
+    setPickerSelected((prev) => {
+      const next = new Set(prev)
+      next.has(name) ? next.delete(name) : next.add(name)
+      return next
+    })
+  }
+
+  const toggleSectionAll = (items: string[]) => {
+    const allChecked = items.every((n) => pickerSelected.has(n))
+    setPickerSelected((prev) => {
+      const next = new Set(prev)
+      if (allChecked) { items.forEach((n) => next.delete(n)) }
+      else { items.forEach((n) => next.add(n)) }
+      return next
+    })
+  }
+
+  const handleBatchAdd = () => {
+    for (const name of pickerSelected) onAddProxy(name)
+    setPickerSelected(new Set())
+    setProxySearch('')
+    setShowProxyPicker(false)
+  }
+
+  const toggleRemoveItem = (name: string) => {
+    setRemoveSelected((prev) => {
+      const next = new Set(prev)
+      next.has(name) ? next.delete(name) : next.add(name)
+      return next
+    })
+  }
+
+  const handleBatchRemove = () => {
+    for (const name of removeSelected) onRemoveProxy(name)
+    setRemoveSelected(new Set())
+  }
+
+  const allRemoveSelected = group.proxies.length > 0 && group.proxies.every((p) => removeSelected.has(p))
+  const toggleRemoveAll = () => {
+    setRemoveSelected(allRemoveSelected ? new Set() : new Set(group.proxies))
+  }
 
   const typeColor: Record<ProxyGroupType, string> = {
     select: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -199,9 +262,17 @@ function GroupCard({
     relay: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
   }
 
-  const filteredProxies = allProxyNames.filter(
-    (n) => !group.proxies.includes(n) && n.toLowerCase().includes(proxySearch.toLowerCase())
-  )
+  const q = proxySearch.toLowerCase()
+  const filteredSections = proxySections
+    .map((s) => ({
+      ...s,
+      items: s.items.filter((n) => n !== group.name && !group.proxies.includes(n) && (!q || n.toLowerCase().includes(q))),
+    }))
+    .filter((s) => s.items.length > 0)
+
+  // All items visible in current filtered picker
+  const allFilteredItems = filteredSections.flatMap((s) => s.items)
+  const allFilteredSelected = allFilteredItems.length > 0 && allFilteredItems.every((n) => pickerSelected.has(n))
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
@@ -214,7 +285,11 @@ function GroupCard({
           {group.type}
         </span>
         <span className="flex-1 text-sm font-medium text-gray-900 dark:text-gray-100">{group.name}</span>
-        <span className="text-xs text-gray-400">{group.proxies.length} 个节点</span>
+        {group.autoAllNodes ? (
+          <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 shrink-0">自动全部节点</span>
+        ) : (
+          <span className="text-xs text-gray-400">{group.proxies.length} 个节点</span>
+        )}
         <button onClick={onEdit} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 transition-colors">
           <Settings size={13} />
         </button>
@@ -283,9 +358,31 @@ function GroupCard({
         </div>
       )}
 
-      {/* Proxy list with DnD */}
+      {/* Proxy list with DnD — always batch-select mode */}
       {expanded && (
         <div className="border-t border-gray-100 dark:border-gray-700">
+          {/* Batch remove toolbar */}
+          {group.proxies.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-700/20">
+              <button onClick={toggleRemoveAll} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                {allRemoveSelected
+                  ? <CheckSquare size={12} className="text-red-500" />
+                  : <Square size={12} />}
+                全选
+              </button>
+              <span className="text-xs text-gray-400">
+                {removeSelected.size > 0 ? `已选 ${removeSelected.size} 个` : `共 ${group.proxies.length} 个`}
+              </span>
+              <button
+                onClick={handleBatchRemove}
+                disabled={removeSelected.size === 0}
+                className="ml-auto text-xs px-2 py-0.5 rounded bg-red-500 hover:bg-red-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white transition-colors"
+              >
+                取消选中 {removeSelected.size > 0 ? `(${removeSelected.size})` : ''}
+              </button>
+            </div>
+          )}
+
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -295,12 +392,16 @@ function GroupCard({
           >
             <SortableContext items={group.proxies} strategy={verticalListSortingStrategy}>
               <div className="max-h-56 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
+                {group.proxies.length === 0 && (
+                  <p className="text-center py-4 text-xs text-gray-400">暂无节点，点击下方批量添加</p>
+                )}
                 {group.proxies.map((proxyName) => (
                   <SortableProxyItem
                     key={proxyName}
                     id={proxyName}
                     active={activeId === proxyName}
-                    onRemove={() => onRemoveProxy(proxyName)}
+                    selected={removeSelected.has(proxyName)}
+                    onToggleSelect={() => toggleRemoveItem(proxyName)}
                   />
                 ))}
               </div>
@@ -315,36 +416,106 @@ function GroupCard({
             </DragOverlay>
           </DndContext>
 
-          {/* Add proxy picker */}
+          {/* Batch add proxy picker */}
           <div className="p-2 border-t border-gray-100 dark:border-gray-700">
             {showProxyPicker ? (
               <div className="space-y-1.5">
+                {/* Search + close */}
                 <div className="flex gap-1">
                   <input
                     type="text"
-                    placeholder="搜索节点..."
+                    placeholder="搜索节点 / 代理组..."
                     value={proxySearch}
                     onChange={(e) => setProxySearch(e.target.value)}
                     autoFocus
                     className="flex-1 text-xs px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
-                  <button onClick={() => { setShowProxyPicker(false); setProxySearch('') }} className="p-1.5 text-gray-400 hover:text-gray-600">
+                  <button
+                    onClick={() => { setShowProxyPicker(false); setProxySearch(''); setPickerSelected(new Set()) }}
+                    className="p-1.5 text-gray-400 hover:text-gray-600"
+                  >
                     <X size={13} />
                   </button>
                 </div>
-                <div className="max-h-40 overflow-y-auto rounded border border-gray-200 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700">
-                  {filteredProxies.length === 0 && (
-                    <p className="text-center py-3 text-xs text-gray-400">无匹配节点</p>
+
+                {/* Toolbar: select all filtered + add */}
+                <div className="flex items-center gap-2 px-0.5">
+                  <button
+                    onClick={() => {
+                      if (allFilteredSelected) {
+                        setPickerSelected((prev) => {
+                          const next = new Set(prev)
+                          allFilteredItems.forEach((n) => next.delete(n))
+                          return next
+                        })
+                      } else {
+                        setPickerSelected((prev) => new Set([...prev, ...allFilteredItems]))
+                      }
+                    }}
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    {allFilteredSelected
+                      ? <CheckSquare size={12} className="text-blue-500" />
+                      : <Square size={12} />}
+                    全选筛选结果
+                  </button>
+                  <span className="text-xs text-gray-400 ml-1">
+                    {pickerSelected.size > 0 ? `已选 ${pickerSelected.size} 个` : ''}
+                  </span>
+                  <button
+                    onClick={handleBatchAdd}
+                    disabled={pickerSelected.size === 0}
+                    className="ml-auto text-xs px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white transition-colors"
+                  >
+                    批量添加 {pickerSelected.size > 0 ? `(${pickerSelected.size})` : ''}
+                  </button>
+                </div>
+
+                {/* List */}
+                <div className="max-h-52 overflow-y-auto rounded border border-gray-200 dark:border-gray-700">
+                  {filteredSections.length === 0 && (
+                    <p className="text-center py-3 text-xs text-gray-400">
+                      {proxySections.length === 0 ? '请先在订阅源页面导入节点' : '无匹配节点'}
+                    </p>
                   )}
-                  {filteredProxies.slice(0, 50).map((name) => (
-                    <button
-                      key={name}
-                      onClick={() => { onAddProxy(name); setProxySearch('') }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                    >
-                      {name}
-                    </button>
-                  ))}
+                  {filteredSections.map((section) => {
+                    const sectionAllChecked = section.items.every((n) => pickerSelected.has(n))
+                    return (
+                      <div key={section.label}>
+                        <div className="sticky top-0 flex items-center gap-2 px-3 py-1 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+                          <button
+                            onClick={() => toggleSectionAll(section.items)}
+                            className="flex items-center gap-1 text-xs font-semibold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 uppercase tracking-wide transition-colors"
+                          >
+                            {sectionAllChecked
+                              ? <CheckSquare size={11} className="text-blue-500" />
+                              : <Square size={11} />}
+                            {section.label}
+                          </button>
+                          <span className="text-xs text-gray-300 dark:text-gray-600">{section.items.length}</span>
+                        </div>
+                        {section.items.map((name) => {
+                          const checked = pickerSelected.has(name)
+                          return (
+                            <div
+                              key={name}
+                              onClick={() => togglePickerItem(name)}
+                              className={`flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-700/50 last:border-0 ${
+                                checked
+                                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                  : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                              }`}
+                            >
+                              {checked
+                                ? <CheckSquare size={12} className="shrink-0 text-blue-500" />
+                                : <Square size={12} className="shrink-0 text-gray-300" />}
+                              <span className="flex-1 truncate">{name}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ) : (
@@ -353,7 +524,7 @@ function GroupCard({
                 className="w-full flex items-center justify-center gap-1 py-1.5 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors border border-dashed border-blue-300 dark:border-blue-700"
               >
                 <Plus size={12} />
-                添加节点
+                批量添加节点 / 代理组
               </button>
             )}
           </div>
@@ -363,7 +534,14 @@ function GroupCard({
   )
 }
 
-function SortableProxyItem({ id, active, onRemove }: { id: string; active: boolean; onRemove: () => void }) {
+function SortableProxyItem({
+  id, active, selected, onToggleSelect,
+}: {
+  id: string
+  active: boolean
+  selected: boolean
+  onToggleSelect: () => void
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
 
   const style = {
@@ -372,27 +550,28 @@ function SortableProxyItem({ id, active, onRemove }: { id: string; active: boole
     opacity: isDragging ? 0.3 : 1,
   }
 
-  const isBuiltIn = BUILT_IN_PROXIES.includes(id)
-
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 px-3 py-1.5 group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${active ? 'ring-1 ring-blue-400' : ''}`}
+      onClick={onToggleSelect}
+      className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-colors ${
+        selected ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+      } ${active ? 'ring-1 ring-blue-400' : ''}`}
     >
-      <button {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors">
+      {/* Drag handle — stop propagation so click-to-select doesn't fire on drag */}
+      <button
+        {...listeners}
+        {...attributes}
+        onClick={(e) => e.stopPropagation()}
+        className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors shrink-0"
+      >
         <GripVertical size={13} />
       </button>
       <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate">{id}</span>
-      {isBuiltIn && (
-        <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded">内置</span>
-      )}
-      <button
-        onClick={onRemove}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all"
-      >
-        <X size={11} />
-      </button>
+      {selected
+        ? <CheckSquare size={13} className="shrink-0 text-red-500" />
+        : <Square size={13} className="shrink-0 text-gray-300" />}
     </div>
   )
 }

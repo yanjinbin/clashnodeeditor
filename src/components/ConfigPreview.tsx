@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { Copy, Download, Check, FileText, ChevronRight } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Copy, Download, Check, FileText, ChevronRight, CheckCircle, XCircle } from 'lucide-react'
+import yaml from 'js-yaml'
 import { useAppStore } from '../store/useAppStore'
 import { generateClashConfig } from '../utils/parseYaml'
 import type { DnsConfig, DnsFallbackFilter } from '../types/clash'
@@ -259,12 +260,14 @@ export default function ConfigPreview() {
   const allProxies = sources.flatMap((s) => s.proxies)
   const enabledProviders = ruleProviders.filter((p) => p.enabled)
 
+  const allProxyNames = allProxies.map((p) => p.name)
+
   const configYaml = generateClashConfig(
     allProxies,
     proxyGroups.map((g) => ({
       name: g.name,
       type: g.type,
-      proxies: g.proxies,
+      proxies: g.autoAllNodes ? allProxyNames : g.proxies,
       url: g.url,
       interval: g.interval,
       tolerance: g.tolerance,
@@ -274,6 +277,16 @@ export default function ConfigPreview() {
     rules.map((r) => ({ type: r.type, payload: r.payload, target: r.target, noResolve: r.noResolve })),
     globalSettings
   )
+
+  // Validate generated YAML by re-parsing it
+  const yamlValidation = useMemo(() => {
+    try {
+      yaml.load(configYaml)
+      return { valid: true, error: undefined }
+    } catch (e) {
+      return { valid: false, error: (e as Error).message }
+    }
+  }, [configYaml])
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(configYaml)
@@ -371,11 +384,24 @@ export default function ConfigPreview() {
         </div>
 
         {/* Stats bar */}
-        <div className="shrink-0 border-t border-gray-800 px-4 py-1.5 flex gap-4 text-xs text-gray-500 bg-gray-950">
+        <div className="shrink-0 border-t border-gray-800 px-4 py-1.5 flex items-center gap-4 text-xs text-gray-500 bg-gray-950">
           <span>节点 <strong className="text-gray-400">{allProxies.length}</strong></span>
           <span>代理组 <strong className="text-gray-400">{proxyGroups.length}</strong></span>
           <span>规则集 <strong className="text-gray-400">{enabledProviders.length}/{ruleProviders.length}</strong></span>
           <span>规则 <strong className="text-gray-400">{rules.length}</strong></span>
+          <span className="ml-auto flex items-center gap-1">
+            {yamlValidation.valid ? (
+              <>
+                <CheckCircle size={12} className="text-green-500" />
+                <span className="text-green-500">YAML 合法</span>
+              </>
+            ) : (
+              <>
+                <XCircle size={12} className="text-red-400" />
+                <span className="text-red-400" title={yamlValidation.error}>YAML 错误：{yamlValidation.error}</span>
+              </>
+            )}
+          </span>
         </div>
       </div>
     </div>

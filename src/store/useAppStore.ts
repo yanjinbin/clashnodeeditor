@@ -19,7 +19,7 @@ interface AppState {
   removeSource: (id: string) => void
 
   // ProxyGroup actions
-  addProxyGroup: (group: Omit<ProxyGroup, 'id'>) => void
+  addProxyGroup: (group: Omit<ProxyGroup, 'id'>) => string
   updateProxyGroup: (id: string, updates: Partial<ProxyGroup>) => void
   removeProxyGroup: (id: string) => void
   addProxyToGroup: (groupId: string, proxyName: string) => void
@@ -38,6 +38,11 @@ interface AppState {
   reorderRules: (oldIndex: number, newIndex: number) => void
 
   setActiveTab: (tab: AppState['activeTab']) => void
+
+  // Proxy node editing
+  updateProxy: (sourceId: string, proxyIndex: number, updates: Partial<Proxy>) => void
+  applyPrefixToSource: (sourceId: string, prefix: string) => void
+  importSourceGroup: (sourceId: string, groupName: string) => void
 
   // Global settings actions
   updateGlobalSettings: (updates: Partial<Omit<ClashGlobalSettings, 'dns'>>) => void
@@ -62,9 +67,19 @@ export const useAppStore = create<AppState>()(
         id: generateId(),
         name: 'PROXY',
         type: 'select',
-        proxies: ['DIRECT'],
+        proxies: [],
         url: 'http://www.gstatic.com/generate_204',
         interval: 300,
+      },
+      {
+        id: generateId(),
+        name: '♻️ 自动选择',
+        type: 'url-test',
+        proxies: [],
+        url: 'http://www.gstatic.com/generate_204',
+        interval: 300,
+        tolerance: 50,
+        autoAllNodes: true,
       },
     ],
 
@@ -85,7 +100,7 @@ export const useAppStore = create<AppState>()(
       { id: generateId(), type: 'IP-CIDR',       payload: '10.0.0.0/8',        target: 'DIRECT' },
       { id: generateId(), type: 'GEOIP',         payload: 'LAN', target: 'DIRECT', noResolve: true },
       { id: generateId(), type: 'GEOIP',         payload: 'CN',  target: 'DIRECT', noResolve: true },
-      { id: generateId(), type: 'MATCH',         payload: '',    target: 'PROXY' },
+      { id: generateId(), type: 'MATCH',         payload: '',    target: '♻️ 自动选择' },
     ],
 
     activeTab: 'sources',
@@ -114,7 +129,9 @@ export const useAppStore = create<AppState>()(
     // ── ProxyGroups ───────────────────────────────────────────────────────────
 
     addProxyGroup: (group) => {
-      set((state) => { state.proxyGroups.push({ ...group, id: generateId() }) })
+      const id = generateId()
+      set((state) => { state.proxyGroups.push({ ...group, id }) })
+      return id
     },
 
     updateProxyGroup: (id, updates) => {
@@ -125,7 +142,16 @@ export const useAppStore = create<AppState>()(
     },
 
     removeProxyGroup: (id) => {
-      set((state) => { state.proxyGroups = state.proxyGroups.filter((g) => g.id !== id) })
+      set((state) => {
+        const removed = state.proxyGroups.find((g) => g.id === id)
+        state.proxyGroups = state.proxyGroups.filter((g) => g.id !== id)
+        // Cascade: remove the deleted group's name from all other groups
+        if (removed) {
+          for (const g of state.proxyGroups) {
+            g.proxies = g.proxies.filter((p) => p !== removed.name)
+          }
+        }
+      })
     },
 
     addProxyToGroup: (groupId, proxyName) => {
@@ -199,6 +225,89 @@ export const useAppStore = create<AppState>()(
 
     setActiveTab: (tab) => {
       set((state) => { state.activeTab = tab })
+    },
+
+    updateProxy: (sourceId, proxyIndex, updates) => {
+      set((state) => {
+        const src = state.sources.find((s) => s.id === sourceId)
+        if (!src || !src.proxies[proxyIndex]) return
+        const oldName = src.proxies[proxyIndex].name
+        Object.assign(src.proxies[proxyIndex], updates)
+        const newName = src.proxies[proxyIndex].name
+        if (updates.name && oldName !== newName) {
+          // Sync to source's imported groups
+          for (const g of src.importedGroups ?? []) {
+            g.proxies = g.proxies.map((p) => (p === oldName ? newName : p))
+          }
+          // Sync to store proxy groups
+          for (const g of state.proxyGroups) {
+            g.proxies = g.proxies.map((p) => (p === oldName ? newName : p))
+          }
+        }
+      })
+    },
+
+    applyPrefixToSource: (sourceId, prefix) => {
+      set((state) => {
+        const src = state.sources.find((s) => s.id === sourceId)
+        if (!src || !prefix) return
+
+        // ── 1. Node rename map ────────────────────────────────────────────────
+        const nodeRename = new Map<string, string>()
+        for (const proxy of src.proxies) {
+          if (!proxy.name.startsWith(prefix))
+            nodeRename.set(proxy.name, `${prefix}${proxy.name}`)
+        }
+        // Apply to source proxies
+        for (const proxy of src.proxies) {
+          const next = nodeRename.get(proxy.name)
+          if (next) proxy.name = next
+        }
+
+        // ── 2. Group rename map (importedGroups of this source) ───────────────
+        const groupRename = new Map<string, string>()
+        for (const g of src.importedGroups ?? []) {
+          if (!g.name.startsWith(prefix))
+            groupRename.set(g.name, `${prefix}${g.name}`)
+        }
+        // Apply name rename to importedGroups themselves
+        for (const g of src.importedGroups ?? []) {
+          const next = groupRename.get(g.name)
+          if (next) g.name = next
+          // Also update member node references
+          g.proxies = g.proxies.map((p) => nodeRename.get(p) ?? p)
+        }
+
+        // ── 3. Sync node renames into store proxyGroups ───────────────────────
+        for (const g of state.proxyGroups) {
+          // Rename member node references
+          g.proxies = g.proxies.map((p) => nodeRename.get(p) ?? p)
+          // Rename the group itself if it was imported from this source
+          const nextName = groupRename.get(g.name)
+          if (nextName) g.name = nextName
+          // Also update any inter-group references (groups referencing other groups by name)
+          g.proxies = g.proxies.map((p) => groupRename.get(p) ?? p)
+        }
+      })
+    },
+
+    importSourceGroup: (sourceId, groupName) => {
+      set((state) => {
+        const src = state.sources.find((s) => s.id === sourceId)
+        const group = src?.importedGroups?.find((g) => g.name === groupName)
+        if (!group) return
+        // Skip if name already exists in store
+        if (state.proxyGroups.some((g) => g.name === group.name)) return
+        state.proxyGroups.push({
+          id: generateId(),
+          name: group.name,
+          type: (group.type as ProxyGroup['type']) || 'select',
+          proxies: [...group.proxies],
+          url: group.url,
+          interval: group.interval,
+          tolerance: group.tolerance,
+        })
+      })
     },
 
     updateGlobalSettings: (updates) => {

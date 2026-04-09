@@ -23,6 +23,8 @@ export interface ProxyGroup {
   interval?: number
   tolerance?: number
   lazy?: boolean
+  /** 生成配置时自动填入所有订阅节点（不含代理组） */
+  autoAllNodes?: boolean
 }
 
 export interface RuleProvider {
@@ -51,6 +53,15 @@ export interface Rule {
   noResolve?: boolean
 }
 
+export interface ImportedProxyGroup {
+  name: string
+  type: string
+  proxies: string[]
+  url?: string
+  interval?: number
+  tolerance?: number
+}
+
 export interface SourceConfig {
   id: string
   name: string
@@ -59,6 +70,7 @@ export interface SourceConfig {
   status: 'idle' | 'loading' | 'success' | 'error'
   error?: string
   proxies: Proxy[]
+  importedGroups?: ImportedProxyGroup[]
 }
 
 export const DEFAULT_USER_AGENT = 'clash-verge/v2.2.3'
@@ -238,4 +250,4 @@ export const BLACKMATRIX7_RULE_PROVIDERS: RuleProvider[] = [
   bm7('GoogleFCM',    'GoogleFCM/GoogleFCM.yaml',      'DIRECT', false, 1209600),
 ]
 
-export const BUILT_IN_PROXIES = ['DIRECT', 'REJECT']
+export const BUILT_IN_PROXIES: string[] = []
