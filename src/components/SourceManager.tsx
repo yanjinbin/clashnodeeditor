@@ -79,7 +79,7 @@ export default function SourceManager() {
             订阅请求通过部署在你自己 Vercel 账号下的 Edge Function 转发，不经过任何第三方服务。
             代码完全开源可审计：
             <a
-              href="https://github.com/yanjinbin/clashnodeeditor/blob/main/api/proxy.ts"
+              href="https://github.com/yanjinbin/clashnodeeditor/blob/master/api/proxy.ts"
               target="_blank"
               rel="noopener noreferrer"
               className="underline ml-1"

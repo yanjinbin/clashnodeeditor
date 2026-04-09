@@ -252,6 +252,9 @@ function SettingsPanel() {
 export default function ConfigPreview() {
   const { sources, proxyGroups, ruleProviders, rules, globalSettings } = useAppStore()
   const [copied, setCopied] = useState(false)
+  const [filename, setFilename] = useState('config.yaml')
+  const [editingFilename, setEditingFilename] = useState(false)
+  const [softWrap, setSoftWrap] = useState(false)
 
   const allProxies = sources.flatMap((s) => s.proxies)
   const enabledProviders = ruleProviders.filter((p) => p.enabled)
@@ -279,11 +282,12 @@ export default function ConfigPreview() {
   }
 
   const handleDownload = () => {
+    const name = filename.trim() || 'config.yaml'
     const blob = new Blob([configYaml], { type: 'text/yaml' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'config.yaml'
+    a.download = name.endsWith('.yaml') || name.endsWith('.yml') ? name : `${name}.yaml`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -300,15 +304,46 @@ export default function ConfigPreview() {
         </div>
       </div>
 
-      {/* Right: preview */}
-      <div className="flex-1 min-h-0 flex flex-col">
+      {/* Right: preview — fills remaining space edge-to-edge */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* Toolbar */}
-        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2">
-            <FileText size={14} className="text-gray-500" />
-            <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">预览导出</span>
-          </div>
-          <div className="flex gap-2">
+        <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-wrap">
+          <FileText size={14} className="text-gray-400 shrink-0" />
+
+          {/* Editable filename */}
+          {editingFilename ? (
+            <input
+              autoFocus
+              value={filename}
+              onChange={(e) => setFilename(e.target.value)}
+              onBlur={() => setEditingFilename(false)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') setEditingFilename(false) }}
+              className="text-xs px-2 py-1 rounded border border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none w-40 font-mono"
+            />
+          ) : (
+            <button
+              onClick={() => setEditingFilename(true)}
+              className="text-xs font-mono text-gray-600 dark:text-gray-300 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+              title="点击编辑文件名"
+            >
+              {filename}
+            </button>
+          )}
+
+          {/* Soft wrap toggle */}
+          <button
+            onClick={() => setSoftWrap((v) => !v)}
+            className={`text-xs px-2 py-1 rounded border transition-colors ${
+              softWrap
+                ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400'
+            }`}
+            title="切换自动换行"
+          >
+            soft wrap
+          </button>
+
+          <div className="flex gap-2 ml-auto">
             <button
               onClick={handleCopy}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
@@ -321,28 +356,26 @@ export default function ConfigPreview() {
               className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
             >
               <Download size={13} />
-              下载 config.yaml
+              导出
             </button>
           </div>
         </div>
 
-        {/* Code area */}
-        <div className="flex-1 min-h-0 p-4">
-          <div className="h-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
-            <div className="h-full bg-gray-950 overflow-auto">
-              <pre className="p-4 text-xs text-green-300 font-mono leading-relaxed whitespace-pre">
-                {configYaml}
-              </pre>
-            </div>
+        {/* Code area — fills all remaining height, no padding so it's truly edge-to-edge */}
+        <div className="flex-1 min-h-0 overflow-hidden bg-gray-950">
+          <div className="h-full overflow-auto">
+            <pre className={`p-4 text-xs text-green-300 font-mono leading-relaxed ${softWrap ? 'whitespace-pre-wrap break-all' : 'whitespace-pre'}`}>
+              {configYaml}
+            </pre>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex gap-4 text-xs text-gray-500">
-          <span>节点: <strong className="text-gray-700 dark:text-gray-300">{allProxies.length}</strong></span>
-          <span>代理组: <strong className="text-gray-700 dark:text-gray-300">{proxyGroups.length}</strong></span>
-          <span>规则集: <strong className="text-gray-700 dark:text-gray-300">{enabledProviders.length}/{ruleProviders.length}</strong></span>
-          <span>规则: <strong className="text-gray-700 dark:text-gray-300">{rules.length}</strong></span>
+        {/* Stats bar */}
+        <div className="shrink-0 border-t border-gray-800 px-4 py-1.5 flex gap-4 text-xs text-gray-500 bg-gray-950">
+          <span>节点 <strong className="text-gray-400">{allProxies.length}</strong></span>
+          <span>代理组 <strong className="text-gray-400">{proxyGroups.length}</strong></span>
+          <span>规则集 <strong className="text-gray-400">{enabledProviders.length}/{ruleProviders.length}</strong></span>
+          <span>规则 <strong className="text-gray-400">{rules.length}</strong></span>
         </div>
       </div>
     </div>
