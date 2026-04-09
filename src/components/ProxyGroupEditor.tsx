@@ -383,6 +383,8 @@ function GroupCard({
   // All items visible in current filtered picker
   const allFilteredItems = filteredSections.flatMap((s) => s.items)
   const allFilteredSelected = allFilteredItems.length > 0 && allFilteredItems.every((n) => pickerSelected.has(n))
+  // Source-only sections (no proxy group names) for autoAllNodes display
+  const sourceOnlySections = proxySections.filter((s) => s.label !== '代理组')
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
@@ -483,8 +485,16 @@ function GroupCard({
       {/* Proxy list with DnD — always batch-select mode */}
       {expanded && (
         <div className="border-t border-gray-100 dark:border-gray-700">
+          {/* autoAllNodes: count header */}
+          {group.autoAllNodes && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-gray-100 dark:border-gray-700/50">
+              <CheckSquare size={12} className="text-emerald-500" />
+              <span className="text-xs text-emerald-600 dark:text-emerald-400">自动包含全部导入节点</span>
+              <span className="text-xs text-gray-400 ml-auto">共 {sourceOnlySections.flatMap((s) => s.items).length} 个</span>
+            </div>
+          )}
           {/* Batch remove toolbar */}
-          {group.proxies.length > 0 && (
+          {!group.autoAllNodes && group.proxies.length > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-700/20">
               <button onClick={toggleRemoveAll} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                 {allRemoveSelected
@@ -514,9 +524,26 @@ function GroupCard({
           >
             <SortableContext items={group.proxies} strategy={verticalListSortingStrategy}>
               <div className="max-h-56 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
-                {group.proxies.length === 0 && (
+                {group.proxies.length === 0 && !group.autoAllNodes && (
                   <p className="text-center py-4 text-xs text-gray-400">暂无节点，点击下方批量添加</p>
                 )}
+                {group.autoAllNodes && sourceOnlySections.length === 0 && (
+                  <p className="text-center py-4 text-xs text-gray-400">暂无导入节点，请先在订阅源页面导入</p>
+                )}
+                {group.autoAllNodes && sourceOnlySections.map((section) => (
+                  <div key={section.label}>
+                    <div className="sticky top-0 px-3 py-1 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex items-center gap-1">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{section.label}</span>
+                      <span className="ml-1 text-xs text-gray-300 dark:text-gray-600">{section.items.length}</span>
+                    </div>
+                    {section.items.map((name) => (
+                      <div key={name} className="flex items-center gap-2 px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50/20 dark:bg-emerald-900/10">
+                        <CheckSquare size={12} className="shrink-0 text-emerald-500" />
+                        <span className="flex-1 truncate">{name}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
                 {group.proxies.map((proxyName) => (
                   <SortableProxyItem
                     key={proxyName}
@@ -538,8 +565,8 @@ function GroupCard({
             </DragOverlay>
           </DndContext>
 
-          {/* Batch add proxy picker */}
-          <div className="p-2 border-t border-gray-100 dark:border-gray-700">
+          {/* Batch add proxy picker — hidden for autoAllNodes groups */}
+          {!group.autoAllNodes && <div className="p-2 border-t border-gray-100 dark:border-gray-700">
             {showProxyPicker ? (
               <div className="space-y-1.5">
                 {/* Search + close */}
@@ -710,7 +737,7 @@ function GroupCard({
                 批量添加节点 / 代理组
               </button>
             )}
-          </div>
+          </div>}
         </div>
       )}
     </div>
