@@ -1,10 +1,11 @@
 import { useState, useRef, useMemo, useCallback } from 'react'
-import { resolveToIp, IP_RE } from '../utils/ipUtils'
+import { resolveToIp, fetchIpInfoBatch, IP_RE } from '../utils/ipUtils'
+import type { IpData } from '../utils/ipUtils'
 import {
   Plus, Trash2, RefreshCw, CheckCircle, XCircle, Loader, Globe,
   Upload, AlertTriangle, ChevronDown, ChevronRight, ShieldCheck,
   Pencil, Check, X, Tag, Layers, ExternalLink, RotateCcw,
-  Activity, Database, Clock,
+  Activity, Database, Clock, MapPin,
 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { fetchAndParseYaml, parseYamlFull } from '../utils/parseYaml'
@@ -83,6 +84,142 @@ function ProtocolChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
           </div>
         )
       })}
+    </div>
+  )
+}
+
+// ── Country flag helper ───────────────────────────────────────────────────────
+function countryFlag(cc: string): string {
+  if (!cc || cc.length !== 2) return '🌐'
+  return String.fromCodePoint(...[...cc.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65))
+}
+
+// ── Geo Distribution Chart (on-demand) ────────────────────────────────────────
+type GeoScanState = 'idle' | 'loading' | 'done' | 'error'
+
+function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
+  const [state, setState] = useState<GeoScanState>('idle')
+  const [progress, setProgress] = useState({ done: 0, total: 0 })
+  const [geoMap, setGeoMap] = useState<Map<string, { country: string; cc: string; count: number }>>(new Map())
+  const [error, setError] = useState('')
+
+  const handleScan = async () => {
+    if (state === 'loading') return
+    setState('loading')
+    setProgress({ done: 0, total: proxies.length })
+    setError('')
+
+    try {
+      // Step 1: resolve all node servers to IPs (concurrently, 20 at a time)
+      const CONCURRENCY = 20
+      const ipResults: { name: string; ip: string }[] = []
+      for (let i = 0; i < proxies.length; i += CONCURRENCY) {
+        const batch = proxies.slice(i, i + CONCURRENCY)
+        const settled = await Promise.allSettled(
+          batch.map(async (p) => {
+            const server = String(p.server ?? '')
+            if (!server) throw new Error('no server')
+            const ip = await resolveToIp(server)
+            return { name: p.name, ip }
+          })
+        )
+        for (const r of settled) {
+          if (r.status === 'fulfilled') ipResults.push(r.value)
+        }
+        setProgress({ done: Math.min(i + CONCURRENCY, proxies.length), total: proxies.length })
+      }
+
+      // Step 2: deduplicate IPs, batch-fetch geo info
+      const uniqueIps = [...new Set(ipResults.map((r) => r.ip))]
+      const geoArr: IpData[] = []
+      for (let i = 0; i < uniqueIps.length; i += 100) {
+        const fetched = await fetchIpInfoBatch(uniqueIps.slice(i, i + 100))
+        geoArr.push(...fetched)
+      }
+      const ipToGeo = new Map<string, IpData>()
+      uniqueIps.forEach((ip, i) => ipToGeo.set(ip, geoArr[i]))
+
+      // Step 3: aggregate by country
+      const countMap = new Map<string, { country: string; cc: string; count: number }>()
+      for (const { ip } of ipResults) {
+        const geo = ipToGeo.get(ip)
+        if (!geo || geo.status !== 'success') continue
+        const cc = geo.countryCode ?? 'XX'
+        const country = geo.country ?? cc
+        const prev = countMap.get(cc)
+        countMap.set(cc, { country, cc, count: (prev?.count ?? 0) + 1 })
+      }
+
+      setGeoMap(countMap)
+      setState('done')
+    } catch (e) {
+      setError((e as Error).message)
+      setState('error')
+    }
+  }
+
+  const rows = useMemo(() =>
+    [...geoMap.values()].sort((a, b) => b.count - a.count),
+    [geoMap]
+  )
+  const total = rows.reduce((s, r) => s + r.count, 0)
+
+  return (
+    <div className="border-t border-gray-100 dark:border-gray-700/50 px-4 py-2.5">
+      <div className="flex items-center gap-2 mb-2">
+        <MapPin size={11} className="text-gray-400 shrink-0" />
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest flex-1">地区分布</p>
+        {state === 'idle' || state === 'error' ? (
+          <button
+            onClick={handleScan}
+            className="text-[10px] px-2 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 font-medium transition-all"
+          >
+            {state === 'error' ? '重试' : '查询'}
+          </button>
+        ) : state === 'loading' ? (
+          <span className="text-[10px] text-gray-400 flex items-center gap-1">
+            <Loader size={10} className="animate-spin" />
+            {progress.done}/{progress.total}
+          </span>
+        ) : (
+          <button
+            onClick={handleScan}
+            className="text-[10px] px-2 py-1 rounded-lg text-gray-400 hover:text-indigo-500 transition-colors"
+            title="重新查询"
+          >
+            <RefreshCw size={10} />
+          </button>
+        )}
+      </div>
+
+      {state === 'error' && (
+        <p className="text-[10px] text-red-400 mb-2">{error}</p>
+      )}
+
+      {state === 'done' && rows.length === 0 && (
+        <p className="text-[10px] text-gray-400">未能解析任何节点 IP</p>
+      )}
+
+      {state === 'done' && rows.length > 0 && (
+        <div className="space-y-1.5">
+          {rows.map((r) => {
+            const pct = (r.count / total) * 100
+            return (
+              <div key={r.cc} className="flex items-center gap-2">
+                <span className="text-sm shrink-0 w-5 text-center">{countryFlag(r.cc)}</span>
+                <span className="text-[10px] text-gray-500 dark:text-gray-400 w-24 shrink-0 truncate">{r.country}</span>
+                <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-indigo-500 transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-gray-400 font-mono w-6 text-right shrink-0">{r.count}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -479,6 +616,11 @@ function SourceCard({
       {/* Protocol chart */}
       {source.status === 'success' && source.proxies.length > 0 && (
         <ProtocolChart proxies={source.proxies} />
+      )}
+
+      {/* Geo distribution chart (on-demand) */}
+      {source.status === 'success' && source.proxies.length > 0 && (
+        <GeoChart proxies={source.proxies} />
       )}
 
       {/* Tools bar */}
