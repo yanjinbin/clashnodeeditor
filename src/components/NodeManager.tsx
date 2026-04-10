@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Plus, Pencil, Trash2, Link2, ExternalLink, Wifi, WifiOff, Loader2, ChevronRight, Copy, Check, AlertTriangle } from 'lucide-react'
+import { Plus, Pencil, Trash2, Link2, ExternalLink, Wifi, WifiOff, Loader2, ChevronRight, Copy, Check, AlertTriangle, X } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import type { Proxy } from '../types/clash'
 import { resolveToIp, fetchIpInfoBatch } from '../utils/ipUtils'
@@ -841,19 +841,28 @@ function NodeRow({
 
 export default function NodeManager() {
   const {
+    sources,
     manualProxies,
     proxyGroups,
     addManualProxy,
     updateManualProxy,
     removeManualProxy,
-    getAllProxyNames,
+    addProxyGroup,
   } = useAppStore()
 
   const [modalState, setModalState] = useState<{ open: boolean; editIndex: number | null }>({ open: false, editIndex: null })
   const [search, setSearch] = useState('')
+  const [postSaveSuggest, setPostSaveSuggest] = useState<{ proxyName: string } | null>(null)
 
   const allGroupNames = useMemo(() => proxyGroups.map((g) => g.name), [proxyGroups])
-  const allProxyNames = useMemo(() => getAllProxyNames(), [getAllProxyNames])
+
+  // 响应式计算：订阅 sources / manualProxies / proxyGroups，任一变化均重新计算
+  const allProxyNames = useMemo(() => {
+    const srcNames = sources.flatMap((s) => s.proxies.map((p) => p.name))
+    const manNames = manualProxies.map((p) => p.name)
+    const grpNames = proxyGroups.map((g) => g.name)
+    return [...new Set([...srcNames, ...manNames, ...grpNames, 'DIRECT', 'REJECT'])]
+  }, [sources, manualProxies, proxyGroups])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return manualProxies.map((p, i) => ({ proxy: p, index: i }))
@@ -877,10 +886,17 @@ export default function NodeManager() {
   function closeModal() { setModalState({ open: false, editIndex: null }) }
 
   function handleSave(proxy: Proxy) {
+    const isNew = modalState.editIndex === null
     if (modalState.editIndex !== null) {
       updateManualProxy(modalState.editIndex, proxy)
     } else {
       addManualProxy(proxy)
+    }
+    // 新建链式代理节点后，提示用户为其创建专属代理组
+    if (isNew && proxy['dialer-proxy']) {
+      setPostSaveSuggest({ proxyName: proxy.name })
+    } else {
+      setPostSaveSuggest(null)
     }
     closeModal()
   }
@@ -911,6 +927,45 @@ export default function NodeManager() {
             添加节点
           </button>
         </div>
+
+        {/* 链式代理 → 创建代理组 提醒 */}
+        {postSaveSuggest && (
+          <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-4 flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">建议为此链式代理创建专属代理组</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                节点 <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded font-mono">{postSaveSuggest.proxyName}</code> 已设置链式出口。
+                创建专属代理组后，可在「规则」标签页将 RULE-SET / 规则直接指向该出口。
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => {
+                  const groupName = `${postSaveSuggest.proxyName}(出口)`
+                  if (!proxyGroups.some((g) => g.name === groupName)) {
+                    addProxyGroup({
+                      name: groupName,
+                      type: 'select',
+                      proxies: [postSaveSuggest.proxyName],
+                      url: 'http://www.gstatic.com/generate_204',
+                      interval: 300,
+                    })
+                  }
+                  setPostSaveSuggest(null)
+                }}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors whitespace-nowrap"
+              >
+                一键创建代理组
+              </button>
+              <button
+                onClick={() => setPostSaveSuggest(null)}
+                className="p-1.5 text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Tip banner */}
         {manualProxies.length === 0 && (
