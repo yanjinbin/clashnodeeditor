@@ -36,6 +36,8 @@ export interface IpData {
   country?: string
   countryCode?: string
   city?: string
+  lat?: number
+  lon?: number
   isp?: string
   /** 是代理/VPN IP */
   proxy?: boolean

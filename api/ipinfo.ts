@@ -6,7 +6,7 @@
  */
 export const config = { runtime: 'edge' }
 
-const FIELDS = 'status,country,countryCode,city,isp,proxy,hosting,query'
+const FIELDS = 'status,country,countryCode,city,lat,lon,isp,proxy,hosting,query'
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Cache-Control': 'max-age=3600',

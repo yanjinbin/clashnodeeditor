@@ -1,6 +1,8 @@
 import { useState, useRef, useMemo, useCallback } from 'react'
 import { resolveToIp, fetchIpInfoBatch, IP_RE } from '../utils/ipUtils'
 import type { IpData } from '../utils/ipUtils'
+import 'leaflet/dist/leaflet.css'
+import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import {
   Plus, Trash2, RefreshCw, CheckCircle, XCircle, Loader, Globe,
   Upload, AlertTriangle, ChevronDown, ChevronRight, ShieldCheck,
@@ -97,10 +99,13 @@ function countryFlag(cc: string): string {
 // ── Geo Distribution Chart (on-demand) ────────────────────────────────────────
 type GeoScanState = 'idle' | 'loading' | 'done' | 'error'
 
+type MapMarker = { id: string, lat: number, lon: number, count: number, city: string, cc: string }
+
 function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
   const [state, setState] = useState<GeoScanState>('idle')
   const [progress, setProgress] = useState({ done: 0, total: 0 })
   const [geoMap, setGeoMap] = useState<Map<string, { country: string; cc: string; count: number }>>(new Map())
+  const [markers, setMarkers] = useState<MapMarker[]>([])
   const [error, setError] = useState('')
 
   const handleScan = async () => {
@@ -139,18 +144,35 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
       const ipToGeo = new Map<string, IpData>()
       uniqueIps.forEach((ip, i) => ipToGeo.set(ip, geoArr[i]))
 
-      // Step 3: aggregate by country
+      // Step 3: aggregate by country and coordinates
       const countMap = new Map<string, { country: string; cc: string; count: number }>()
+      const locMap = new Map<string, MapMarker>()
+
       for (const { ip } of ipResults) {
         const geo = ipToGeo.get(ip)
         if (!geo || geo.status !== 'success') continue
         const cc = geo.countryCode ?? 'XX'
         const country = geo.country ?? cc
+        
         const prev = countMap.get(cc)
         countMap.set(cc, { country, cc, count: (prev?.count ?? 0) + 1 })
+
+        if (geo.lat && geo.lon) {
+          const locId = `${geo.lat},${geo.lon}`
+          const prevLoc = locMap.get(locId)
+          locMap.set(locId, {
+            id: locId,
+            lat: geo.lat,
+            lon: geo.lon,
+            count: (prevLoc?.count ?? 0) + 1,
+            city: geo.city || country,
+            cc
+          })
+        }
       }
 
       setGeoMap(countMap)
+      setMarkers([...locMap.values()])
       setState('done')
     } catch (e) {
       setError((e as Error).message)
@@ -201,7 +223,35 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
       )}
 
       {state === 'done' && rows.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-4 pt-2">
+          {/* Interactive Map */}
+          {markers.length > 0 && (
+            <div className="h-56 w-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-inner relative z-0">
+              <MapContainer center={[20, 0]} zoom={1} style={{ height: '100%', width: '100%', background: '#e5e7eb' }} scrollWheelZoom={true}>
+                <TileLayer
+                  url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                  attribution='&copy; Google Maps'
+                />
+                {markers.map((m) => (
+                  <CircleMarker
+                    key={m.id}
+                    center={[m.lat, m.lon]}
+                    radius={Math.max(6, Math.min(24, 4 + m.count * 1.5))}
+                    pathOptions={{ color: '#4f46e5', fillColor: '#6366f1', fillOpacity: 0.7, weight: 2 }}
+                  >
+                    <Tooltip sticky>
+                      <div className="text-xs font-mono">
+                        {countryFlag(m.cc)} {m.city}: <strong>{m.count}</strong> 个节点
+                      </div>
+                    </Tooltip>
+                  </CircleMarker>
+                ))}
+              </MapContainer>
+            </div>
+          )}
+
+          {/* List distribution */}
+          <div className="space-y-1.5">
           {rows.map((r) => {
             const pct = (r.count / total) * 100
             return (
@@ -218,6 +268,7 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
               </div>
             )
           })}
+        </div>
         </div>
       )}
     </div>
