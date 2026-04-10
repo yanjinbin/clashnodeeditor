@@ -6,18 +6,26 @@ import { PRESET_RULE_PROVIDERS, BLACKMATRIX7_RULE_PROVIDERS, DEFAULT_GLOBAL_SETT
 
 interface AppState {
   sources: SourceConfig[]
+  /** Manually added proxy nodes (persist fully, unlike subscription sources) */
+  manualProxies: Proxy[]
   proxyGroups: ProxyGroup[]
   /** All rule providers: preset + user-added, ordered, each with enabled/target */
   ruleProviders: RuleProvider[]
   /** Non-RULE-SET routing rules (DOMAIN, GEOIP, MATCH, etc.) */
   rules: Rule[]
-  activeTab: 'sources' | 'groups' | 'rules' | 'preview'
+  activeTab: 'sources' | 'nodes' | 'groups' | 'rules' | 'preview'
   globalSettings: ClashGlobalSettings
 
   // Source actions
   addSource: (source: Omit<SourceConfig, 'id' | 'status' | 'proxies'>) => string
   updateSource: (id: string, updates: Partial<SourceConfig>) => void
   removeSource: (id: string) => void
+
+  // Manual proxy node actions
+  addManualProxy: (proxy: Proxy) => void
+  updateManualProxy: (index: number, updates: Partial<Proxy>) => void
+  removeManualProxy: (index: number) => void
+  reorderManualProxies: (oldIndex: number, newIndex: number) => void
 
   // ProxyGroup actions
   addProxyGroup: (group: Omit<ProxyGroup, 'id'>) => string
@@ -65,6 +73,7 @@ export const useAppStore = create<AppState>()(
   persist(
     immer((set, get) => ({
     sources: [],
+    manualProxies: [],
     globalSettings: JSON.parse(JSON.stringify(DEFAULT_GLOBAL_SETTINGS)) as ClashGlobalSettings,
 
     proxyGroups: [
@@ -157,6 +166,37 @@ export const useAppStore = create<AppState>()(
 
     removeSource: (id) => {
       set((state) => { state.sources = state.sources.filter((s) => s.id !== id) })
+    },
+
+    // ── Manual Proxies ────────────────────────────────────────────────────────
+
+    addManualProxy: (proxy) => {
+      set((state) => { state.manualProxies.push(proxy) })
+    },
+
+    updateManualProxy: (index, updates) => {
+      set((state) => {
+        if (!state.manualProxies[index]) return
+        const oldName = state.manualProxies[index].name
+        Object.assign(state.manualProxies[index], updates)
+        const newName = state.manualProxies[index].name
+        if (updates.name && oldName !== newName) {
+          for (const g of state.proxyGroups) {
+            g.proxies = g.proxies.map((p) => (p === oldName ? newName : p))
+          }
+        }
+      })
+    },
+
+    removeManualProxy: (index) => {
+      set((state) => { state.manualProxies.splice(index, 1) })
+    },
+
+    reorderManualProxies: (oldIndex, newIndex) => {
+      set((state) => {
+        const [item] = state.manualProxies.splice(oldIndex, 1)
+        state.manualProxies.splice(newIndex, 0, item)
+      })
     },
 
     // ── ProxyGroups ───────────────────────────────────────────────────────────
@@ -414,12 +454,16 @@ export const useAppStore = create<AppState>()(
       set((state) => { Object.assign(state.globalSettings.dns['fallback-filter'], updates) })
     },
 
-    getAllProxies: () => get().sources.flatMap((s) => s.proxies),
+    getAllProxies: () => [
+      ...get().sources.flatMap((s) => s.proxies),
+      ...get().manualProxies,
+    ],
 
     getAllProxyNames: () => {
       const proxies = get().sources.flatMap((s) => s.proxies.map((p) => p.name))
+      const manualNames = get().manualProxies.map((p) => p.name)
       const groupNames = get().proxyGroups.map((g) => g.name)
-      return [...new Set([...proxies, ...groupNames, 'DIRECT', 'REJECT'])]
+      return [...new Set([...proxies, ...manualNames, ...groupNames, 'DIRECT', 'REJECT'])]
     },
 
     importFullConfig: (config) => {
@@ -530,6 +574,7 @@ export const useAppStore = create<AppState>()(
         proxies: [],
         importedGroups: [],
       })),
+      manualProxies:  state.manualProxies,
       proxyGroups:    state.proxyGroups,
       ruleProviders:  state.ruleProviders,
       rules:          state.rules,

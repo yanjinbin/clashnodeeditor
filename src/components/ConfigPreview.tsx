@@ -422,7 +422,7 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
 
 // ── ConfigPreview ─────────────────────────────────────────────────────────────
 export default function ConfigPreview() {
-  const { sources, proxyGroups, ruleProviders, rules, globalSettings, importFullConfig } = useAppStore()
+  const { sources, manualProxies, proxyGroups, ruleProviders, rules, globalSettings, importFullConfig } = useAppStore()
   const [copied, setCopied] = useState(false)
   const [filename, setFilename] = useState('config.yaml')
   const [editingFilename, setEditingFilename] = useState(false)
@@ -430,7 +430,7 @@ export default function ConfigPreview() {
   const [flowArrays, setFlowArrays] = useState(false)
   const [showImport, setShowImport] = useState(false)
 
-  const allProxies = sources.flatMap((s) => s.proxies)
+  const allProxies = [...sources.flatMap((s) => s.proxies), ...manualProxies]
   const enabledProviders = ruleProviders.filter((p) => p.enabled)
 
   const allProxyNames = allProxies.map((p) => p.name)

@@ -1,15 +1,17 @@
 import { useAppStore } from './store/useAppStore'
 import SourceManager from './components/SourceManager'
+import NodeManager from './components/NodeManager'
 import ProxyGroupEditor from './components/ProxyGroupEditor'
 import RuleSetManager from './components/RuleSetManager'
 import ConfigPreview from './components/ConfigPreview'
 import AdBanner from './components/AdBanner'
-import { Globe, Users, Shield, FileText } from 'lucide-react'
+import { Globe, Server, Users, Shield, FileText } from 'lucide-react'
 
 const TABS = [
   { id: 'sources' as const, label: '订阅源', icon: Globe },
-  { id: 'groups' as const, label: '代理组', icon: Users },
-  { id: 'rules' as const, label: '规则', icon: Shield },
+  { id: 'nodes'   as const, label: '手动节点', icon: Server },
+  { id: 'groups'  as const, label: '代理组', icon: Users },
+  { id: 'rules'   as const, label: '规则', icon: Shield },
   { id: 'preview' as const, label: '预览导出', icon: FileText },
 ]
 
@@ -94,8 +96,9 @@ export default function App() {
         <div className="flex-1 min-w-0 min-h-0 overflow-hidden flex justify-center">
           <div className="w-full max-w-5xl min-h-0 flex flex-col bg-white dark:bg-gray-900 border-x border-gray-200 dark:border-gray-800">
             {activeTab === 'sources' && <SourceManager />}
-            {activeTab === 'groups' && <ProxyGroupEditor />}
-            {activeTab === 'rules' && <RuleSetManager />}
+            {activeTab === 'nodes'   && <NodeManager />}
+            {activeTab === 'groups'  && <ProxyGroupEditor />}
+            {activeTab === 'rules'   && <RuleSetManager />}
             {activeTab === 'preview' && <ConfigPreview />}
           </div>
         </div>
