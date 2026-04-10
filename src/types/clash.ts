@@ -100,12 +100,26 @@ export interface DnsConfig {
   'default-nameserver': string[]
   'enhanced-mode': string
   'fake-ip-range': string
+  'fake-ip-filter'?: string[]
   'use-hosts': boolean
   'respect-rules': boolean
   'proxy-server-nameserver': string[]
   nameserver: string[]
+  'nameserver-policy'?: Record<string, string[]>
   fallback: string[]
   'fallback-filter': DnsFallbackFilter
+}
+
+export interface SnifferConfig {
+  enable: boolean
+  sniff: Record<string, { ports: number[] }>
+  'skip-domain'?: string[]
+}
+
+export interface GeoxUrl {
+  geoip?: string
+  geosite?: string
+  mmdb?: string
 }
 
 export interface ClashGlobalSettings {
@@ -115,6 +129,13 @@ export interface ClashGlobalSettings {
   mode: string
   'log-level': string
   'external-controller': string
+  'tcp-concurrent'?: boolean
+  'unified-delay'?: boolean
+  'find-process-mode'?: string
+  'geodata-mode'?: boolean
+  'geox-url'?: GeoxUrl
+  'global-client-fingerprint'?: string
+  sniffer?: SnifferConfig
   dns: DnsConfig
 }
 
@@ -125,22 +146,61 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   mode: 'rule',
   'log-level': 'info',
   'external-controller': '127.0.0.1:9090',
+  'tcp-concurrent': true,
+  'unified-delay': true,
+  'find-process-mode': 'strict',
+  'geodata-mode': true,
+  'geox-url': {
+    geoip: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat',
+    geosite: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat',
+    mmdb: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb',
+  },
+  'global-client-fingerprint': 'chrome',
+  sniffer: {
+    enable: true,
+    sniff: {
+      HTTP:  { ports: [80, 8080] },
+      TLS:   { ports: [443, 8443] },
+      QUIC:  { ports: [443, 8443] },
+    },
+    'skip-domain': ['Mijia Cloud', '+.apple.com'],
+  },
   dns: {
     enable: true,
     ipv6: false,
-    'default-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
+    'default-nameserver': ['223.5.5.5', '119.29.29.29'],
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
+    'fake-ip-filter': [
+      '*.lan', '*.local', 'localhost.ptlogin2.qq.com',
+      '*.ntp.org.cn', 'time.*.com', 'time.*.gov', '*.time.edu.cn',
+      'ntp.*.com', '+.stun.*.*', '+.stun.*.*.*',
+      'heartbeat.belkin.com', '*.msftconnecttest.com', '*.msftncsi.com',
+      'xbox.*.microsoft.com', '*.xboxlive.com',
+    ],
     'use-hosts': true,
     'respect-rules': true,
-    'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
-    nameserver: ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
-    fallback: ['1.1.1.1', '8.8.8.8'],
+    'proxy-server-nameserver': [
+      'https://doh.pub/dns-query',
+      'https://dns.alidns.com/dns-query',
+    ],
+    nameserver: [
+      'https://doh.pub/dns-query',
+      'https://dns.alidns.com/dns-query',
+    ],
+    'nameserver-policy': {
+      'geosite:cn': ['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query'],
+      'geosite:geolocation-!cn': ['https://1.1.1.1/dns-query', 'https://dns.google/dns-query'],
+    },
+    fallback: [
+      'https://1.1.1.1/dns-query',
+      'https://dns.google/dns-query',
+    ],
     'fallback-filter': {
       geoip: true,
       'geoip-code': 'CN',
       geosite: ['gfw'],
-      ipcidr: ['240.0.0.0/4'],
+      ipcidr: ['240.0.0.0/4', '0.0.0.0/8'],
       domain: ['+.google.com', '+.facebook.com', '+.youtube.com'],
     },
   },
@@ -153,6 +213,13 @@ export interface ClashConfig {
   mode?: string
   'log-level'?: string
   'external-controller'?: string
+  'tcp-concurrent'?: boolean
+  'unified-delay'?: boolean
+  'find-process-mode'?: string
+  'geodata-mode'?: boolean
+  'geox-url'?: GeoxUrl
+  'global-client-fingerprint'?: string
+  sniffer?: SnifferConfig
   dns?: DnsConfig
   proxies?: Proxy[]
   'proxy-groups'?: Array<{
@@ -200,14 +267,9 @@ function preset(
 export const PRESET_RULE_PROVIDERS: RuleProvider[] = [
   preset('reject',       'domain',    'REJECT', true),
   preset('private',      'domain',    'DIRECT', true),
-  preset('applications', 'classical', 'DIRECT', false),
-  preset('icloud',       'domain',    'DIRECT', false),
-  preset('apple',        'domain',    'DIRECT', false),
   preset('google',       'domain',    'PROXY',  false),
-  preset('proxy',        'domain',    'PROXY',  true),
   preset('direct',       'domain',    'DIRECT', true),
   preset('gfw',          'domain',    'PROXY',  false),
-  preset('tld-not-cn',   'domain',    'PROXY',  false),
   preset('telegramcidr', 'ipcidr',    'PROXY',  false, true),
   preset('cncidr',       'ipcidr',    'DIRECT', true,  true),
   preset('lancidr',      'ipcidr',    'DIRECT', true,  true),
@@ -235,19 +297,19 @@ function bm7(
 }
 
 export const BLACKMATRIX7_RULE_PROVIDERS: RuleProvider[] = [
-  bm7('cn',           'China/China.yaml',             'DIRECT', true),
   bm7('openai',       'OpenAI/OpenAI.yaml',            'PROXY',  true),
   bm7('claude',       'Claude/Claude.yaml',            'PROXY',  true),
   bm7('gemini',       'Gemini/Gemini.yaml',            'PROXY',  true),
   bm7('copilot',      'Copilot/Copilot.yaml',          'PROXY',  false),
+  bm7('youtube-music','YouTubeMusic/YouTubeMusic.yaml','PROXY',  false, 1209600),
   bm7('youtube',      'YouTube/YouTube.yaml',          'PROXY',  false),
   bm7('telegram',     'Telegram/Telegram.yaml',        'PROXY',  false, 1209600),
   bm7('twitter',      'Twitter/Twitter.yaml',          'PROXY',  false, 1209600),
   bm7('tiktok',       'TikTok/TikTok.yaml',            'PROXY',  false, 1209600),
   bm7('linkedin',     'LinkedIn/LinkedIn.yaml',        'PROXY',  false, 1209600),
   bm7('docker',       'Docker/Docker.yaml',            'PROXY',  false, 1209600),
-  bm7('youtube-music','YouTubeMusic/YouTubeMusic.yaml','PROXY',  false, 1209600),
   bm7('GoogleFCM',    'GoogleFCM/GoogleFCM.yaml',      'DIRECT', false, 1209600),
+  bm7('cn',           'China/China.yaml',             'DIRECT', true),
 ]
 
 export const BUILT_IN_PROXIES: string[] = []

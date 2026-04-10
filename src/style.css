@@ -10,17 +10,53 @@ html, body, #root {
   padding: 0;
 }
 
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --accent: 99 102 241;     /* indigo-500 */
+  --accent-light: 238 242 255; /* indigo-50 */
+  --surface: 255 255 255;
+  --surface-2: 249 250 251;  /* gray-50 */
+  --border: 229 231 235;     /* gray-200 */
+  --text: 17 24 39;          /* gray-900 */
+  --text-2: 107 114 128;     /* gray-500 */
+  --radius: 10px;
+}
+
+.dark {
+  --accent: 129 140 248;    /* indigo-400 */
+  --accent-light: 30 27 75;  /* indigo-950 */
+  --surface: 17 24 39;       /* gray-900 */
+  --surface-2: 31 41 55;     /* gray-800 */
+  --border: 55 65 81;        /* gray-700 */
+  --text: 249 250 251;       /* gray-50 */
+  --text-2: 156 163 175;     /* gray-400 */
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
+  background: rgb(var(--border));
+  border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: rgb(var(--text-2));
+}
+
+/* ── Focus ring ────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+}
+
+/* ── Smooth transitions ────────────────────────────────────────────────────── */
+button, a, input, select, textarea {
+  transition-property: color, background-color, border-color, opacity, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }

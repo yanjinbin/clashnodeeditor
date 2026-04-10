@@ -98,6 +98,8 @@ function SettingsPanel() {
   const updFF = (k: keyof DnsFallbackFilter, v: unknown) =>
     updateDnsFallbackFilter({ [k]: v } as Partial<DnsFallbackFilter>)
 
+  const sel = 'text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none'
+
   return (
     <div className="space-y-4">
       <Section title="基本设置">
@@ -113,37 +115,58 @@ function SettingsPanel() {
           <Toggle checked={gs['allow-lan']} onChange={(v) => updateGlobalSettings({ 'allow-lan': v })} />
         </Row>
         <Row label="bind-address">
-          <BlurInput
-            value={gs['bind-address']}
-            onChange={(v) => updateGlobalSettings({ 'bind-address': v })}
-            className="w-full"
-          />
+          <BlurInput value={gs['bind-address']} onChange={(v) => updateGlobalSettings({ 'bind-address': v })} className="w-full" />
         </Row>
         <Row label="mode">
-          <select
-            value={gs.mode}
-            onChange={(e) => updateGlobalSettings({ mode: e.target.value })}
-            className="text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none"
-          >
+          <select value={gs.mode} onChange={(e) => updateGlobalSettings({ mode: e.target.value })} className={sel}>
             {['rule', 'global', 'direct'].map((m) => <option key={m}>{m}</option>)}
           </select>
         </Row>
         <Row label="log-level">
-          <select
-            value={gs['log-level']}
-            onChange={(e) => updateGlobalSettings({ 'log-level': e.target.value })}
-            className="text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none"
-          >
+          <select value={gs['log-level']} onChange={(e) => updateGlobalSettings({ 'log-level': e.target.value })} className={sel}>
             {['debug', 'info', 'warning', 'error', 'silent'].map((l) => <option key={l}>{l}</option>)}
           </select>
         </Row>
         <Row label="external-controller">
-          <BlurInput
-            value={gs['external-controller']}
-            onChange={(v) => updateGlobalSettings({ 'external-controller': v })}
-            className="w-full"
+          <BlurInput value={gs['external-controller']} onChange={(v) => updateGlobalSettings({ 'external-controller': v })} className="w-full" />
+        </Row>
+        <Row label="tcp-concurrent">
+          <Toggle checked={gs['tcp-concurrent'] ?? false} onChange={(v) => updateGlobalSettings({ 'tcp-concurrent': v })} />
+        </Row>
+        <Row label="unified-delay">
+          <Toggle checked={gs['unified-delay'] ?? false} onChange={(v) => updateGlobalSettings({ 'unified-delay': v })} />
+        </Row>
+        <Row label="find-process-mode">
+          <select value={gs['find-process-mode'] ?? 'strict'} onChange={(e) => updateGlobalSettings({ 'find-process-mode': e.target.value })} className={sel}>
+            {['always', 'strict', 'off'].map((m) => <option key={m}>{m}</option>)}
+          </select>
+        </Row>
+        <Row label="global-fingerprint">
+          <select value={gs['global-client-fingerprint'] ?? 'chrome'} onChange={(e) => updateGlobalSettings({ 'global-client-fingerprint': e.target.value })} className={sel}>
+            {['chrome', 'firefox', 'safari', 'ios', 'android', 'edge', '360', 'qq', 'random'].map((f) => <option key={f}>{f}</option>)}
+          </select>
+        </Row>
+      </Section>
+
+      <Section title="Sniffer（嗅探）" defaultOpen={false}>
+        <Row label="enable">
+          <Toggle
+            checked={gs.sniffer?.enable ?? false}
+            onChange={(v) => updateGlobalSettings({ sniffer: { ...gs.sniffer!, enable: v } })}
           />
         </Row>
+        <p className="text-[10px] text-gray-400 dark:text-gray-600 leading-snug pl-1">
+          开启后 Clash 可识别 HTTP/TLS/QUIC 流量的真实域名，让域名规则覆盖直连 IP 请求。
+        </p>
+      </Section>
+
+      <Section title="GeoData" defaultOpen={false}>
+        <Row label="geodata-mode">
+          <Toggle checked={gs['geodata-mode'] ?? false} onChange={(v) => updateGlobalSettings({ 'geodata-mode': v })} />
+        </Row>
+        <p className="text-[10px] text-gray-400 dark:text-gray-600 leading-snug pl-1">
+          启用后使用 MetaCubeX .dat 格式 GeoIP/GeoSite 数据库，精度更高。数据从 jsdelivr CDN 下载，首次启动需联网。
+        </p>
       </Section>
 
       <Section title="DNS 设置">
@@ -154,20 +177,12 @@ function SettingsPanel() {
           <Toggle checked={dns.ipv6} onChange={(v) => updDns('ipv6', v)} />
         </Row>
         <Row label="enhanced-mode">
-          <select
-            value={dns['enhanced-mode']}
-            onChange={(e) => updDns('enhanced-mode', e.target.value)}
-            className="text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none"
-          >
-            {['fake-ip', 'redir-host', 'normal'].map((m) => <option key={m}>{m}</option>)}
+          <select value={dns['enhanced-mode']} onChange={(e) => updDns('enhanced-mode', e.target.value)} className={sel}>
+            {['fake-ip', 'redir-host'].map((m) => <option key={m}>{m}</option>)}
           </select>
         </Row>
         <Row label="fake-ip-range">
-          <BlurInput
-            value={dns['fake-ip-range']}
-            onChange={(v) => updDns('fake-ip-range', v)}
-            className="w-full"
-          />
+          <BlurInput value={dns['fake-ip-range']} onChange={(v) => updDns('fake-ip-range', v)} className="w-full" />
         </Row>
         <Row label="use-hosts">
           <Toggle checked={dns['use-hosts']} onChange={(v) => updDns('use-hosts', v)} />
@@ -183,27 +198,35 @@ function SettingsPanel() {
             className="w-full"
           />
         </Row>
-        <Row label="proxy-server-nameserver">
-          <BlurInput
-            value={joinArr(dns['proxy-server-nameserver'])}
-            onChange={(v) => updDns('proxy-server-nameserver', parseArr(v))}
-            placeholder="223.5.5.5, 8.8.8.8"
-            className="w-full"
-          />
-        </Row>
-        <Row label="nameserver">
+        <Row label="nameserver (DoH)">
           <BlurInput
             value={joinArr(dns.nameserver)}
             onChange={(v) => updDns('nameserver', parseArr(v))}
-            placeholder="223.5.5.5, 114.114.114.114"
+            placeholder="https://doh.pub/dns-query"
             className="w-full"
           />
         </Row>
-        <Row label="fallback">
+        <Row label="proxy-server-ns">
+          <BlurInput
+            value={joinArr(dns['proxy-server-nameserver'])}
+            onChange={(v) => updDns('proxy-server-nameserver', parseArr(v))}
+            placeholder="https://doh.pub/dns-query"
+            className="w-full"
+          />
+        </Row>
+        <Row label="fallback (DoH)">
           <BlurInput
             value={joinArr(dns.fallback)}
             onChange={(v) => updDns('fallback', parseArr(v))}
-            placeholder="1.1.1.1, 8.8.8.8"
+            placeholder="https://1.1.1.1/dns-query"
+            className="w-full"
+          />
+        </Row>
+        <Row label="fake-ip-filter">
+          <BlurInput
+            value={joinArr(dns['fake-ip-filter'] ?? [])}
+            onChange={(v) => updDns('fake-ip-filter', parseArr(v))}
+            placeholder="*.lan, *.local, ..."
             className="w-full"
           />
         </Row>
@@ -214,11 +237,7 @@ function SettingsPanel() {
           <Toggle checked={ff.geoip} onChange={(v) => updFF('geoip', v)} />
         </Row>
         <Row label="geoip-code">
-          <BlurInput
-            value={ff['geoip-code']}
-            onChange={(v) => updFF('geoip-code', v)}
-            className="w-16"
-          />
+          <BlurInput value={ff['geoip-code']} onChange={(v) => updFF('geoip-code', v)} className="w-16" />
         </Row>
         <Row label="geosite">
           <BlurInput

@@ -91,18 +91,46 @@ export const useAppStore = create<AppState>()(
       ...BLACKMATRIX7_RULE_PROVIDERS.map((p) => ({ ...p })),
     ],
 
-    // Non-RULE-SET rules; RULE-SET lines are auto-generated from enabled ruleProviders
+    // Unified ordered rule list — includes both manual rules and inline RULE-SET references.
+    // RULE-SET entries are only emitted when their provider is enabled.
     rules: [
-      { id: generateId(), type: 'DOMAIN',        payload: 'clash.razord.top',  target: 'DIRECT' },
-      { id: generateId(), type: 'DOMAIN',        payload: 'yacd.haishan.me',   target: 'DIRECT' },
-      { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'local',             target: 'DIRECT' },
-      { id: generateId(), type: 'IP-CIDR',       payload: '127.0.0.0/8',       target: 'DIRECT' },
-      { id: generateId(), type: 'IP-CIDR',       payload: '172.16.0.0/12',     target: 'DIRECT' },
-      { id: generateId(), type: 'IP-CIDR',       payload: '192.168.0.0/16',    target: 'DIRECT' },
-      { id: generateId(), type: 'IP-CIDR',       payload: '10.0.0.0/8',        target: 'DIRECT' },
-      { id: generateId(), type: 'GEOIP',         payload: 'LAN', target: 'DIRECT', noResolve: true },
-      { id: generateId(), type: 'GEOIP',         payload: 'CN',  target: 'DIRECT', noResolve: true },
-      { id: generateId(), type: 'MATCH',         payload: '',    target: '♻️ 自动选择' },
+      // 1) 本地 / 局域网 / 保留地址
+      { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'local',          target: 'DIRECT' },
+      { id: generateId(), type: 'IP-CIDR',       payload: '127.0.0.0/8',    target: 'DIRECT' },
+      { id: generateId(), type: 'IP-CIDR',       payload: '10.0.0.0/8',     target: 'DIRECT' },
+      { id: generateId(), type: 'IP-CIDR',       payload: '172.16.0.0/12',  target: 'DIRECT' },
+      { id: generateId(), type: 'IP-CIDR',       payload: '192.168.0.0/16', target: 'DIRECT' },
+      { id: generateId(), type: 'GEOIP',         payload: 'LAN',            target: 'DIRECT', noResolve: true },
+      { id: generateId(), type: 'RULE-SET',      payload: 'private',        target: 'DIRECT' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'lancidr',        target: 'DIRECT', noResolve: true },
+      // 2) 明确拦截
+      { id: generateId(), type: 'RULE-SET',      payload: 'reject',         target: 'REJECT' },
+      // 4) AI / 开发 / 特定服务
+      { id: generateId(), type: 'RULE-SET',      payload: 'openai',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'claude',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'copilot',        target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'gemini',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'docker',         target: 'PROXY' },
+      // 5) 社交 / 媒体
+      { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',  target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'youtube',        target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'google',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'telegram',       target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'twitter',        target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'tiktok',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'linkedin',       target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'GoogleFCM',      target: 'PROXY' },
+      // 6) 通用规则
+      { id: generateId(), type: 'RULE-SET',      payload: 'direct',         target: 'DIRECT' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'gfw',            target: 'PROXY' },
+      // 7) IP 类规则
+      { id: generateId(), type: 'RULE-SET',      payload: 'telegramcidr',   target: 'PROXY',  noResolve: true },
+      { id: generateId(), type: 'RULE-SET',      payload: 'cncidr',         target: 'DIRECT', noResolve: true },
+      // 8) 国内兜底
+      { id: generateId(), type: 'RULE-SET',      payload: 'cn',             target: 'DIRECT' },
+      { id: generateId(), type: 'GEOIP',         payload: 'CN',             target: 'DIRECT', noResolve: true },
+      // 9) 最终兜底
+      { id: generateId(), type: 'MATCH',         payload: '',               target: '♻️ 自动选择' },
     ],
 
     activeTab: 'sources',
@@ -207,19 +235,49 @@ export const useAppStore = create<AppState>()(
     addRuleProvider: (provider) => {
       set((state) => {
         state.ruleProviders.push({ ...provider, id: generateId() })
+        // Insert a RULE-SET rule before the final MATCH rule
+        const noResolve = provider.noResolve || provider.behavior === 'ipcidr'
+        const ruleSetEntry = {
+          id: generateId(),
+          type: 'RULE-SET' as const,
+          payload: provider.name,
+          target: provider.target,
+          noResolve,
+        }
+        const matchIdx = state.rules.findIndex((r) => r.type === 'MATCH')
+        if (matchIdx !== -1) {
+          state.rules.splice(matchIdx, 0, ruleSetEntry)
+        } else {
+          state.rules.push(ruleSetEntry)
+        }
       })
     },
 
     updateRuleProvider: (id, updates) => {
       set((state) => {
         const idx = state.ruleProviders.findIndex((p) => p.id === id)
-        if (idx !== -1) Object.assign(state.ruleProviders[idx], updates)
+        if (idx === -1) return
+        const providerName = state.ruleProviders[idx].name
+        Object.assign(state.ruleProviders[idx], updates)
+        // Sync target / noResolve changes to corresponding RULE-SET rules in the rules array
+        for (const rule of state.rules) {
+          if (rule.type === 'RULE-SET' && rule.payload === providerName) {
+            if (updates.target !== undefined) rule.target = updates.target
+            if (updates.noResolve !== undefined) rule.noResolve = updates.noResolve
+          }
+        }
       })
     },
 
     removeRuleProvider: (id) => {
       set((state) => {
+        const removed = state.ruleProviders.find((p) => p.id === id)
         state.ruleProviders = state.ruleProviders.filter((p) => p.id !== id)
+        if (removed) {
+          state.rules = state.rules.filter(
+            (r) => !(r.type === 'RULE-SET' && r.payload === removed.name)
+          )
+        }
       })
     },
 
@@ -396,18 +454,23 @@ export const useAppStore = create<AppState>()(
           }))
         }
 
-        // 4. Rules — RULE-SET entries update ruleProvider targets; others become Rule objects
+        // 4. Rules — process in order; RULE-SET entries update provider targets AND are stored
+        //    as inline RULE-SET rules to preserve their position in the output.
         if (Array.isArray(config.rules)) {
           const rules: Rule[] = []
           for (const ruleStr of config.rules) {
             const parts = (ruleStr as string).split(',').map((s) => s.trim())
             const type = parts[0]
             if (type === 'RULE-SET') {
-              const rp = state.ruleProviders.find((p) => p.name === parts[1])
+              const providerName = parts[1]
+              const target = parts[2] || 'DIRECT'
+              const noResolve = parts[3] === 'no-resolve'
+              const rp = state.ruleProviders.find((p) => p.name === providerName)
               if (rp) {
-                rp.target = parts[2] || 'DIRECT'
-                if (parts[3] === 'no-resolve') rp.noResolve = true
+                rp.target = target
+                if (noResolve) rp.noResolve = true
               }
+              rules.push({ id: generateId(), type: 'RULE-SET', payload: providerName, target, noResolve })
             } else if (type === 'MATCH') {
               rules.push({ id: generateId(), type: 'MATCH', payload: '', target: parts[1] || 'DIRECT' })
             } else {
@@ -431,6 +494,13 @@ export const useAppStore = create<AppState>()(
         if (config.mode) state.globalSettings.mode = config.mode
         if (config['log-level']) state.globalSettings['log-level'] = config['log-level']
         if (config['external-controller']) state.globalSettings['external-controller'] = config['external-controller']
+        if (config['tcp-concurrent'] !== undefined) state.globalSettings['tcp-concurrent'] = config['tcp-concurrent']
+        if (config['unified-delay'] !== undefined) state.globalSettings['unified-delay'] = config['unified-delay']
+        if (config['find-process-mode']) state.globalSettings['find-process-mode'] = config['find-process-mode']
+        if (config['geodata-mode'] !== undefined) state.globalSettings['geodata-mode'] = config['geodata-mode']
+        if (config['geox-url']) state.globalSettings['geox-url'] = config['geox-url']
+        if (config['global-client-fingerprint']) state.globalSettings['global-client-fingerprint'] = config['global-client-fingerprint']
+        if (config.sniffer) state.globalSettings.sniffer = config.sniffer
         if (config.dns) Object.assign(state.globalSettings.dns, config.dns)
       })
     },

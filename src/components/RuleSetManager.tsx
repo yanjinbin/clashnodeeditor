@@ -40,6 +40,7 @@ const RULE_TYPES = [
   'IP-CIDR',
   'IP-CIDR6',
   'GEOIP',
+  'RULE-SET',
   'MATCH',
 ]
 const BEHAVIORS: RuleProvider['behavior'][] = ['domain', 'ipcidr', 'classical']
@@ -47,10 +48,60 @@ const BEHAVIORS: RuleProvider['behavior'][] = ['domain', 'ipcidr', 'classical']
 // ─────────────────────────────────────────────────────────────────────────────
 export default function RuleSetManager() {
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
+    <div className="h-full overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
+      <RuleOrderNotice />
       <AiQuickSetup />
       <ProviderSection />
       <ManualRulesSection />
+    </div>
+  )
+}
+
+// ── Rule Order Notice ─────────────────────────────────────────────────────────
+const RULE_ORDER_STEPS = [
+  { label: '本地 / LAN', items: ['DOMAIN-SUFFIX local', 'IP-CIDR ×4', 'GEOIP LAN', 'RULE-SET private', 'RULE-SET lancidr'] },
+  { label: '拦截',       items: ['RULE-SET reject'] },
+  { label: 'AI 服务',   items: ['openai', 'claude', 'copilot', 'gemini', 'docker'] },
+  { label: '社交 / 媒体', items: ['youtube-music', 'youtube', 'google', 'telegram', 'twitter', 'tiktok', 'linkedin', 'GoogleFCM'] },
+  { label: '通用',       items: ['RULE-SET direct', 'RULE-SET gfw'] },
+  { label: 'IP 规则',   items: ['telegramcidr no-resolve', 'cncidr no-resolve'] },
+  { label: '国内兜底',  items: ['RULE-SET cn', 'GEOIP CN no-resolve'] },
+  { label: 'MATCH',     items: ['♻️ 自动选择'] },
+] as const
+
+function RuleOrderNotice() {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="px-5 py-3">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 w-full text-left"
+      >
+        <Shield size={13} className="text-indigo-400 shrink-0" />
+        <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex-1">
+          默认规则匹配顺序
+        </h2>
+        <ChevronDown size={14} className={`text-gray-400 transition-transform ${open ? '' : '-rotate-90'}`} />
+      </button>
+
+      {open && (
+        <div className="mt-3 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-900/10 p-3 space-y-1.5">
+          {RULE_ORDER_STEPS.map((step, i) => (
+            <div key={step.label} className="flex items-start gap-2">
+              <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 w-4 text-right shrink-0 mt-0.5">{i + 1}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300">{step.label}</span>
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1.5">
+                  {step.items.join(' → ')}
+                </span>
+              </div>
+            </div>
+          ))}
+          <p className="text-[9px] text-gray-400 dark:text-gray-600 pt-1 border-t border-indigo-100 dark:border-indigo-900/40">
+            规则按顺序匹配，命中即停止。在「自定义规则」区可拖拽调整 RULE-SET 与手动规则的相对位置。
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -91,20 +142,20 @@ function AiQuickSetup() {
   const validTarget = (t: string) => allTargets.includes(t) ? t : (allTargets[2] ?? allTargets[0])
 
   return (
-    <div className="p-4">
+    <div className="px-5 py-4">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 w-full text-left mb-2"
+        className="flex items-center gap-2 w-full text-left mb-3"
       >
-        <Zap size={13} className="text-amber-500" />
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide flex-1">
+        <Zap size={13} className="text-amber-500 shrink-0" />
+        <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex-1">
           AI 规则快速配置
         </h2>
         <ChevronDown size={14} className={`text-gray-400 transition-transform ${open ? '' : '-rotate-90'}`} />
       </button>
 
       {open && (
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-3 space-y-2">
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200/70 dark:border-amber-800/60 rounded-xl p-4 space-y-3">
           <p className="text-xs text-amber-600 dark:text-amber-400">
             为 AI 服务规则集选择目标代理组，一键启用：
           </p>
@@ -113,20 +164,20 @@ function AiQuickSetup() {
               const provider = ruleProviders.find((p) => p.id === svc.id)
               const current = targets[svc.id] ?? defaultTarget
               return (
-                <div key={svc.id} className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg px-2.5 py-2 border border-gray-200 dark:border-gray-700">
+                <div key={svc.id} className="flex items-center gap-2 bg-white dark:bg-gray-800/80 rounded-xl px-3 py-2.5 border border-amber-100 dark:border-gray-700/80 shadow-sm">
                   <span className="text-sm shrink-0">{svc.emoji}</span>
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 w-14 shrink-0">{svc.label}</span>
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 w-14 shrink-0">{svc.label}</span>
                   <select
                     value={validTarget(current)}
                     onChange={(e) => setTargets((prev) => ({ ...prev, [svc.id]: e.target.value }))}
-                    className="flex-1 min-w-0 text-xs px-1.5 py-1 rounded border border-gray-200 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                    className="flex-1 min-w-0 text-xs px-1.5 py-1 rounded-lg border border-amber-200 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
                   >
                     {allTargets.map((t) => (
                       <option key={t} value={t} className="bg-white dark:bg-gray-800">{t}</option>
                     ))}
                   </select>
                   {provider?.enabled && (
-                    <span className="text-green-500 shrink-0" title="已启用"><Check size={11} /></span>
+                    <span className="text-emerald-500 shrink-0" title="已启用"><Check size={12} /></span>
                   )}
                 </div>
               )
@@ -134,9 +185,9 @@ function AiQuickSetup() {
           </div>
           <button
             onClick={handleApply}
-            className="w-full flex items-center justify-center gap-1.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-xs font-semibold rounded-xl shadow-sm shadow-amber-200 dark:shadow-none transition-all"
           >
-            <Zap size={12} />
+            <Zap size={13} />
             一键应用 AI 规则
           </button>
         </div>
@@ -177,20 +228,20 @@ function ProviderSection() {
   }
 
   return (
-    <div className="p-4">
+    <div className="px-5 py-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide flex items-center gap-1.5">
-          <Link size={13} />
+        <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2">
+          <Link size={12} />
           规则集
-          <span className="text-xs font-normal text-gray-400 normal-case ml-1">
+          <span className="text-[10px] font-medium text-gray-400 normal-case font-mono">
             {enabledCount}/{ruleProviders.length} 已启用
           </span>
         </h2>
         <button
           onClick={() => setShowAddForm((v) => !v)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shadow-sm shadow-indigo-200 dark:shadow-none transition-all"
         >
-          {showAddForm ? <X size={12} /> : <Plus size={12} />}
+          {showAddForm ? <X size={12} /> : <Plus size={13} />}
           {showAddForm ? '取消' : '添加规则集'}
         </button>
       </div>
@@ -230,9 +281,9 @@ function ProviderSection() {
         </SortableContext>
         <DragOverlay>
           {activeId ? (
-            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-300 rounded-lg shadow-lg text-xs opacity-90">
-              <GripVertical size={12} className="text-blue-400" />
-              <span>{ruleProviders.find((p) => p.id === activeId)?.name}</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-700 rounded-xl shadow-xl text-xs opacity-95 font-medium">
+              <GripVertical size={12} className="text-indigo-400" />
+              <span className="text-gray-900 dark:text-gray-100">{ruleProviders.find((p) => p.id === activeId)?.name}</span>
             </div>
           ) : null}
         </DragOverlay>
@@ -292,24 +343,24 @@ function AddProviderForm({
   const preview = url.trim() ? normalizeRuleUrl(url.trim()) : ''
 
   return (
-    <div className="mb-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 space-y-2">
-      <p className="text-xs font-medium text-blue-700 dark:text-blue-300">新建规则集</p>
+    <div className="mb-3 p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/15 border border-indigo-200/70 dark:border-indigo-800/60 space-y-2.5">
+      <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">新建规则集</p>
 
       {/* URL input */}
       <div>
-        <label className="block text-xs text-gray-500 mb-1">
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
           URL
-          <span className="ml-1 text-gray-400">（支持 GitHub 链接，自动转换为 CDN）</span>
+          <span className="ml-1 text-gray-400 font-normal">（支持 GitHub 链接，自动转换为 CDN）</span>
         </label>
         <input
           type="text"
           placeholder="https://github.com/blackmatrix7/ios_rule_script/tree/master/rule/Clash/OpenAI.yaml"
           value={url}
           onChange={(e) => handleUrlChange(e.target.value)}
-          className="w-full text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
         />
         {preview && preview !== url.trim() && (
-          <p className="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
             <ExternalLink size={10} />
             已转换为: {preview}
           </p>
@@ -318,17 +369,17 @@ function AddProviderForm({
 
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">名称</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">名称</label>
           <input
             type="text"
             placeholder="auto"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full text-xs px-2.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400"
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">类型</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">类型</label>
           <select
             value={behavior}
             onChange={(e) => {
@@ -336,17 +387,17 @@ function AddProviderForm({
               setBehavior(b)
               setNoResolve(b === 'ipcidr')
             }}
-            className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full text-xs px-2.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer"
           >
             {BEHAVIORS.map((b) => <option key={b}>{b}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">目标代理组</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">目标代理组</label>
           <select
             value={target}
             onChange={(e) => setTarget(e.target.value)}
-            className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full text-xs px-2.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer"
           >
             {allTargets.map((t) => <option key={t}>{t}</option>)}
           </select>
@@ -354,19 +405,19 @@ function AddProviderForm({
       </div>
 
       <div className="flex items-center justify-between">
-        <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
+        <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={noResolve}
             onChange={(e) => setNoResolve(e.target.checked)}
-            className="rounded"
+            className="rounded accent-indigo-500"
           />
           no-resolve
         </label>
         <button
           onClick={handleSubmit}
           disabled={!url.trim()}
-          className="flex items-center gap-1 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-xs rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white text-xs font-medium rounded-xl transition-all"
         >
           <Check size={12} />
           确认添加
@@ -406,11 +457,11 @@ function SortableProviderRow({
   const behaviorColor: Record<RuleProvider['behavior'], string> = {
     domain: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
     ipcidr: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-    classical: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    classical: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
   }
 
   const targetColor: Record<string, string> = {
-    DIRECT: 'text-green-600 dark:text-green-400',
+    DIRECT: 'text-emerald-600 dark:text-emerald-400',
     REJECT: 'text-red-600 dark:text-red-400',
   }
 
@@ -428,13 +479,13 @@ function SortableProviderRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group rounded-lg border transition-colors ${
+      className={`group rounded-xl border transition-all shadow-sm ${
         provider.enabled
-          ? 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-          : 'border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 opacity-60'
-      } ${active ? 'ring-2 ring-blue-400' : ''}`}
+          ? 'border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 hover:shadow-md'
+          : 'border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/20 opacity-55'
+      } ${active ? 'ring-2 ring-indigo-400' : ''}`}
     >
-      <div className="flex items-center gap-2 px-2 py-2">
+      <div className="flex items-center gap-2 px-3 py-2.5">
         {/* Drag handle */}
         <button
           {...listeners}
@@ -451,7 +502,7 @@ function SortableProviderRow({
           onClick={() => onUpdate({ enabled: !provider.enabled })}
           title={provider.enabled ? '点击禁用' : '点击启用'}
           className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-            provider.enabled ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
+            provider.enabled ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-600'
           }`}
         >
           <span
@@ -467,16 +518,16 @@ function SortableProviderRow({
             autoFocus
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
-            className="w-24 text-xs px-1.5 py-0.5 rounded border border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none"
+            className="w-24 text-xs px-2 py-1 rounded-lg border border-indigo-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-400"
           />
         ) : (
-          <span className="text-xs font-medium text-gray-900 dark:text-gray-100 w-28 truncate shrink-0">
+          <span className="text-xs font-semibold text-gray-900 dark:text-gray-100 w-28 truncate shrink-0">
             {provider.name}
           </span>
         )}
 
         {/* Behavior badge */}
-        <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${behaviorColor[provider.behavior]}`}>
+        <span className={`text-xs px-1.5 py-0.5 rounded-lg shrink-0 font-mono font-medium ${behaviorColor[provider.behavior]}`}>
           {provider.behavior}
         </span>
 
@@ -489,10 +540,10 @@ function SortableProviderRow({
               <select
                 value={provider.target}
                 onChange={(e) => onUpdate({ target: e.target.value })}
-                className={`text-xs px-1.5 py-0.5 rounded border focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium bg-transparent ${
+                className={`text-xs px-1.5 py-0.5 rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-400 font-medium bg-transparent cursor-pointer ${
                   !targetInList
                     ? 'border-red-400 text-red-500 dark:text-red-400'
-                    : `border-gray-200 dark:border-gray-700 ${targetColor[provider.target] ?? 'text-purple-600 dark:text-purple-400'}`
+                    : `border-gray-200 dark:border-gray-700 ${targetColor[provider.target] ?? 'text-indigo-600 dark:text-indigo-400'}`
                 }`}
                 title={!targetInList ? `代理组 "${provider.target}" 不存在，Clash 加载时会报 proxy not found` : undefined}
               >
@@ -512,10 +563,10 @@ function SortableProviderRow({
         {/* no-resolve toggle */}
         <button
           onClick={() => onUpdate({ noResolve: !provider.noResolve })}
-          className={`text-xs px-1.5 py-0.5 rounded border transition-colors shrink-0 ${
+          className={`text-xs px-1.5 py-0.5 rounded-lg border transition-all shrink-0 font-medium ${
             provider.noResolve
               ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-              : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
+              : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300 hover:text-gray-500'
           }`}
           title="切换 no-resolve"
         >
@@ -528,7 +579,7 @@ function SortableProviderRow({
             value={editUrl}
             onChange={(e) => setEditUrl(e.target.value)}
             placeholder="URL"
-            className="flex-1 min-w-0 text-xs px-1.5 py-0.5 rounded border border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none"
+            className="flex-1 min-w-0 text-xs px-2 py-0.5 rounded-lg border border-indigo-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-400"
           />
         )}
         {!editing && provider.url && (
@@ -541,10 +592,10 @@ function SortableProviderRow({
         <div className="flex items-center gap-1 shrink-0 ml-auto">
           {editing ? (
             <>
-              <button onClick={saveEdit} className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600">
+              <button onClick={saveEdit} className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-emerald-600 transition-all">
                 <Check size={12} />
               </button>
-              <button onClick={() => { setEditing(false); setEditUrl(provider.url ?? ''); setEditName(provider.name) }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400">
+              <button onClick={() => { setEditing(false); setEditUrl(provider.url ?? ''); setEditName(provider.name) }} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-all">
                 <X size={12} />
               </button>
             </>
@@ -552,16 +603,16 @@ function SortableProviderRow({
             <>
               <button
                 onClick={() => { setEditing(true); setEditUrl(provider.url ?? ''); setEditName(provider.name) }}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-all"
+                className="p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all"
               >
-                <Pencil size={11} />
+                <Pencil size={12} />
               </button>
               {!provider.isPreset && (
                 <button
                   onClick={onRemove}
-                  className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                  className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
                 >
-                  <Trash2 size={11} />
+                  <Trash2 size={12} />
                 </button>
               )}
             </>
@@ -574,7 +625,7 @@ function SortableProviderRow({
 
 // ── Manual Rules ──────────────────────────────────────────────────────────────
 function ManualRulesSection() {
-  const { rules, addRule, removeRule, reorderRules, proxyGroups } = useAppStore()
+  const { rules, addRule, removeRule, reorderRules, proxyGroups, ruleProviders } = useAppStore()
   const [newRule, setNewRule] = useState({
     type: 'DOMAIN',
     payload: '',
@@ -631,20 +682,34 @@ function ManualRulesSection() {
             <div className="grid grid-cols-3 gap-2">
               <select
                 value={newRule.type}
-                onChange={(e) => setNewRule({ ...newRule, type: e.target.value })}
+                onChange={(e) => {
+                  const type = e.target.value
+                  const payload = type === 'RULE-SET' ? (ruleProviders[0]?.name ?? '') : ''
+                  setNewRule({ ...newRule, type, payload })
+                }}
                 className="text-xs px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {RULE_TYPES.map((t) => <option key={t}>{t}</option>)}
               </select>
-              <input
-                type="text"
-                placeholder="payload"
-                value={newRule.payload}
-                onChange={(e) => setNewRule({ ...newRule, payload: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddRule()}
-                disabled={newRule.type === 'MATCH'}
-                className="text-xs px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
-              />
+              {newRule.type === 'RULE-SET' ? (
+                <select
+                  value={newRule.payload}
+                  onChange={(e) => setNewRule({ ...newRule, payload: e.target.value })}
+                  className="text-xs px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {ruleProviders.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="payload"
+                  value={newRule.payload}
+                  onChange={(e) => setNewRule({ ...newRule, payload: e.target.value })}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddRule()}
+                  disabled={newRule.type === 'MATCH'}
+                  className="text-xs px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                />
+              )}
               <select
                 value={newRule.target}
                 onChange={(e) => setNewRule({ ...newRule, target: e.target.value })}

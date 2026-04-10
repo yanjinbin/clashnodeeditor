@@ -111,7 +111,14 @@ export function generateClashConfig(
     mode: settings.mode,
     'log-level': settings['log-level'],
     'external-controller': settings['external-controller'],
+    'tcp-concurrent': settings['tcp-concurrent'],
+    'unified-delay': settings['unified-delay'],
+    'find-process-mode': settings['find-process-mode'],
+    'geodata-mode': settings['geodata-mode'],
+    'geox-url': settings['geox-url'],
+    'global-client-fingerprint': settings['global-client-fingerprint'],
     dns: settings.dns,
+    sniffer: settings.sniffer,
     proxies,
     'proxy-groups': proxyGroups,
   }
@@ -131,27 +138,49 @@ export function generateClashConfig(
     }
   }
 
-  // Manual rules except MATCH
-  const nonMatchRules = rules.filter((r) => r.type !== 'MATCH')
-  const matchRule = rules.find((r) => r.type === 'MATCH')
-
-  // Auto-generate RULE-SET rules from enabled providers (in provider list order)
-  const ruleSetLines = enabledProviders.map((rp) => {
-    const noResolve = rp.noResolve || rp.behavior === 'ipcidr'
-    return noResolve
-      ? `RULE-SET,${rp.name},${rp.target},no-resolve`
-      : `RULE-SET,${rp.name},${rp.target}`
-  })
+  const enabledProviderMap = new Map(enabledProviders.map((p) => [p.name, p]))
 
   const renderRule = (r: { type: string; payload: string; target: string; noResolve?: boolean }) => {
     if (r.type === 'MATCH') return `MATCH,${r.target}`
+    if (r.type === 'RULE-SET') {
+      return r.noResolve
+        ? `RULE-SET,${r.payload},${r.target},no-resolve`
+        : `RULE-SET,${r.payload},${r.target}`
+    }
     if (r.noResolve) return `${r.type},${r.payload},${r.target},no-resolve`
     return `${r.type},${r.payload},${r.target}`
   }
 
+  // Process all rules in order; RULE-SET entries are emitted inline when provider is enabled
+  const allRuleLines: string[] = []
+  let matchRule: { type: string; payload: string; target: string; noResolve?: boolean } | undefined
+  const handledProviders = new Set<string>()
+
+  for (const rule of rules) {
+    if (rule.type === 'MATCH') {
+      matchRule = rule
+      continue
+    }
+    if (rule.type === 'RULE-SET') {
+      handledProviders.add(rule.payload)
+      if (!enabledProviderMap.has(rule.payload)) continue  // skip if provider disabled/missing
+      allRuleLines.push(renderRule(rule))
+    } else {
+      allRuleLines.push(renderRule(rule))
+    }
+  }
+
+  // Append any enabled providers not yet referenced in the rules array
+  for (const rp of enabledProviders) {
+    if (handledProviders.has(rp.name)) continue
+    const noResolve = rp.noResolve || rp.behavior === 'ipcidr'
+    allRuleLines.push(
+      noResolve ? `RULE-SET,${rp.name},${rp.target},no-resolve` : `RULE-SET,${rp.name},${rp.target}`
+    )
+  }
+
   config.rules = [
-    ...nonMatchRules.map(renderRule),
-    ...ruleSetLines,
+    ...allRuleLines,
     ...(matchRule ? [renderRule(matchRule)] : []),
   ]
 

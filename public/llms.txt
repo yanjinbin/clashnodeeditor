@@ -1,0 +1,36 @@
+# 多源机场节点配置编辑器 (Clash Node Editor)
+
+> A free, browser-based tool for merging multiple Clash / Mihomo proxy subscription sources, managing proxy groups, and exporting complete Clash Meta configuration files.
+
+## What this tool does
+
+- **Subscription Source Manager**: Add multiple airport (proxy provider) subscription URLs or upload local YAML files. Fetches and parses proxies from each source via a privacy-preserving Vercel Edge Function proxy — no third-party services involved.
+- **Proxy Group Editor**: Visually configure proxy groups (select, url-test, fallback, load-balance, relay). Drag-and-drop node ordering, batch add/remove, IP quality detection.
+- **Rule Set Manager**: Manage rule providers (HTTP-based YAML rule sets), configure per-service routing targets. Includes one-click AI service rules (OpenAI, Claude, Gemini, Copilot).
+- **Config Preview & Export**: Generate a complete Clash Meta / Mihomo YAML configuration. Edit DNS settings, tuning parameters, copy to clipboard or download as file.
+
+## Key features
+
+- All data processed locally in the browser — no server-side storage
+- Supports Clash Meta / Mihomo compatible configuration format
+- Prefix-based deduplication for nodes and proxy groups across sources
+- User-Agent spoofing to retrieve subscription in correct format
+- IP geolocation quality check per node (residential / datacenter / VPN detection)
+- Dark mode support
+
+## Technical stack
+
+- React + TypeScript + Vite
+- Tailwind CSS v4
+- Deployed on Vercel (Edge Functions for subscription proxying)
+- State managed with Zustand + localStorage persistence
+
+## Use cases
+
+1. Users with multiple proxy provider (airport) subscriptions who want a unified Clash config
+2. Users who need to customize proxy groups beyond what their airport provides
+3. Advanced users configuring split-tunneling rules for specific services (AI tools, streaming, etc.)
+
+## URL
+
+https://clashnodeeditor.vercel.app/

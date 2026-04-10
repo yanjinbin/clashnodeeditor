@@ -3,6 +3,7 @@ import SourceManager from './components/SourceManager'
 import ProxyGroupEditor from './components/ProxyGroupEditor'
 import RuleSetManager from './components/RuleSetManager'
 import ConfigPreview from './components/ConfigPreview'
+import AdBanner from './components/AdBanner'
 import { Globe, Users, Shield, FileText } from 'lucide-react'
 
 const TABS = [
@@ -12,61 +13,98 @@ const TABS = [
   { id: 'preview' as const, label: '预览导出', icon: FileText },
 ]
 
+const AD_SLOT_LEFT  = '9398106385'
+const AD_SLOT_RIGHT = '1439725312'
+
+// 左右广告列宽 — xl:144px，与 max-w-5xl(1024px) 合计 1312px ≤ 1280px 时自动隐藏
+const AD_COL = 'w-36' // 144px
+
 export default function App() {
   const { activeTab, setActiveTab } = useAppStore()
 
   return (
-    // 根容器：flex 列，占满视口，overflow-hidden 只在最外层防止 body 滚动
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
 
-      {/* Header：shrink-0 固定高度，不参与 flex 伸缩 */}
-      <header className="shrink-0 flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-xl leading-none select-none">⚙️</span>
-          <h1 className="text-sm font-bold text-gray-900 dark:text-gray-100">多源✈️机场节点配置编辑器</h1>
-          <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
-            {new Date(__BUILD_TIME__).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}
-          </span>
-        </div>
-        <div className="ml-4 flex gap-1">
-          {TABS.map((tab) => {
-            const Icon = tab.icon
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <Icon size={14} />
-                {tab.label}
-              </button>
-            )
-          })}
+      {/* ── Header：三列对齐，spacer 宽度与广告列一致 ─────────────────── */}
+      <header className="shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="flex h-full">
+          {/* 左 spacer（对齐广告列） */}
+          <div className={`hidden xl:block ${AD_COL} shrink-0`} />
+
+          {/* 品牌 + Tab，与内容区等宽对齐 */}
+          <div className="flex-1 min-w-0 flex justify-center">
+            <div className="w-full max-w-5xl">
+              <div className="flex items-center gap-3 px-6 pt-3 pb-0">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-200 dark:shadow-indigo-900/40 shrink-0">
+                  <span className="text-base leading-none select-none">✈️</span>
+                </div>
+                <div>
+                  <h1 className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                    多源机场节点配置编辑器 — Clash 订阅合并 & 代理组管理工具
+                  </h1>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono leading-tight">
+                    {new Date(__BUILD_TIME__).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}
+                  </p>
+                </div>
+              </div>
+
+              <nav className="flex gap-0.5 px-5 pt-2" role="tablist">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon
+                  const active = activeTab === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={[
+                        'relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl transition-all select-none',
+                        active
+                          ? 'text-indigo-600 dark:text-indigo-400 bg-gray-50 dark:bg-gray-950'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50/60 dark:hover:bg-gray-800/60',
+                      ].join(' ')}
+                    >
+                      <Icon size={15} />
+                      <span>{tab.label}</span>
+                      {active && (
+                        <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-indigo-500 dark:bg-indigo-400 rounded-t-full" />
+                      )}
+                    </button>
+                  )
+                })}
+              </nav>
+            </div>
+          </div>
+
+          {/* 右 spacer */}
+          <div className={`hidden xl:block ${AD_COL} shrink-0`} />
         </div>
       </header>
 
-      {/*
-        main：flex-1 min-h-0
-        - flex-1 → 吃掉 header 剩余的所有高度
-        - min-h-0 → 关键！覆盖 flex 子项默认的 min-height:auto，
-                    否则内容撑高后此层不会收缩，溢出根容器
-        - flex flex-col → 继续传递 flex 上下文给子层
-      */}
-      <main className="flex-1 min-h-0 flex flex-col">
-        {/*
-          居中容器：flex-1 min-h-0 继续传递，
-          max-w-5xl 限制宽度，w-full 保证窄屏不缩
-        */}
-        <div className="flex-1 min-h-0 flex flex-col w-full max-w-5xl mx-auto bg-white dark:bg-gray-900">
-          {activeTab === 'sources' && <SourceManager />}
-          {activeTab === 'groups' && <ProxyGroupEditor />}
-          {activeTab === 'rules' && <RuleSetManager />}
-          {activeTab === 'preview' && <ConfigPreview />}
+      {/* ── Main：三列布局 ────────────────────────────────────────────── */}
+      <main className="flex-1 min-h-0 overflow-hidden flex">
+
+        {/* 左侧广告列 — xl(≥1280px) 起显示 */}
+        <aside className={`hidden xl:flex flex-col ${AD_COL} shrink-0 overflow-y-auto pt-3 px-2 gap-4 bg-gray-50 dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800`}>
+          <AdBanner slot={AD_SLOT_LEFT} />
+        </aside>
+
+        {/* 主内容区 */}
+        <div className="flex-1 min-w-0 min-h-0 overflow-hidden flex justify-center">
+          <div className="w-full max-w-5xl min-h-0 flex flex-col bg-white dark:bg-gray-900 border-x border-gray-200 dark:border-gray-800">
+            {activeTab === 'sources' && <SourceManager />}
+            {activeTab === 'groups' && <ProxyGroupEditor />}
+            {activeTab === 'rules' && <RuleSetManager />}
+            {activeTab === 'preview' && <ConfigPreview />}
+          </div>
         </div>
+
+        {/* 右侧广告列 */}
+        <aside className={`hidden xl:flex flex-col ${AD_COL} shrink-0 overflow-y-auto pt-3 px-2 gap-4 bg-gray-50 dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800`}>
+          <AdBanner slot={AD_SLOT_RIGHT} />
+        </aside>
+
       </main>
     </div>
   )

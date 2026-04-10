@@ -116,25 +116,27 @@ export default function ProxyGroupEditor() {
   )
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+    <div className="h-full overflow-y-auto">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+        <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
           代理组配置
         </h2>
         <button
           onClick={handleAddGroup}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shadow-sm shadow-indigo-200 dark:shadow-none transition-all"
         >
-          <Plus size={13} />
+          <Plus size={14} />
           新建分组
         </button>
       </div>
 
-      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+      <div ref={listRef} className="p-4 space-y-3">
         {proxyGroups.length === 0 && (
-          <div className="text-center py-8 text-gray-400 text-sm">
-            <Users size={32} className="mx-auto mb-2 opacity-30" />
-            <p>点击"新建分组"开始配置</p>
+          <div className="flex flex-col items-center justify-center py-16 text-gray-300 dark:text-gray-600">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+              <Users size={28} className="opacity-60" />
+            </div>
+            <p className="text-sm font-medium text-gray-400 dark:text-gray-500">点击"新建分组"开始配置</p>
           </div>
         )}
         {proxyGroups.map((group) => (
@@ -349,11 +351,11 @@ function GroupCard({
   }
 
   const typeColor: Record<ProxyGroupType, string> = {
-    select: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-    'url-test': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-    fallback: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-    'load-balance': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-    relay: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
+    select: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+    'url-test': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    fallback: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    'load-balance': 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+    relay: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
   }
 
   const q = proxySearch.toLowerCase()
@@ -387,36 +389,36 @@ function GroupCard({
   const sourceOnlySections = proxySections.filter((s) => s.label !== '代理组')
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2.5">
-        <button onClick={onToggleExpand} className="text-gray-400 hover:text-gray-600 transition-colors">
+      <div className="flex items-center gap-2.5 px-4 py-3">
+        <button onClick={onToggleExpand} className="text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors p-0.5">
           {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
         </button>
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColor[group.type]}`}>
+        <span className={`text-xs px-2 py-0.5 rounded-lg font-medium font-mono ${typeColor[group.type]}`}>
           {group.type}
         </span>
-        <span className="flex-1 text-sm font-medium text-gray-900 dark:text-gray-100">{group.name}</span>
+        <span className="flex-1 text-sm font-semibold text-gray-900 dark:text-gray-100">{group.name}</span>
         {group.autoAllNodes ? (
-          <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 shrink-0">自动全部节点</span>
+          <span className="text-xs px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 shrink-0 font-medium border border-emerald-200 dark:border-emerald-800/50">自动全部节点</span>
         ) : (
-          <span className="text-xs text-gray-400">{group.proxies.length} 个节点</span>
+          <span className="text-xs text-gray-400 font-mono">{group.proxies.length} 节点</span>
         )}
-        <button onClick={onEdit} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 transition-colors">
-          <Settings size={13} />
+        <button onClick={onEdit} className="p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all">
+          <Settings size={14} />
         </button>
-        <button onClick={onRemove} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors">
-          <Trash2 size={13} />
+        <button onClick={onRemove} className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all">
+          <Trash2 size={14} />
         </button>
       </div>
 
       {/* Edit settings */}
       {editing && (
-        <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-900/50 space-y-3">
+        <div className="border-t border-gray-100 dark:border-gray-700/60 px-4 py-4 bg-gray-50/80 dark:bg-gray-900/40 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">分组名称</label>
-              <div className="flex items-center gap-1">
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">分组名称</label>
+              <div className="flex items-center gap-1.5">
                 <input
                   ref={nameInputRef}
                   type="text"
@@ -427,10 +429,10 @@ function GroupCard({
                     if (e.key === 'Enter') { e.preventDefault(); commitName() }
                     if (e.key === 'Escape') { setNameDraft(group.name); setNameError(''); nameInputRef.current?.blur() }
                   }}
-                  className={`flex-1 text-sm px-2 py-1.5 rounded border bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 ${
+                  className={`flex-1 text-sm px-2.5 py-1.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 ${
                     nameError
                       ? 'border-red-400 focus:ring-red-400'
-                      : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+                      : 'border-gray-200 dark:border-gray-700 focus:ring-indigo-400 focus:border-indigo-400'
                   }`}
                 />
                 <EmojiPicker
@@ -445,11 +447,11 @@ function GroupCard({
               )}
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">类型</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">类型</label>
               <select
                 value={group.type}
                 onChange={(e) => onUpdate({ type: e.target.value as ProxyGroupType })}
-                className="w-full text-sm px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full text-sm px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 cursor-pointer"
               >
                 {GROUP_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>{t.label} — {t.desc}</option>
@@ -460,21 +462,21 @@ function GroupCard({
           {group.type !== 'select' && group.type !== 'relay' && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">测速 URL</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">测速 URL</label>
                 <input
                   type="text"
                   value={group.url ?? ''}
                   onChange={(e) => onUpdate({ url: e.target.value })}
-                  className="w-full text-sm px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full text-sm px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">间隔(秒)</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">间隔（秒）</label>
                 <input
                   type="number"
                   value={group.interval ?? 300}
                   onChange={(e) => onUpdate({ interval: Number(e.target.value) })}
-                  className="w-full text-sm px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full text-sm px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
                 />
               </div>
             </div>
@@ -484,33 +486,33 @@ function GroupCard({
 
       {/* Proxy list with DnD — always batch-select mode */}
       {expanded && (
-        <div className="border-t border-gray-100 dark:border-gray-700">
+        <div className="border-t border-gray-100 dark:border-gray-700/60">
           {/* autoAllNodes: count header */}
           {group.autoAllNodes && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-gray-100 dark:border-gray-700/50">
+            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50/60 dark:bg-emerald-900/10 border-b border-gray-100 dark:border-gray-700/50">
               <CheckSquare size={12} className="text-emerald-500" />
-              <span className="text-xs text-emerald-600 dark:text-emerald-400">自动包含全部导入节点</span>
-              <span className="text-xs text-gray-400 ml-auto">共 {sourceOnlySections.flatMap((s) => s.items).length} 个</span>
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">自动包含全部导入节点</span>
+              <span className="text-xs text-gray-400 ml-auto font-mono">共 {sourceOnlySections.flatMap((s) => s.items).length} 个</span>
             </div>
           )}
           {/* Batch remove toolbar */}
           {!group.autoAllNodes && group.proxies.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-700/20">
-              <button onClick={toggleRemoveAll} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+            <div className="flex items-center gap-2.5 px-4 py-2 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/60 dark:bg-gray-700/20">
+              <button onClick={toggleRemoveAll} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                 {allRemoveSelected
                   ? <CheckSquare size={12} className="text-red-500" />
                   : <Square size={12} />}
                 全选
               </button>
-              <span className="text-xs text-gray-400">
-                {removeSelected.size > 0 ? `已选 ${removeSelected.size} 个` : `共 ${group.proxies.length} 个`}
+              <span className="text-xs text-gray-400 font-mono">
+                {removeSelected.size > 0 ? `已选 ${removeSelected.size}` : `共 ${group.proxies.length} 节点`}
               </span>
               <button
                 onClick={handleBatchRemove}
                 disabled={removeSelected.size === 0}
-                className="ml-auto text-xs px-2 py-0.5 rounded bg-red-500 hover:bg-red-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white transition-colors"
+                className="ml-auto text-xs px-3 py-1 rounded-lg bg-red-500 hover:bg-red-400 active:bg-red-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white font-medium transition-all"
               >
-                取消选中 {removeSelected.size > 0 ? `(${removeSelected.size})` : ''}
+                移除{removeSelected.size > 0 ? ` (${removeSelected.size})` : ''}
               </button>
             </div>
           )}
@@ -532,13 +534,13 @@ function GroupCard({
                 )}
                 {group.autoAllNodes && sourceOnlySections.map((section) => (
                   <div key={section.label}>
-                    <div className="sticky top-0 px-3 py-1 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex items-center gap-1">
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{section.label}</span>
-                      <span className="ml-1 text-xs text-gray-300 dark:text-gray-600">{section.items.length}</span>
+                    <div className="sticky top-0 px-4 py-1.5 bg-gray-50 dark:bg-gray-800/90 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-1.5">
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{section.label}</span>
+                      <span className="ml-1 text-[10px] text-gray-300 dark:text-gray-600 font-mono">{section.items.length}</span>
                     </div>
                     {section.items.map((name) => (
-                      <div key={name} className="flex items-center gap-2 px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50/20 dark:bg-emerald-900/10">
-                        <CheckSquare size={12} className="shrink-0 text-emerald-500" />
+                      <div key={name} className="flex items-center gap-2 px-4 py-1.5 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50/30 dark:bg-emerald-900/10">
+                        <CheckSquare size={11} className="shrink-0 text-emerald-500" />
                         <span className="flex-1 truncate">{name}</span>
                       </div>
                     ))}
@@ -557,31 +559,31 @@ function GroupCard({
             </SortableContext>
             <DragOverlay>
               {activeId ? (
-                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded shadow-lg text-sm opacity-90">
-                  <GripVertical size={13} className="text-blue-400" />
-                  <span className="text-gray-900 dark:text-gray-100">{activeId}</span>
+                <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-700 rounded-lg shadow-xl text-sm opacity-95">
+                  <GripVertical size={13} className="text-indigo-400" />
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{activeId}</span>
                 </div>
               ) : null}
             </DragOverlay>
           </DndContext>
 
           {/* Batch add proxy picker — hidden for autoAllNodes groups */}
-          {!group.autoAllNodes && <div className="p-2 border-t border-gray-100 dark:border-gray-700">
+          {!group.autoAllNodes && <div className="px-3 py-3 border-t border-gray-100 dark:border-gray-700/60">
             {showProxyPicker ? (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {/* Search + close */}
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   <input
                     type="text"
                     placeholder="搜索节点 / 代理组..."
                     value={proxySearch}
                     onChange={(e) => setProxySearch(e.target.value)}
                     autoFocus
-                    className="flex-1 text-xs px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400 focus:bg-white dark:focus:bg-gray-800"
                   />
                   <button
                     onClick={() => { setShowProxyPicker(false); setProxySearch(''); setPickerSelected(new Set()) }}
-                    className="p-1.5 text-gray-400 hover:text-gray-600"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
                   >
                     <X size={13} />
                   </button>
@@ -594,14 +596,14 @@ function GroupCard({
                     type="text"
                     value={filterCountry}
                     onChange={(e) => setFilterCountry(e.target.value.toUpperCase().slice(0, 2))}
-                    placeholder="国家 CC"
+                    placeholder="CC"
                     maxLength={2}
-                    className="w-16 text-xs px-1.5 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono uppercase"
+                    className="w-12 text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 font-mono uppercase text-center"
                   />
                   <select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value as typeof filterType)}
-                    className="text-xs px-1.5 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer"
                   >
                     <option value="all">全部类型</option>
                     <option value="residential">住宅 IP</option>
@@ -611,7 +613,7 @@ function GroupCard({
                   {(filterCountry || filterType !== 'all') && (
                     <button
                       onClick={() => { setFilterCountry(''); setFilterType('all') }}
-                      className="text-xs text-gray-400 hover:text-gray-600"
+                      className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
                     >
                       <X size={11} />
                     </button>
@@ -622,7 +624,7 @@ function GroupCard({
                       handleFetchIps(allNames)
                     }}
                     disabled={ipFetchState === 'loading'}
-                    className="ml-auto flex items-center gap-1 text-xs px-2 py-1 rounded border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 disabled:opacity-50 transition-colors shrink-0"
+                    className="ml-auto flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg border border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 disabled:opacity-50 transition-all shrink-0"
                   >
                     {ipFetchState === 'loading'
                       ? <><Loader size={10} className="animate-spin" />查询中…</>
@@ -631,7 +633,7 @@ function GroupCard({
                 </div>
 
                 {/* Toolbar: select all filtered + add */}
-                <div className="flex items-center gap-2 px-0.5">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
                       if (allFilteredSelected) {
@@ -644,29 +646,29 @@ function GroupCard({
                         setPickerSelected((prev) => new Set([...prev, ...allFilteredItems]))
                       }
                     }}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
                     {allFilteredSelected
-                      ? <CheckSquare size={12} className="text-blue-500" />
+                      ? <CheckSquare size={12} className="text-indigo-500" />
                       : <Square size={12} />}
                     全选筛选结果
                   </button>
-                  <span className="text-xs text-gray-400 ml-1">
-                    {pickerSelected.size > 0 ? `已选 ${pickerSelected.size} 个` : ''}
+                  <span className="text-xs text-gray-400 font-mono">
+                    {pickerSelected.size > 0 ? `已选 ${pickerSelected.size}` : ''}
                   </span>
                   <button
                     onClick={handleBatchAdd}
                     disabled={pickerSelected.size === 0}
-                    className="ml-auto text-xs px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white transition-colors"
+                    className="ml-auto text-xs px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white font-medium transition-all"
                   >
-                    批量添加 {pickerSelected.size > 0 ? `(${pickerSelected.size})` : ''}
+                    批量添加{pickerSelected.size > 0 ? ` (${pickerSelected.size})` : ''}
                   </button>
                 </div>
 
                 {/* List */}
-                <div className="max-h-52 overflow-y-auto rounded border border-gray-200 dark:border-gray-700">
+                <div className="max-h-52 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700/80">
                   {filteredSections.length === 0 && (
-                    <p className="text-center py-3 text-xs text-gray-400">
+                    <p className="text-center py-4 text-xs text-gray-400">
                       {proxySections.length === 0 ? '请先在订阅源页面导入节点' : '无匹配节点'}
                     </p>
                   )}
@@ -674,17 +676,17 @@ function GroupCard({
                     const sectionAllChecked = section.items.every((n) => pickerSelected.has(n))
                     return (
                       <div key={section.label}>
-                        <div className="sticky top-0 flex items-center gap-2 px-3 py-1 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+                        <div className="sticky top-0 flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/90 border-b border-gray-100 dark:border-gray-700/50">
                           <button
                             onClick={() => toggleSectionAll(section.items)}
-                            className="flex items-center gap-1 text-xs font-semibold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 uppercase tracking-wide transition-colors"
+                            className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 uppercase tracking-widest transition-colors"
                           >
                             {sectionAllChecked
-                              ? <CheckSquare size={11} className="text-blue-500" />
+                              ? <CheckSquare size={11} className="text-indigo-500" />
                               : <Square size={11} />}
                             {section.label}
                           </button>
-                          <span className="text-xs text-gray-300 dark:text-gray-600">{section.items.length}</span>
+                          <span className="text-[10px] text-gray-300 dark:text-gray-600 font-mono">{section.items.length}</span>
                         </div>
                         {section.items.map((name) => {
                           const checked = pickerSelected.has(name)
@@ -693,30 +695,30 @@ function GroupCard({
                             <div
                               key={name}
                               onClick={() => togglePickerItem(name)}
-                              className={`flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-700/50 last:border-0 ${
+                              className={`flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-700/30 last:border-0 ${
                                 checked
-                                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                  : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                  ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
+                                  : 'text-gray-700 dark:text-gray-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-900/10'
                               }`}
                             >
                               {checked
-                                ? <CheckSquare size={12} className="shrink-0 text-blue-500" />
-                                : <Square size={12} className="shrink-0 text-gray-300" />}
+                                ? <CheckSquare size={12} className="shrink-0 text-indigo-500" />
+                                : <Square size={12} className="shrink-0 text-gray-300 dark:text-gray-600" />}
                               <span className="flex-1 truncate">{name}</span>
                               {/* IP 信息徽章 */}
                               {ipd?.status === 'success' && (
                                 <span className="flex items-center gap-1 shrink-0">
                                   {ipd.countryCode && (
-                                    <span className="font-mono text-gray-400 dark:text-gray-500">{ipd.countryCode}</span>
+                                    <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px]">{ipd.countryCode}</span>
                                   )}
                                   {ipd.hosting && (
-                                    <span className="px-1 py-0.5 rounded text-[10px] bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">DC</span>
+                                    <span className="px-1 py-0.5 rounded-md text-[10px] bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 font-medium">DC</span>
                                   )}
                                   {ipd.proxy && (
-                                    <span className="px-1 py-0.5 rounded text-[10px] bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">VPN</span>
+                                    <span className="px-1 py-0.5 rounded-md text-[10px] bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 font-medium">VPN</span>
                                   )}
                                   {!ipd.hosting && !ipd.proxy && (
-                                    <span className="px-1 py-0.5 rounded text-[10px] bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">住宅</span>
+                                    <span className="px-1 py-0.5 rounded-md text-[10px] bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">住宅</span>
                                   )}
                                 </span>
                               )}
@@ -731,9 +733,9 @@ function GroupCard({
             ) : (
               <button
                 onClick={() => setShowProxyPicker(true)}
-                className="w-full flex items-center justify-center gap-1 py-1.5 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors border border-dashed border-blue-300 dark:border-blue-700"
+                className="w-full flex items-center justify-center gap-2 py-2 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/15 rounded-xl transition-all border-2 border-dashed border-indigo-200 dark:border-indigo-800 hover:border-indigo-400 dark:hover:border-indigo-600 font-medium"
               >
-                <Plus size={12} />
+                <Plus size={13} />
                 批量添加节点 / 代理组
               </button>
             )}
@@ -765,23 +767,22 @@ function SortableProxyItem({
       ref={setNodeRef}
       style={style}
       onClick={onToggleSelect}
-      className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-colors ${
-        selected ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-      } ${active ? 'ring-1 ring-blue-400' : ''}`}
+      className={`flex items-center gap-2 px-4 py-1.5 cursor-pointer transition-colors ${
+        selected ? 'bg-red-50 dark:bg-red-900/15' : 'hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10'
+      } ${active ? 'ring-1 ring-inset ring-indigo-400' : ''}`}
     >
-      {/* Drag handle — stop propagation so click-to-select doesn't fire on drag */}
       <button
         {...listeners}
         {...attributes}
         onClick={(e) => e.stopPropagation()}
-        className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors shrink-0"
+        className="cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors shrink-0"
       >
         <GripVertical size={13} />
       </button>
       <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate">{id}</span>
       {selected
         ? <CheckSquare size={13} className="shrink-0 text-red-500" />
-        : <Square size={13} className="shrink-0 text-gray-300" />}
+        : <Square size={13} className="shrink-0 text-gray-300 dark:text-gray-600" />}
     </div>
   )
 }
