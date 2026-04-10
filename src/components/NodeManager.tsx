@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
-import { Plus, Pencil, Trash2, Link2, ExternalLink, Wifi, WifiOff, Loader2, ChevronRight, ChevronDown, Copy, Check, AlertTriangle, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Link2, ExternalLink, Wifi, WifiOff, Loader2, ChevronRight, ChevronDown, Copy, Check, AlertTriangle, X, HelpCircle } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import type { Proxy } from '../types/clash'
 import { resolveToIp, fetchIpInfoBatch } from '../utils/ipUtils'
@@ -965,6 +965,8 @@ export default function NodeManager() {
   const [modalState, setModalState] = useState<{ open: boolean; editIndex: number | null }>({ open: false, editIndex: null })
   const [search, setSearch] = useState('')
   const [postSaveSuggest, setPostSaveSuggest] = useState<{ proxyName: string } | null>(null)
+  const [showHelp, setShowHelp] = useState(false)
+  const [aiPromptCopied, setAiPromptCopied] = useState(false)
 
   const allGroupNames = useMemo(() => proxyGroups.map((g) => g.name), [proxyGroups])
 
@@ -1031,13 +1033,22 @@ export default function NodeManager() {
               <span className="ml-2">— 支持配置 dialer-proxy 实现静态原生 IP 链式出口</span>
             </p>
           </div>
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shadow-sm"
-          >
-            <Plus size={15} />
-            添加节点
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHelp((v) => !v)}
+              title="使用指南 & 链式代理说明"
+              className={`p-2 rounded-xl border transition-colors ${showHelp ? 'border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
+            >
+              <HelpCircle size={15} />
+            </button>
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shadow-sm"
+            >
+              <Plus size={15} />
+              添加节点
+            </button>
+          </div>
         </div>
 
         {/* 链式代理 → 创建代理组 提醒 */}
@@ -1079,14 +1090,64 @@ export default function NodeManager() {
           </div>
         )}
 
-        {/* Tip banner */}
-        {manualProxies.length === 0 && (
-          <div className="rounded-xl border border-dashed border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20 p-6 text-center">
-            <Link2 size={28} className="mx-auto text-indigo-400 mb-3" />
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">添加自定义节点</p>
-            <p className="text-xs text-gray-400 max-w-sm mx-auto">
-              支持 socks5 / http / ss / vmess / vless / trojan 等协议，以及通过 <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">dialer-proxy</code> 配置链式代理，实现前置日本节点访问美国静态原生 IP 等场景。
+        {/* Help / Intro panel */}
+        {(showHelp || manualProxies.length === 0) && (
+          <div className="rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 p-5 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Link2 size={16} className="text-indigo-500 shrink-0 mt-0.5" />
+                <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">链式代理（dialer-proxy）使用指南</p>
+              </div>
+              {manualProxies.length > 0 && (
+                <button onClick={() => setShowHelp(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-0.5 rounded shrink-0">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+              通过 <code className="bg-white dark:bg-gray-800 px-1 rounded border border-gray-200 dark:border-gray-700 font-mono text-[11px]">dialer-proxy</code> 字段，
+              可让一个节点经由另一个代理/代理组建立连接，实现「链式出口」。
+              典型场景：<strong className="text-gray-800 dark:text-gray-200">日本节点 → 美国原生住宅 SOCKS5</strong>，
+              最终出口 IP 为美国原生 IP，可解锁流媒体、金融等 IP 敏感服务。
+              支持 socks5 / http / ss / vmess / vless / trojan / hysteria2 等全协议。
             </p>
+
+            {/* AI 提问模板 */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
+                <span className="text-base leading-none">🤖</span> 问 AI 配置模板
+              </p>
+              <div className="relative bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 pr-10">
+                <p className="text-xs text-gray-700 dark:text-gray-300 font-mono leading-relaxed select-all">
+                  如何在 Clash 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过日本节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 proxies / proxy-groups / rules 配置示例。
+                </p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText('如何在 Clash 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过日本节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 proxies / proxy-groups / rules 配置示例。')
+                    setAiPromptCopied(true)
+                    setTimeout(() => setAiPromptCopied(false), 2000)
+                  }}
+                  className="absolute top-2.5 right-2.5 p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                  title="复制提问模板"
+                >
+                  {aiPromptCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                </button>
+              </div>
+            </div>
+
+            {/* 参考文档 */}
+            <div className="flex items-center gap-2 pt-0.5">
+              <ExternalLink size={12} className="text-indigo-500 shrink-0" />
+              <a
+                href="https://zwbfnc29pf1.feishu.cn/wiki/OFfXwECbxi2l0gkFssMce70qnLi#IlvFdDz8toK3BCxVdWDchJiEnDJ"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                参考文档：高阶 — Socks 家宽原生住宅（自愿购买）
+              </a>
+            </div>
           </div>
         )}
 
