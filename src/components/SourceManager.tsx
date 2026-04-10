@@ -1,15 +1,134 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useCallback } from 'react'
 import { resolveToIp, IP_RE } from '../utils/ipUtils'
 import {
   Plus, Trash2, RefreshCw, CheckCircle, XCircle, Loader, Globe,
   Upload, AlertTriangle, ChevronDown, ChevronRight, ShieldCheck,
-  Pencil, Check, X, Tag, Layers, ExternalLink,
+  Pencil, Check, X, Tag, Layers, ExternalLink, RotateCcw,
+  Activity, Database, Clock,
 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { fetchAndParseYaml, parseYamlFull } from '../utils/parseYaml'
 import EmojiPicker from './EmojiPicker'
 import { PRESET_USER_AGENTS, DEFAULT_USER_AGENT } from '../types/clash'
-import type { SourceConfig } from '../types/clash'
+import type { SourceConfig, SubscriptionInfo } from '../types/clash'
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`
+}
+
+function formatExpire(ts: number): string {
+  return new Date(ts * 1000).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+
+// ── Protocol distribution chart ───────────────────────────────────────────────
+const TYPE_COLOR: Record<string, string> = {
+  ss:        'bg-green-500',
+  ssr:       'bg-green-400',
+  vmess:     'bg-blue-500',
+  vless:     'bg-purple-500',
+  trojan:    'bg-orange-500',
+  hysteria2: 'bg-pink-500',
+  hysteria:  'bg-pink-400',
+  tuic:      'bg-cyan-500',
+}
+const TYPE_TEXT: Record<string, string> = {
+  ss:        'text-green-600 dark:text-green-400',
+  ssr:       'text-green-500 dark:text-green-300',
+  vmess:     'text-blue-600 dark:text-blue-400',
+  vless:     'text-purple-600 dark:text-purple-400',
+  trojan:    'text-orange-600 dark:text-orange-400',
+  hysteria2: 'text-pink-600 dark:text-pink-400',
+  hysteria:  'text-pink-500 dark:text-pink-300',
+  tuic:      'text-cyan-600 dark:text-cyan-400',
+}
+
+function ProtocolChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
+  const counts = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const p of proxies) {
+      const t = (String(p.type ?? '')).toLowerCase()
+      map.set(t, (map.get(t) ?? 0) + 1)
+    }
+    return [...map.entries()].sort((a, b) => b[1] - a[1])
+  }, [proxies])
+
+  if (counts.length === 0) return null
+  const total = proxies.length
+  const top = counts.slice(0, 5)
+  const otherCount = counts.slice(5).reduce((s, [, n]) => s + n, 0)
+  const rows = otherCount > 0 ? [...top, ['其他', otherCount] as [string, number]] : top
+
+  return (
+    <div className="border-t border-gray-100 dark:border-gray-700/50 px-4 py-2.5 space-y-1.5">
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">协议分布</p>
+      {rows.map(([type, count]) => {
+        const pct = (count / total) * 100
+        const barColor = TYPE_COLOR[type] ?? 'bg-gray-400'
+        const textColor = TYPE_TEXT[type] ?? 'text-gray-500'
+        return (
+          <div key={type} className="flex items-center gap-2">
+            <span className={`text-[10px] font-mono w-16 shrink-0 truncate ${textColor}`}>{type}</span>
+            <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-gray-400 font-mono w-8 text-right shrink-0">{count}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Subscription Info ─────────────────────────────────────────────────────────
+function SubscriptionInfoBar({ info }: { info: SubscriptionInfo }) {
+  const used = info.upload + info.download
+  const pct = info.total > 0 ? Math.min((used / info.total) * 100, 100) : 0
+  const isExpiringSoon = info.expire && info.expire - Date.now() / 1000 < 7 * 86400
+  const isExpired = info.expire && info.expire < Date.now() / 1000
+
+  return (
+    <div className="border-t border-gray-100 dark:border-gray-700/50 px-4 py-2.5 space-y-1">
+      {/* Usage bar */}
+      <div className="flex items-center gap-2">
+        <Database size={11} className="text-gray-400 shrink-0" />
+        <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-700 ${
+              pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-indigo-500'
+            }`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className="text-[10px] text-gray-400 font-mono shrink-0 whitespace-nowrap">
+          {formatBytes(used)} / {formatBytes(info.total)}
+        </span>
+      </div>
+      {/* Activity: upload + download */}
+      <div className="flex items-center gap-3 text-[10px] text-gray-400">
+        <span className="flex items-center gap-1">
+          <Activity size={10} />
+          上传 {formatBytes(info.upload)} · 下载 {formatBytes(info.download)}
+        </span>
+        {info.expire !== undefined && (
+          <span className={`flex items-center gap-1 ml-auto font-medium ${
+            isExpired ? 'text-red-500' : isExpiringSoon ? 'text-amber-500' : 'text-gray-400'
+          }`}>
+            <Clock size={10} />
+            {isExpired ? '已到期' : `到期 ${formatExpire(info.expire)}`}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function SourceManager() {
@@ -19,6 +138,8 @@ export default function SourceManager() {
   const [newUa, setNewUa] = useState(DEFAULT_USER_AGENT)
   const [customUa, setCustomUa] = useState('')
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const [refreshingAll, setRefreshingAll] = useState(false)
+  const [refreshProgress, setRefreshProgress] = useState<{ done: number; total: number } | null>(null)
 
   // Global dup summary for the top banner
   const { dupProxyCount: totalDupProxy, dupGroupCount: totalDupGroup } = useMemo(() => {
@@ -32,8 +153,6 @@ export default function SourceManager() {
         groupMap.set(g.name, [...(groupMap.get(g.name) ?? []), src.name])
       }
     }
-    // Only count true cross-source duplicates (same name in 2+ sources)
-    // A name that exists in only 1 source and also in storeGroups is the normal "already imported" state
     let dupGroupCount = 0
     for (const [, srcs] of groupMap) {
       if (srcs.length > 1) dupGroupCount++
@@ -43,6 +162,16 @@ export default function SourceManager() {
   }, [sources, proxyGroups])
 
   const resolvedUa = newUa === '__custom__' ? customUa : newUa
+
+  const loadSource = useCallback(async (id: string, url: string, ua?: string) => {
+    updateSource(id, { status: 'loading', error: undefined })
+    try {
+      const { proxies, groups, subscriptionInfo } = await fetchAndParseYaml(url, ua)
+      updateSource(id, { status: 'success', proxies, importedGroups: groups, subscriptionInfo })
+    } catch (err) {
+      updateSource(id, { status: 'error', error: (err as Error).message, proxies: [] })
+    }
+  }, [updateSource])
 
   const handleAddSource = () => {
     if (!newUrl.trim()) return
@@ -54,14 +183,21 @@ export default function SourceManager() {
     loadSource(id, newUrl.trim(), resolvedUa || DEFAULT_USER_AGENT)
   }
 
-  const loadSource = async (id: string, url: string, ua?: string) => {
-    updateSource(id, { status: 'loading', error: undefined })
-    try {
-      const { proxies, groups } = await fetchAndParseYaml(url, ua)
-      updateSource(id, { status: 'success', proxies, importedGroups: groups })
-    } catch (err) {
-      updateSource(id, { status: 'error', error: (err as Error).message, proxies: [] })
-    }
+  const handleRefreshAll = async () => {
+    const activeSources = sources.filter((s) => s.url && !s.url.startsWith('file://'))
+    if (activeSources.length === 0) return
+    setRefreshingAll(true)
+    setRefreshProgress({ done: 0, total: activeSources.length })
+
+    // 并发刷新，每完成一个更新进度
+    await Promise.allSettled(
+      activeSources.map(async (src) => {
+        await loadSource(src.id, src.url, src.userAgent)
+        setRefreshProgress((prev) => prev ? { ...prev, done: prev.done + 1 } : null)
+      })
+    )
+    setRefreshingAll(false)
+    setTimeout(() => setRefreshProgress(null), 1500)
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,13 +219,32 @@ export default function SourceManager() {
     e.target.value = ''
   }
 
+  const hasRefreshableSources = sources.some((s) => s.url && !s.url.startsWith('file://'))
+
   return (
     <div className="h-full overflow-y-auto">
       {/* Form */}
       <div className="p-5 border-b border-gray-100 dark:border-gray-800">
-        <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 mb-3 uppercase tracking-widest">
-          机场订阅源
-        </h2>
+        {/* Header row */}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+            机场订阅源
+          </h2>
+          {hasRefreshableSources && (
+            <button
+              onClick={handleRefreshAll}
+              disabled={refreshingAll}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 disabled:opacity-60 transition-all"
+            >
+              {refreshingAll
+                ? <><Loader size={12} className="animate-spin" />
+                    {refreshProgress ? `${refreshProgress.done}/${refreshProgress.total}` : '刷新中…'}</>
+                : <><RotateCcw size={12} />刷新全部</>
+              }
+            </button>
+          )}
+        </div>
+
         <div className="flex items-start gap-2 mb-3 px-3 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/15 border border-emerald-200 dark:border-emerald-800/60">
           <ShieldCheck size={13} className="text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
           <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed">
@@ -191,7 +346,6 @@ function SourceCard({
 }) {
   const { sources, updateProxy, applyPrefixToSource, importSourceGroup, proxyGroups } = useAppStore()
 
-  // Compute dup counts directly from store so they update in the same render cycle
   const dupProxyCount = useMemo(() => {
     const nameMap = new Map<string, number>()
     for (const src of sources) {
@@ -207,8 +361,6 @@ function SourceCard({
         map.set(g.name, [...(map.get(g.name) ?? []), src.name])
       }
     }
-    // Only flag true cross-source duplicates (name appears in 2+ sources)
-    // Single-source groups that are already imported share the name by design — not a conflict
     const result = new Map<string, string[]>()
     for (const [name, srcs] of map) {
       if (srcs.length > 1) result.set(name, srcs)
@@ -281,6 +433,14 @@ function SourceCard({
         <div className="mx-4 mb-3 px-3 py-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-800/50 rounded-lg">
           {source.error}
         </div>
+      )}
+
+      {/* Subscription info */}
+      {source.subscriptionInfo && <SubscriptionInfoBar info={source.subscriptionInfo} />}
+
+      {/* Protocol chart */}
+      {source.status === 'success' && source.proxies.length > 0 && (
+        <ProtocolChart proxies={source.proxies} />
       )}
 
       {/* Tools bar */}
@@ -404,8 +564,6 @@ function SourceCard({
   )
 }
 
-// ── IP 质量检测 ───────────────────────────────────────────────────────────────
-
 // ── Proxy Row ─────────────────────────────────────────────────────────────────
 function ProxyRow({ name, type, server, onChange }: {
   name: string
@@ -434,25 +592,24 @@ function ProxyRow({ name, type, server, onChange }: {
       window.open(`https://ippure.com/?ip=${encodeURIComponent(ip)}`, '_blank', 'noopener,noreferrer')
     } catch {
       setIpState('error')
-      // 解析失败时直接用 server 原值兜底
       if (server) window.open(`https://ippure.com/?ip=${encodeURIComponent(server)}`, '_blank', 'noopener,noreferrer')
     }
   }
 
-  const TYPE_COLOR: Record<string, string> = {
-    ss: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    ssr: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    vmess: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    vless: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-    trojan: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  const BADGE_COLOR: Record<string, string> = {
+    ss:        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    ssr:       'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    vmess:     'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    vless:     'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    trojan:    'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     hysteria2: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
-    hysteria: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
-    tuic: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+    hysteria:  'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
+    tuic:      'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
   }
 
   return (
     <div className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-indigo-50/60 dark:hover:bg-indigo-900/10 transition-colors">
-      <span className={`text-[10px] px-1.5 py-0.5 rounded-md shrink-0 font-mono font-medium ${TYPE_COLOR[type.toLowerCase()] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
+      <span className={`text-[10px] px-1.5 py-0.5 rounded-md shrink-0 font-mono font-medium ${BADGE_COLOR[type.toLowerCase()] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
         {type || '?'}
       </span>
       {editing ? (

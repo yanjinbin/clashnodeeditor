@@ -47,7 +47,7 @@ const GROUP_TYPES: { value: ProxyGroupType; label: string; desc: string }[] = [
 ]
 
 export default function ProxyGroupEditor() {
-  const { sources, proxyGroups, addProxyGroup, removeProxyGroup, updateProxyGroup, addProxyToGroup, removeProxyFromGroup, reorderProxiesInGroup } =
+  const { sources, proxyGroups, addProxyGroup, removeProxyGroup, updateProxyGroup, addProxyToGroup, removeProxyFromGroup, reorderProxiesInGroup, reorderProxyGroups } =
     useAppStore()
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [editingGroup, setEditingGroup] = useState<string | null>(null)
@@ -58,6 +58,9 @@ export default function ProxyGroupEditor() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
+
+  // Outer drag state — for reordering group cards
+  const [outerActiveId, setOuterActiveId] = useState<string | null>(null)
 
   // Grouped sections for the proxy picker — no built-in presets
   const proxySections = [
@@ -139,29 +142,53 @@ export default function ProxyGroupEditor() {
             <p className="text-sm font-medium text-gray-400 dark:text-gray-500">点击"新建分组"开始配置</p>
           </div>
         )}
-        {proxyGroups.map((group) => (
-          <GroupCard
-            key={group.id}
-            group={group}
-            expanded={expandedGroups.has(group.id)}
-            editing={editingGroup === group.id}
-            proxySections={proxySections}
-            existingNames={proxyGroups.filter((g) => g.id !== group.id).map((g) => g.name)}
-            onToggleExpand={() => toggleExpand(group.id)}
-            onEdit={() => setEditingGroup(editingGroup === group.id ? null : group.id)}
-            onRemove={() => removeProxyGroup(group.id)}
-            onUpdate={(updates) => updateProxyGroup(group.id, updates)}
-            onAddProxy={(name) => addProxyToGroup(group.id, name)}
-            onRemoveProxy={(name) => removeProxyFromGroup(group.id, name)}
-            onReorder={(oldIdx, newIdx) => reorderProxiesInGroup(group.id, oldIdx, newIdx)}
-            sensors={sensors}
-            activeId={activeId}
-            overId={overId}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={(e) => handleDragEnd(e, group.id, group.proxies)}
-          />
-        ))}
+        {/* ── Outer DnD: group card reordering ── */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={(e) => setOuterActiveId(e.active.id as string)}
+          onDragEnd={(e) => {
+            setOuterActiveId(null)
+            const { active, over } = e
+            if (!over || active.id === over.id) return
+            const oldIdx = proxyGroups.findIndex((g) => g.id === active.id)
+            const newIdx = proxyGroups.findIndex((g) => g.id === over.id)
+            if (oldIdx !== -1 && newIdx !== -1) reorderProxyGroups(oldIdx, newIdx)
+          }}
+        >
+          <SortableContext items={proxyGroups.map((g) => g.id)} strategy={verticalListSortingStrategy}>
+            {proxyGroups.map((group) => (
+              <SortableGroupCard
+                key={group.id}
+                group={group}
+                expanded={expandedGroups.has(group.id)}
+                editing={editingGroup === group.id}
+                proxySections={proxySections}
+                existingNames={proxyGroups.filter((g) => g.id !== group.id).map((g) => g.name)}
+                onToggleExpand={() => toggleExpand(group.id)}
+                onEdit={() => setEditingGroup(editingGroup === group.id ? null : group.id)}
+                onRemove={() => removeProxyGroup(group.id)}
+                onUpdate={(updates) => updateProxyGroup(group.id, updates)}
+                onAddProxy={(name) => addProxyToGroup(group.id, name)}
+                onRemoveProxy={(name) => removeProxyFromGroup(group.id, name)}
+                onReorder={(oldIdx, newIdx) => reorderProxiesInGroup(group.id, oldIdx, newIdx)}
+                sensors={sensors}
+                activeId={activeId}
+                overId={overId}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={(e) => handleDragEnd(e, group.id, group.proxies)}
+              />
+            ))}
+          </SortableContext>
+          <DragOverlay>
+            {outerActiveId ? (
+              <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-700 rounded-xl shadow-2xl opacity-90 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {proxyGroups.find((g) => g.id === outerActiveId)?.name}
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </div>
     </div>
   )
@@ -192,6 +219,21 @@ interface GroupCardProps {
   onDragStart: (e: DragStartEvent) => void
   onDragOver: (e: DragOverEvent) => void
   onDragEnd: (e: DragEndEvent) => void
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>
+}
+
+function SortableGroupCard(props: GroupCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.group.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+  return (
+    <div ref={setNodeRef} style={style}>
+      <GroupCard {...props} dragHandleProps={{ ...listeners, ...attributes }} />
+    </div>
+  )
 }
 
 function GroupCard({
@@ -211,6 +253,7 @@ function GroupCard({
   onDragStart,
   onDragOver,
   onDragEnd,
+  dragHandleProps,
 }: GroupCardProps) {
   const { sources } = useAppStore()
   const [proxySearch, setProxySearch] = useState('')
@@ -392,6 +435,16 @@ function GroupCard({
     <div className="rounded-xl border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3">
+        {/* Outer drag handle for group card reordering */}
+        {dragHandleProps && (
+          <button
+            {...dragHandleProps}
+            className="cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors shrink-0 touch-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical size={14} />
+          </button>
+        )}
         <button onClick={onToggleExpand} className="text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors p-0.5">
           {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
         </button>

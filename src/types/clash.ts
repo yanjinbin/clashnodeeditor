@@ -62,6 +62,13 @@ export interface ImportedProxyGroup {
   tolerance?: number
 }
 
+export interface SubscriptionInfo {
+  upload: number    // bytes
+  download: number  // bytes
+  total: number     // bytes
+  expire?: number   // unix timestamp (seconds)
+}
+
 export interface SourceConfig {
   id: string
   name: string
@@ -71,6 +78,7 @@ export interface SourceConfig {
   error?: string
   proxies: Proxy[]
   importedGroups?: ImportedProxyGroup[]
+  subscriptionInfo?: SubscriptionInfo
 }
 
 export const DEFAULT_USER_AGENT = 'clash-verge/v2.2.3'

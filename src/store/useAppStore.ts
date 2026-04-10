@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { SourceConfig, ProxyGroup, RuleProvider, Rule, Proxy, ClashConfig, ClashGlobalSettings, DnsConfig, DnsFallbackFilter } from '../types/clash'
 import { PRESET_RULE_PROVIDERS, BLACKMATRIX7_RULE_PROVIDERS, DEFAULT_GLOBAL_SETTINGS } from '../types/clash'
 
@@ -25,6 +26,7 @@ interface AppState {
   addProxyToGroup: (groupId: string, proxyName: string) => void
   removeProxyFromGroup: (groupId: string, proxyName: string) => void
   reorderProxiesInGroup: (groupId: string, oldIndex: number, newIndex: number) => void
+  reorderProxyGroups: (oldIndex: number, newIndex: number) => void
 
   // Rule provider CRUD
   addRuleProvider: (provider: Omit<RuleProvider, 'id'>) => void
@@ -60,7 +62,8 @@ function generateId() {
 }
 
 export const useAppStore = create<AppState>()(
-  immer((set, get) => ({
+  persist(
+    immer((set, get) => ({
     sources: [],
     globalSettings: JSON.parse(JSON.stringify(DEFAULT_GLOBAL_SETTINGS)) as ClashGlobalSettings,
 
@@ -227,6 +230,13 @@ export const useAppStore = create<AppState>()(
           const [item] = group.proxies.splice(oldIndex, 1)
           group.proxies.splice(newIndex, 0, item)
         }
+      })
+    },
+
+    reorderProxyGroups: (oldIndex, newIndex) => {
+      set((state) => {
+        const [item] = state.proxyGroups.splice(oldIndex, 1)
+        state.proxyGroups.splice(newIndex, 0, item)
       })
     },
 
@@ -504,5 +514,28 @@ export const useAppStore = create<AppState>()(
         if (config.dns) Object.assign(state.globalSettings.dns, config.dns)
       })
     },
-  }))
+  })),
+  {
+    name: 'clash-node-editor-v1',
+    storage: createJSONStorage(() => localStorage),
+    // Only persist metadata, not the fetched proxy data (can be large).
+    // Sources are restored with status='idle' so users know to refresh.
+    partialize: (state) => ({
+      sources: state.sources.map((s) => ({
+        id: s.id,
+        name: s.name,
+        url: s.url,
+        userAgent: s.userAgent,
+        status: 'idle' as const,
+        proxies: [],
+        importedGroups: [],
+      })),
+      proxyGroups:    state.proxyGroups,
+      ruleProviders:  state.ruleProviders,
+      rules:          state.rules,
+      globalSettings: state.globalSettings,
+      activeTab:      state.activeTab,
+    }),
+  }
+)
 )

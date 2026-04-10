@@ -37,13 +37,21 @@ export default async function handler(request: Request): Promise<Response> {
 
     const text = await upstream.text()
 
+    const subInfo = upstream.headers.get('Subscription-Userinfo') ?? ''
+
+    const responseHeaders: Record<string, string> = {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-store',
+    }
+    if (subInfo) {
+      responseHeaders['X-Subscription-Userinfo'] = subInfo
+      responseHeaders['Access-Control-Expose-Headers'] = 'X-Subscription-Userinfo'
+    }
+
     return new Response(text, {
       status: upstream.status,
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'no-store',
-      },
+      headers: responseHeaders,
     })
   } catch (err) {
     return new Response(`Upstream fetch failed: ${(err as Error).message}`, { status: 502 })

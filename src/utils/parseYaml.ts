@@ -1,13 +1,31 @@
 import yaml from 'js-yaml'
-import type { ClashConfig, Proxy, RuleProvider, ClashGlobalSettings, ImportedProxyGroup } from '../types/clash'
+import type { ClashConfig, Proxy, RuleProvider, ClashGlobalSettings, ImportedProxyGroup, SubscriptionInfo } from '../types/clash'
 import { DEFAULT_GLOBAL_SETTINGS } from '../types/clash'
 
-export async function fetchAndParseYaml(url: string, userAgent?: string): Promise<{ proxies: Proxy[], groups: ImportedProxyGroup[] }> {
+export function parseSubscriptionInfo(header: string): SubscriptionInfo | undefined {
+  if (!header) return undefined
+  const result: Partial<SubscriptionInfo> = {}
+  for (const part of header.split(';')) {
+    const [key, val] = part.trim().split('=')
+    const num = Number(val)
+    if (key === 'upload')   result.upload   = num
+    if (key === 'download') result.download = num
+    if (key === 'total')    result.total    = num
+    if (key === 'expire')   result.expire   = num
+  }
+  if (result.upload === undefined || result.download === undefined || result.total === undefined) return undefined
+  return result as SubscriptionInfo
+}
+
+export async function fetchAndParseYaml(url: string, userAgent?: string): Promise<{ proxies: Proxy[], groups: ImportedProxyGroup[], subscriptionInfo?: SubscriptionInfo }> {
   const ua = userAgent || 'clash-verge/v2.2.3'
   const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}&ua=${encodeURIComponent(ua)}`
   const response = await fetch(proxyUrl)
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-  return parseYamlFull(await response.text())
+  const subInfoHeader = response.headers.get('X-Subscription-Userinfo')
+  const subscriptionInfo = subInfoHeader ? parseSubscriptionInfo(subInfoHeader) : undefined
+  const parsed = parseYamlFull(await response.text())
+  return { ...parsed, subscriptionInfo }
 }
 
 export function parseYamlFull(text: string): { proxies: Proxy[], groups: ImportedProxyGroup[] } {

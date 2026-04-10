@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Copy, Download, Check, FileText, ChevronRight, CheckCircle, XCircle, Upload, X } from 'lucide-react'
+import { Copy, Download, Check, FileText, ChevronRight, CheckCircle, XCircle, Upload, X, ShieldCheck } from 'lucide-react'
 import yaml from 'js-yaml'
 import { useAppStore } from '../store/useAppStore'
 import { generateClashConfig } from '../utils/parseYaml'
+import ValidationPanel from './ValidationPanel'
 import type { ClashConfig, DnsConfig, DnsFallbackFilter } from '../types/clash'
 
 // ── Tiny helpers ──────────────────────────────────────────────────────────────
@@ -488,6 +489,17 @@ export default function ConfigPreview() {
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
           <SettingsPanel />
+          {/* Validation section */}
+          <div>
+            <button
+              onClick={() => {}}
+              className="flex items-center gap-1.5 w-full text-left py-1 mb-2"
+            >
+              <ShieldCheck size={12} className="text-indigo-400" />
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">配置校验</span>
+            </button>
+            <ValidationPanel />
+          </div>
         </div>
       </div>
 
