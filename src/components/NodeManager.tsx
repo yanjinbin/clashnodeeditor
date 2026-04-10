@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react'
-import { Plus, Pencil, Trash2, Link2, ExternalLink, Wifi, WifiOff, Loader2, ChevronRight, Copy, Check, AlertTriangle, X } from 'lucide-react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import { Plus, Pencil, Trash2, Link2, ExternalLink, Wifi, WifiOff, Loader2, ChevronRight, ChevronDown, Copy, Check, AlertTriangle, X } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import type { Proxy } from '../types/clash'
 import { resolveToIp, fetchIpInfoBatch } from '../utils/ipUtils'
@@ -308,6 +308,115 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   )
 }
 
+// ── Searchable Select ─────────────────────────────────────────────────────────
+
+function SearchableSelect({
+  label,
+  value,
+  onChange,
+  groups,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  groups: { label: string; items: { value: string; label: string }[] }[]
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  const q = query.trim().toLowerCase()
+  const filtered = groups
+    .map((g) => ({
+      label: g.label,
+      items: q ? g.items.filter((i) => i.label.toLowerCase().includes(q) || i.value.toLowerCase().includes(q)) : g.items,
+    }))
+    .filter((g) => g.items.length > 0)
+
+  const selectedLabel = groups.flatMap((g) => g.items).find((i) => i.value === value)?.label ?? value
+
+  return (
+    <div className="flex flex-col gap-1" ref={containerRef}>
+      <label className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</label>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => { setOpen((v) => !v); if (!open) setQuery('') }}
+          className="w-full flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <span className={`flex-1 truncate ${value ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
+            {value ? selectedLabel : '— 无（直接连接）'}
+          </span>
+          {value && (
+            <span
+              role="button"
+              onClick={(e) => { e.stopPropagation(); onChange('') }}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 shrink-0 cursor-pointer"
+            >
+              <X size={12} />
+            </span>
+          )}
+          <ChevronDown size={13} className={`text-gray-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+
+        {open && (
+          <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
+            <div className="p-2 border-b border-gray-100 dark:border-gray-700/60">
+              <input
+                autoFocus
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}
+                placeholder="搜索代理 / 代理组…"
+                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div className="max-h-52 overflow-y-auto">
+              <button
+                type="button"
+                onClick={() => { onChange(''); setOpen(false) }}
+                className={`w-full text-left px-3 py-2 text-xs transition-colors ${value === '' ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
+              >
+                — 无（直接连接）
+              </button>
+              {filtered.map((group) => (
+                <div key={group.label}>
+                  <p className="px-3 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 select-none">
+                    {group.label}
+                  </p>
+                  {group.items.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => { onChange(item.value); setOpen(false); setQuery('') }}
+                      className={`w-full text-left px-3 py-1.5 text-sm truncate transition-colors ${value === item.value ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              ))}
+              {filtered.length === 0 && q && (
+                <p className="px-3 py-4 text-xs text-gray-400 dark:text-gray-500 text-center">无匹配结果</p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── IP Detection ──────────────────────────────────────────────────────────────
 
 interface IpCheckState {
@@ -494,13 +603,16 @@ function NodeFormModal({
 
   const isEdit = initial !== null
 
-  const dialerOptions = useMemo(() => [
-    { value: '', label: '— 无（直接连接）' },
-    ...allGroupNames.map((n) => ({ value: n, label: `${n} (代理组)` })),
-    ...allProxyNames
-      .filter((n) => !allGroupNames.includes(n) && n !== form.name)
-      .map((n) => ({ value: n, label: `${n} (节点)` })),
-  ], [allGroupNames, allProxyNames, form.name])
+  const dialerGroups = useMemo(() => {
+    const groupItems = allGroupNames.map((n) => ({ value: n, label: n }))
+    const proxyItems = allProxyNames
+      .filter((n) => !allGroupNames.includes(n) && n !== form.name && n !== 'DIRECT' && n !== 'REJECT')
+      .map((n) => ({ value: n, label: n }))
+    return [
+      ...(groupItems.length ? [{ label: '代理组', items: groupItems }] : []),
+      ...(proxyItems.length ? [{ label: '节点', items: proxyItems }] : []),
+    ]
+  }, [allGroupNames, allProxyNames, form.name])
 
   const errors: string[] = []
   if (!form.name.trim()) errors.push('节点名称不能为空')
@@ -725,11 +837,11 @@ function NodeFormModal({
               选择前置代理后，Clash 会先通过该代理/代理组建立与本节点服务器的连接，实现链式出口。
               <br />例：日本节点 → 本节点（美国静态IP）→ 互联网，出口 IP = 美国原生 IP。
             </p>
-            <Select
+            <SearchableSelect
               label="前置代理 / 代理组"
               value={form.dialerProxy}
               onChange={(v) => set('dialerProxy', v)}
-              options={dialerOptions}
+              groups={dialerGroups}
             />
             {form.dialerProxy && (
               <div className="mt-3 flex items-center gap-1.5 flex-wrap text-xs">

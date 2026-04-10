@@ -47,7 +47,7 @@ const GROUP_TYPES: { value: ProxyGroupType; label: string; desc: string }[] = [
 ]
 
 export default function ProxyGroupEditor() {
-  const { sources, proxyGroups, addProxyGroup, removeProxyGroup, updateProxyGroup, addProxyToGroup, removeProxyFromGroup, reorderProxiesInGroup, reorderProxyGroups } =
+  const { sources, manualProxies, proxyGroups, addProxyGroup, removeProxyGroup, updateProxyGroup, addProxyToGroup, removeProxyFromGroup, reorderProxiesInGroup, reorderProxyGroups } =
     useAppStore()
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [editingGroup, setEditingGroup] = useState<string | null>(null)
@@ -65,6 +65,7 @@ export default function ProxyGroupEditor() {
   // Grouped sections for the proxy picker — no built-in presets
   const proxySections = [
     { label: '代理组', items: proxyGroups.map((g) => g.name) },
+    ...(manualProxies.length > 0 ? [{ label: '手动节点', items: manualProxies.map((p) => p.name) }] : []),
     ...sources
       .filter((s) => s.proxies.length > 0)
       .map((s) => ({ label: s.name, items: s.proxies.map((p) => p.name) })),
