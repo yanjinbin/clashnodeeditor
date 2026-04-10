@@ -401,6 +401,47 @@ function SourceCard({
           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{source.name}</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 truncate font-mono">{source.url}</p>
           {source.userAgent && <p className="text-xs text-indigo-400 truncate font-mono">UA: {source.userAgent}</p>}
+
+          {/* ── Inline subscription traffic info ── */}
+          {source.subscriptionInfo && (() => {
+            const info = source.subscriptionInfo!
+            const used = info.upload + info.download
+            const pct = info.total > 0 ? Math.min((used / info.total) * 100, 100) : 0
+            const isExpiringSoon = info.expire && info.expire - Date.now() / 1000 < 7 * 86400
+            const isExpired = info.expire && info.expire < Date.now() / 1000
+            return (
+              <div className="mt-1.5 space-y-1">
+                {/* Text row */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium tabular-nums">
+                    {formatBytes(used)}
+                    <span className="text-gray-300 dark:text-gray-600 mx-1">/</span>
+                    {formatBytes(info.total)}
+                    <span className="text-gray-300 dark:text-gray-600 mx-1.5">·</span>
+                    <span className={pct >= 90 ? 'text-red-500 font-semibold' : pct >= 70 ? 'text-amber-500 font-semibold' : 'text-indigo-500'}>
+                      {pct.toFixed(1)}% 已用
+                    </span>
+                  </span>
+                  {info.expire !== undefined && (
+                    <span className={`text-[11px] font-medium ${
+                      isExpired ? 'text-red-500' : isExpiringSoon ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500'
+                    }`}>
+                      {isExpired ? '⚠️ 已到期' : `到期 ${formatExpire(info.expire)}`}
+                    </span>
+                  )}
+                </div>
+                {/* Progress bar */}
+                <div className="h-1 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${
+                      pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-indigo-500'
+                    }`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })()}
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {source.status === 'success' && (
@@ -434,9 +475,6 @@ function SourceCard({
           {source.error}
         </div>
       )}
-
-      {/* Subscription info */}
-      {source.subscriptionInfo && <SubscriptionInfoBar info={source.subscriptionInfo} />}
 
       {/* Protocol chart */}
       {source.status === 'success' && source.proxies.length > 0 && (
