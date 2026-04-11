@@ -180,7 +180,7 @@ export const useAppStore = create<AppState>()(
     // ── Manual Proxies ────────────────────────────────────────────────────────
 
     addManualProxy: (proxy) => {
-      set((state) => { state.manualProxies.push(proxy) })
+      set((state) => { state.manualProxies.unshift(proxy) })
     },
 
     updateManualProxy: (index, updates) => {

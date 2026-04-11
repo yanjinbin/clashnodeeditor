@@ -109,19 +109,19 @@ const EMPTY_FORM: FormState = {
 
 // Per-type default field values applied when user switches protocol type
 const TYPE_DEFAULTS: Partial<Record<ProxyType, Partial<FormState>>> = {
-  socks5:    { port: '443', tls: false, udp: true },
-  http:      { port: '8080', tls: false },
-  ss:        { port: '8388', cipher: 'aes-128-gcm' },
-  ssr:       { port: '8388', cipher: 'aes-128-gcm', ssrProtocol: 'auth_sha1_v4', ssrObfs: 'plain' },
-  vmess:     { port: '443',  alterId: '0', cipher: 'auto', network: 'tcp', tls: true },
-  vless:     { port: '443',  network: 'tcp', tls: true },
-  trojan:    { port: '443',  tls: true },
-  hysteria2: { port: '443',  tls: true, up: '50', down: '200' },
-  hysteria:  { port: '443',  up: '50', down: '200' },
-  tuic:      { port: '443',  tls: true },
-  anytls:    { port: '443',  tls: true },
-  wireguard: { port: '51820', wgMtu: '1280', wgDns: '1.1.1.1' },
-  ssh:       { port: '22' },
+  socks5:    { port: '443',   tls: false, udp: false },
+  http:      { port: '8080',  tls: false, udp: false },
+  ss:        { port: '8388',  cipher: 'aes-128-gcm', udp: false },
+  ssr:       { port: '8388',  cipher: 'aes-128-gcm', ssrProtocol: 'auth_sha1_v4', ssrObfs: 'plain', udp: false },
+  vmess:     { port: '443',   alterId: '0', cipher: 'auto', network: 'tcp', tls: true, udp: false },
+  vless:     { port: '443',   network: 'tcp', tls: true, udp: false },
+  trojan:    { port: '443',   tls: true, udp: false },
+  hysteria2: { port: '443',   tls: true, up: '50', down: '200', udp: true },  // QUIC，必须 UDP
+  hysteria:  { port: '443',   up: '50', down: '200', udp: true },              // QUIC，必须 UDP
+  tuic:      { port: '443',   tls: true, udp: true },                          // QUIC，必须 UDP
+  anytls:    { port: '443',   tls: true, udp: false },
+  wireguard: { port: '51820', wgMtu: '1280', wgDns: '1.1.1.1', udp: true },   // WireGuard 基于 UDP
+  ssh:       { port: '22',    udp: false },
 }
 
 // ── Converters ────────────────────────────────────────────────────────────────
@@ -1149,6 +1149,37 @@ export default function NodeManager() {
           </div>
         )}
 
+        {/* Search */}
+        {manualProxies.length > 0 && (
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="搜索节点名称、服务器、协议…"
+            className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        )}
+
+        {/* Node list */}
+        {filtered.length > 0 && (
+          <div className="space-y-2">
+            {filtered.map(({ proxy, index }) => (
+              <NodeRow
+                key={index}
+                proxy={proxy}
+                index={index}
+                allGroupNames={allGroupNames}
+                allProxyNames={allProxyNames}
+                onEdit={() => openEdit(index)}
+                onDelete={() => removeManualProxy(index)}
+              />
+            ))}
+          </div>
+        )}
+
+        {search && filtered.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-6">无匹配节点</p>
+        )}
+
         {/* Help / Intro panel */}
         {(showHelp || manualProxies.length === 0) && (
           <div className="rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 p-5 space-y-4">
@@ -1366,36 +1397,6 @@ rules:
           </div>
         )}
 
-        {/* Search */}
-        {manualProxies.length > 0 && (
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜索节点名称、服务器、协议…"
-            className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        )}
-
-        {/* Node list */}
-        {filtered.length > 0 && (
-          <div className="space-y-2">
-            {filtered.map(({ proxy, index }) => (
-              <NodeRow
-                key={index}
-                proxy={proxy}
-                index={index}
-                allGroupNames={allGroupNames}
-                allProxyNames={allProxyNames}
-                onEdit={() => openEdit(index)}
-                onDelete={() => removeManualProxy(index)}
-              />
-            ))}
-          </div>
-        )}
-
-        {search && filtered.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-6">无匹配节点</p>
-        )}
       </div>
 
       {/* Modal */}
