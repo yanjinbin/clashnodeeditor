@@ -93,3 +93,4 @@ clashnodeeditor/
 - [04-utils.md](./04-utils.md) — 工具函数（YAML / IP）
 - [05-bugfix-changelog.md](./05-bugfix-changelog.md) — Bug 修复与功能迭代记录
 - [06-patterns.md](./06-patterns.md) — 可复用技术模式
+- [07-session-2026-04-11.md](./07-session-2026-04-11.md) — 2026-04-11 功能迭代与 Bug 修复记录

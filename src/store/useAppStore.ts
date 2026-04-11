@@ -48,6 +48,8 @@ interface AppState {
   reorderRules: (oldIndex: number, newIndex: number) => void
 
   setActiveTab: (tab: AppState['activeTab']) => void
+  showChainExample: boolean
+  setShowChainExample: (v: boolean) => void
 
   // Proxy node editing
   updateProxy: (sourceId: string, proxyIndex: number, updates: Partial<Proxy>) => void
@@ -63,61 +65,16 @@ interface AppState {
   getAllProxyNames: () => string[]
 
   importFullConfig: (config: ClashConfig) => void
-  resetTab: (tab: AppState['activeTab']) => void
+
+  // Reset actions
+  resetSources: () => void
+  resetManualProxies: () => void
+  resetProxyGroups: () => void
+  resetRules: () => void
 }
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10)
-}
-
-function createDefaultProxyGroups(): ProxyGroup[] {
-  return [
-    { id: generateId(), name: '♻️ 自动选择', type: 'url-test', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50, autoAllNodes: true },
-    { id: generateId(), name: '🇺🇸｜美国出口', type: 'select', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300 },
-    { id: generateId(), name: '🇯🇵｜日本出口', type: 'select', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300 },
-    { id: generateId(), name: '📺 油管',       type: 'select', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300 },
-    { id: generateId(), name: '🐦 社交媒体',   type: 'select', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300 },
-  ]
-}
-
-function createDefaultRuleProviders(): RuleProvider[] {
-  return [
-    ...PRESET_RULE_PROVIDERS.map((p) => ({ ...p })),
-    ...BLACKMATRIX7_RULE_PROVIDERS.map((p) => ({ ...p })),
-  ]
-}
-
-function createDefaultRules(): Rule[] {
-  return [
-    // 1) 本地 / 局域网 / 保留地址
-    { id: generateId(), type: 'IP-CIDR',       payload: '0.0.0.0/32',      target: 'REJECT-DROP', noResolve: true },
-    { id: generateId(), type: 'IP-CIDR',       payload: '127.0.0.0/8',     target: 'DIRECT',      noResolve: true },
-    { id: generateId(), type: 'DOMAIN',        payload: 'localhost',        target: 'DIRECT' },
-    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'local',           target: 'DIRECT' },
-    { id: generateId(), type: 'IP-CIDR',       payload: '10.0.0.0/8',      target: 'DIRECT',      noResolve: true },
-    { id: generateId(), type: 'IP-CIDR',       payload: '172.16.0.0/12',   target: 'DIRECT',      noResolve: true },
-    { id: generateId(), type: 'IP-CIDR',       payload: '192.168.0.0/16',  target: 'DIRECT',      noResolve: true },
-    { id: generateId(), type: 'RULE-SET',      payload: 'private',         target: 'DIRECT' },
-    { id: generateId(), type: 'GEOIP',         payload: 'LAN',             target: 'DIRECT',      noResolve: true },
-    // 2) AI 规则集
-    { id: generateId(), type: 'RULE-SET',      payload: 'claude',          target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'openai',          target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'copilot',         target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'gemini',          target: '♻️ 自动选择' },
-    // 3) 视频和社交媒体
-    { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',   target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'youtube',         target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'google',          target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'telegram',        target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'twitter',         target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'tiktok',          target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'linkedin',        target: '♻️ 自动选择' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'docker',          target: '♻️ 自动选择' },
-    // 4) 国内直连
-    { id: generateId(), type: 'GEOIP',         payload: 'CN',              target: 'DIRECT',      noResolve: true },
-    // 5) 最终兜底
-    { id: generateId(), type: 'MATCH',         payload: '',                target: '♻️ 自动选择' },
-  ]
 }
 
 export const useAppStore = create<AppState>()(
@@ -126,11 +83,78 @@ export const useAppStore = create<AppState>()(
     sources: [],
     manualProxies: [],
     globalSettings: JSON.parse(JSON.stringify(DEFAULT_GLOBAL_SETTINGS)) as ClashGlobalSettings,
-    proxyGroups: createDefaultProxyGroups(),
-    ruleProviders: createDefaultRuleProviders(),
-    rules: createDefaultRules(),
+
+    proxyGroups: [
+      {
+        id: generateId(),
+        name: 'PROXY',
+        type: 'select',
+        proxies: [],
+        url: 'http://www.gstatic.com/generate_204',
+        interval: 300,
+      },
+      {
+        id: generateId(),
+        name: '♻️ 自动选择',
+        type: 'url-test',
+        proxies: [],
+        url: 'http://www.gstatic.com/generate_204',
+        interval: 300,
+        tolerance: 50,
+        autoAllNodes: true,
+      },
+    ],
+
+    // Loyalsoldier presets first, then blackmatrix7 presets
+    ruleProviders: [
+      ...PRESET_RULE_PROVIDERS.map((p) => ({ ...p })),
+      ...BLACKMATRIX7_RULE_PROVIDERS.map((p) => ({ ...p })),
+    ],
+
+    // Unified ordered rule list — includes both manual rules and inline RULE-SET references.
+    // RULE-SET entries are only emitted when their provider is enabled.
+    rules: [
+      // 1) 本地 / 局域网 / 保留地址
+      { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'local',          target: 'DIRECT' },
+      { id: generateId(), type: 'IP-CIDR',       payload: '127.0.0.0/8',    target: 'DIRECT' },
+      { id: generateId(), type: 'IP-CIDR',       payload: '10.0.0.0/8',     target: 'DIRECT' },
+      { id: generateId(), type: 'IP-CIDR',       payload: '172.16.0.0/12',  target: 'DIRECT' },
+      { id: generateId(), type: 'IP-CIDR',       payload: '192.168.0.0/16', target: 'DIRECT' },
+      { id: generateId(), type: 'GEOIP',         payload: 'LAN',            target: 'DIRECT', noResolve: true },
+      { id: generateId(), type: 'RULE-SET',      payload: 'private',        target: 'DIRECT' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'lancidr',        target: 'DIRECT', noResolve: true },
+      // 2) 明确拦截
+      { id: generateId(), type: 'RULE-SET',      payload: 'reject',         target: 'REJECT' },
+      // 4) AI / 开发 / 特定服务
+      { id: generateId(), type: 'RULE-SET',      payload: 'openai',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'claude',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'copilot',        target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'gemini',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'docker',         target: 'PROXY' },
+      // 5) 社交 / 媒体
+      { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',  target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'youtube',        target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'google',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'telegram',       target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'twitter',        target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'tiktok',         target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'linkedin',       target: 'PROXY' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'GoogleFCM',      target: 'PROXY' },
+      // 6) 通用规则
+      { id: generateId(), type: 'RULE-SET',      payload: 'direct',         target: 'DIRECT' },
+      { id: generateId(), type: 'RULE-SET',      payload: 'gfw',            target: 'PROXY' },
+      // 7) IP 类规则
+      { id: generateId(), type: 'RULE-SET',      payload: 'telegramcidr',   target: 'PROXY',  noResolve: true },
+      { id: generateId(), type: 'RULE-SET',      payload: 'cncidr',         target: 'DIRECT', noResolve: true },
+      // 8) 国内兜底
+      { id: generateId(), type: 'RULE-SET',      payload: 'cn',             target: 'DIRECT' },
+      { id: generateId(), type: 'GEOIP',         payload: 'CN',             target: 'DIRECT', noResolve: true },
+      // 9) 最终兜底
+      { id: generateId(), type: 'MATCH',         payload: '',               target: '♻️ 自动选择' },
+    ],
 
     activeTab: 'sources',
+    showChainExample: false,
 
     // ── Sources ──────────────────────────────────────────────────────────────
 
@@ -344,6 +368,10 @@ export const useAppStore = create<AppState>()(
       set((state) => { state.activeTab = tab })
     },
 
+    setShowChainExample: (v) => {
+      set((state) => { state.showChainExample = v })
+    },
+
     updateProxy: (sourceId, proxyIndex, updates) => {
       set((state) => {
         const src = state.sources.find((s) => s.id === sourceId)
@@ -436,12 +464,7 @@ export const useAppStore = create<AppState>()(
     },
 
     updateDnsFallbackFilter: (updates) => {
-      set((state) => {
-        if (!state.globalSettings.dns['fallback-filter']) {
-          state.globalSettings.dns['fallback-filter'] = { geoip: true, 'geoip-code': 'CN', geosite: [], ipcidr: [], domain: [] }
-        }
-        Object.assign(state.globalSettings.dns['fallback-filter'], updates)
-      })
+      set((state) => { Object.assign(state.globalSettings.dns['fallback-filter'], updates) })
     },
 
     getAllProxies: () => [
@@ -549,22 +572,51 @@ export const useAppStore = create<AppState>()(
       })
     },
 
-    resetTab: (tab) => {
-      set((state) => {
-        if (tab === 'sources') {
-          state.sources = []
-        } else if (tab === 'nodes') {
-          state.manualProxies = []
-        } else if (tab === 'groups') {
-          state.proxyGroups = createDefaultProxyGroups()
-        } else if (tab === 'rules') {
-          state.ruleProviders = createDefaultRuleProviders()
-          state.rules = createDefaultRules()
-        } else if (tab === 'preview') {
-          state.globalSettings = JSON.parse(JSON.stringify(DEFAULT_GLOBAL_SETTINGS))
-        }
-      })
-    },
+    resetSources: () => set((state) => { state.sources = [] }),
+
+    resetManualProxies: () => set((state) => { state.manualProxies = [] }),
+
+    resetProxyGroups: () => set((state) => {
+      state.proxyGroups = [
+        { id: generateId(), name: 'PROXY', type: 'select', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300 },
+        { id: generateId(), name: '♻️ 自动选择', type: 'url-test', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50, autoAllNodes: true },
+      ]
+    }),
+
+    resetRules: () => set((state) => {
+      const g = generateId
+      state.rules = [
+        { id: g(), type: 'DOMAIN-SUFFIX', payload: 'local',          target: 'DIRECT' },
+        { id: g(), type: 'IP-CIDR',       payload: '127.0.0.0/8',    target: 'DIRECT' },
+        { id: g(), type: 'IP-CIDR',       payload: '10.0.0.0/8',     target: 'DIRECT' },
+        { id: g(), type: 'IP-CIDR',       payload: '172.16.0.0/12',  target: 'DIRECT' },
+        { id: g(), type: 'IP-CIDR',       payload: '192.168.0.0/16', target: 'DIRECT' },
+        { id: g(), type: 'GEOIP',         payload: 'LAN',            target: 'DIRECT', noResolve: true },
+        { id: g(), type: 'RULE-SET',      payload: 'private',        target: 'DIRECT' },
+        { id: g(), type: 'RULE-SET',      payload: 'lancidr',        target: 'DIRECT', noResolve: true },
+        { id: g(), type: 'RULE-SET',      payload: 'reject',         target: 'REJECT' },
+        { id: g(), type: 'RULE-SET',      payload: 'openai',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'claude',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'copilot',        target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'gemini',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'docker',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'youtube-music',  target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'youtube',        target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'google',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'telegram',       target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'twitter',        target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'tiktok',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'linkedin',       target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'GoogleFCM',      target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'direct',         target: 'DIRECT' },
+        { id: g(), type: 'RULE-SET',      payload: 'gfw',            target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'telegramcidr',   target: 'PROXY',  noResolve: true },
+        { id: g(), type: 'RULE-SET',      payload: 'cncidr',         target: 'DIRECT', noResolve: true },
+        { id: g(), type: 'RULE-SET',      payload: 'cn',             target: 'DIRECT' },
+        { id: g(), type: 'GEOIP',         payload: 'CN',             target: 'DIRECT', noResolve: true },
+        { id: g(), type: 'MATCH',         payload: '',               target: '♻️ 自动选择' },
+      ]
+    }),
   })),
   {
     name: 'clash-node-editor-v1',

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { Plus, Pencil, Trash2, Link2, ExternalLink, Wifi, WifiOff, Loader2, ChevronRight, ChevronDown, Copy, Check, AlertTriangle, X, HelpCircle } from 'lucide-react'
+import { Claude, Gemini, OpenAI } from '@lobehub/icons'
 import { useAppStore } from '../store/useAppStore'
 import type { Proxy } from '../types/clash'
 import { resolveToIp, fetchIpInfoBatch } from '../utils/ipUtils'
@@ -104,6 +105,23 @@ const EMPTY_FORM: FormState = {
   ssrProtocol: 'auth_sha1_v4', ssrProtocolParam: '', ssrObfs: 'plain', ssrObfsParam: '',
   wgIp: '', wgPrivateKey: '', wgPublicKey: '', wgPresharedKey: '', wgMtu: '1280', wgDns: '1.1.1.1',
   sshPrivateKey: '', sshPrivateKeyPassphrase: '', sshHostKey: '',
+}
+
+// Per-type default field values applied when user switches protocol type
+const TYPE_DEFAULTS: Partial<Record<ProxyType, Partial<FormState>>> = {
+  socks5:    { port: '443', tls: false, udp: true },
+  http:      { port: '8080', tls: false },
+  ss:        { port: '8388', cipher: 'aes-128-gcm' },
+  ssr:       { port: '8388', cipher: 'aes-128-gcm', ssrProtocol: 'auth_sha1_v4', ssrObfs: 'plain' },
+  vmess:     { port: '443',  alterId: '0', cipher: 'auto', network: 'tcp', tls: true },
+  vless:     { port: '443',  network: 'tcp', tls: true },
+  trojan:    { port: '443',  tls: true },
+  hysteria2: { port: '443',  tls: true, up: '50', down: '200' },
+  hysteria:  { port: '443',  up: '50', down: '200' },
+  tuic:      { port: '443',  tls: true },
+  anytls:    { port: '443',  tls: true },
+  wireguard: { port: '51820', wgMtu: '1280', wgDns: '1.1.1.1' },
+  ssh:       { port: '22' },
 }
 
 // ── Converters ────────────────────────────────────────────────────────────────
@@ -265,6 +283,9 @@ function Input({ label, value, onChange, placeholder = '', type = 'text', requir
         type={type}
         value={value}
         placeholder={placeholder}
+        autoComplete="off"
+        data-1p-ignore
+        data-lpignore="true"
         onChange={(e) => onChange(e.target.value)}
         className={`px-2.5 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 ${mono ? 'font-mono' : ''}`}
       />
@@ -596,7 +617,9 @@ function NodeFormModal({
   onSave: (proxy: Proxy) => void
   onClose: () => void
 }) {
-  const [form, setForm] = useState<FormState>(initial ?? EMPTY_FORM)
+  const [form, setForm] = useState<FormState>(
+    initial ?? { ...EMPTY_FORM, ...(TYPE_DEFAULTS[EMPTY_FORM.type] ?? {}) }
+  )
   const set = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: val }))
   }, [])
@@ -669,7 +692,11 @@ function NodeFormModal({
             <Select
               label="协议类型"
               value={form.type}
-              onChange={(v) => set('type', v as ProxyType)}
+              onChange={(v) => {
+                const t = v as ProxyType
+                const defaults = TYPE_DEFAULTS[t] ?? {}
+                setForm((prev) => ({ ...prev, type: t, ...defaults }))
+              }}
               options={PROXY_TYPES.map((t) => ({ value: t, label: t }))}
             />
           </div>
@@ -835,7 +862,7 @@ function NodeFormModal({
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
               选择前置代理后，Clash 会先通过该代理/代理组建立与本节点服务器的连接，实现链式出口。
-              <br />例：日本节点 → 本节点（美国静态IP）→ 互联网，出口 IP = 美国原生 IP。
+              <br />例：港澳台新韩节点 → 本节点（美国静态IP）→ 互联网，出口 IP = 美国原生 IP。
             </p>
             <SearchableSelect
               label="前置代理 / 代理组"
@@ -960,6 +987,10 @@ export default function NodeManager() {
     updateManualProxy,
     removeManualProxy,
     addProxyGroup,
+    resetManualProxies,
+    setActiveTab,
+    showChainExample,
+    setShowChainExample,
   } = useAppStore()
 
   const [modalState, setModalState] = useState<{ open: boolean; editIndex: number | null }>({ open: false, editIndex: null })
@@ -967,6 +998,20 @@ export default function NodeManager() {
   const [postSaveSuggest, setPostSaveSuggest] = useState<{ proxyName: string } | null>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [aiPromptCopied, setAiPromptCopied] = useState(false)
+  const [exampleCopied, setExampleCopied] = useState(false)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const confirmResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleResetClick = () => {
+    if (confirmReset) {
+      resetManualProxies()
+      setConfirmReset(false)
+      if (confirmResetTimer.current) clearTimeout(confirmResetTimer.current)
+    } else {
+      setConfirmReset(true)
+      confirmResetTimer.current = setTimeout(() => setConfirmReset(false), 3000)
+    }
+  }
 
   const allGroupNames = useMemo(() => proxyGroups.map((g) => g.name), [proxyGroups])
 
@@ -1034,6 +1079,19 @@ export default function NodeManager() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {manualProxies.length > 0 && (
+              <button
+                onClick={handleResetClick}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  confirmReset
+                    ? 'bg-red-500 border-red-500 text-white hover:bg-red-600'
+                    : 'border-red-200 dark:border-red-800/50 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                }`}
+              >
+                <Trash2 size={11} />
+                {confirmReset ? '确认重置？' : '重置'}
+              </button>
+            )}
             <button
               onClick={() => setShowHelp((v) => !v)}
               title="使用指南 & 链式代理说明"
@@ -1050,49 +1108,6 @@ export default function NodeManager() {
             </button>
           </div>
         </div>
-
-        {/* 原生 IP 购买推荐横幅 */}
-        <a
-          href="https://novproxy.com/zh/?code=q5mwcaudt"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group block rounded-xl border border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 via-violet-50 to-purple-50 dark:from-indigo-950/40 dark:via-violet-950/30 dark:to-purple-950/40 px-5 py-4 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-950/60 dark:hover:to-purple-950/60 transition-all cursor-pointer no-underline"
-        >
-          {/* 顶栏：标题 + 按钮 */}
-          <div className="flex items-center gap-3 mb-3">
-            <span className="text-xl shrink-0 select-none">🏠</span>
-            <p className="flex-1 text-sm font-bold text-indigo-900 dark:text-indigo-100">
-              Claude · ChatGPT · Gemini 稳定不封号 — 原生住宅 IP 是关键
-            </p>
-            <div className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-indigo-600 group-hover:bg-indigo-700 text-white text-xs font-semibold transition-colors shadow-sm whitespace-nowrap">
-              立即购买 <ExternalLink size={11} />
-            </div>
-          </div>
-
-          {/* 三个 AI 原因说明 */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {[
-              { icon: '🤖', name: 'Claude', desc: '基于 IP 风控，机房/共享 IP 触发异常登录拦截，原生住宅 IP 与真实用户同段，绕过风控无压力。' },
-              { icon: '💬', name: 'ChatGPT', desc: '大量共用同一 IP 的用户会导致该 IP 被标记限速甚至封禁，住宅 IP 独享一个地址，账号更稳定。' },
-              { icon: '✨', name: 'Gemini', desc: 'Google 账号风控极为严格，机房 IP 极易触发二次验证或封号，住宅 IP 等同本地上网，无感使用。' },
-            ].map(({ icon, name, desc }) => (
-              <div key={name} className="bg-white/60 dark:bg-gray-900/40 rounded-lg p-3 border border-indigo-100 dark:border-indigo-900/50">
-                <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-200 mb-1">{icon} {name}</p>
-                <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* 推广话术 */}
-          <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
-            推荐{' '}
-            <span className="inline-flex items-center gap-1 font-semibold text-indigo-900 dark:text-indigo-100">
-              NovProxy 原生静态住宅 SOCKS5
-              <span className="font-bold text-white text-xs bg-indigo-500 dark:bg-indigo-600 px-2 py-0.5 rounded-md">novproxy.com/zh ↗</span>
-            </span>
-            ——固定 IP 不轮换，配合本页「链式代理」dialer-proxy 填入节点即可，出口 IP 秒变原生住宅，Claude / ChatGPT / Gemini 用起来和当地人一样，再也不用担心封号和验证码轰炸。
-          </p>
-        </a>
 
         {/* 链式代理 → 创建代理组 提醒 */}
         {postSaveSuggest && (
@@ -1118,6 +1133,7 @@ export default function NodeManager() {
                     })
                   }
                   setPostSaveSuggest(null)
+                  setActiveTab('groups')
                 }}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors whitespace-nowrap"
               >
@@ -1151,48 +1167,93 @@ export default function NodeManager() {
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
               通过 <code className="bg-white dark:bg-gray-800 px-1 rounded border border-gray-200 dark:border-gray-700 font-mono text-[11px]">dialer-proxy</code> 字段，
               可让一个节点经由另一个代理/代理组建立连接，实现「链式出口」。
-              典型场景：<strong className="text-gray-800 dark:text-gray-200">日本节点 → 美国原生住宅 SOCKS5</strong>，
+              典型场景：<strong className="text-gray-800 dark:text-gray-200">港澳台新韩节点 → 美国原生住宅 SOCKS5</strong>，
               最终出口 IP 为美国原生 IP，可解锁流媒体、金融等 IP 敏感服务。
               支持 socks5 / http / ss / vmess / vless / trojan / hysteria2 等全协议。
             </p>
 
-            {/* 为什么这样配置 */}
-            <div>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
-                <span className="text-base leading-none">⚙️</span> 配套配置项说明
-              </p>
-              <div className="space-y-2">
-                {[
-                  {
-                    key: 'sniffer: parse-pure-ip: true',
-                    why: '链式代理下，Clash 收到的往往是裸 IP 请求（fake-ip 已映射，域名信息丢失）。开启此项后 Sniffer 会主动嗅探 TLS/HTTP 报文还原真实域名，确保分流规则能命中。不开会导致链式节点流量全走兜底规则。',
-                  },
-                  {
-                    key: 'find-process-mode: off',
-                    why: '进程匹配需要遍历系统进程表，链式代理时连接数翻倍，开启会造成明显 CPU 占用和延迟抖动。关闭后仅凭域名/IP 分流，性能更稳定。',
-                  },
-                  {
-                    key: 'unified-delay: true',
-                    why: '开启后延迟测试会走完整链路（中转+落地），Dashboard 里显示的就是真实体感延迟，便于比较不同链式组合的速度。',
-                  },
-                  {
-                    key: 'profile: store-fake-ip: true',
-                    why: 'fake-ip 模式下每个域名分配一个虚假 IP。重启若映射丢失，正在进行的 TCP 连接会立刻断开。开启后映射持久化，切换/重启节点时连接续命，链式代理尤其受益。',
-                  },
-                  {
-                    key: 'udp-timeout: 300',
-                    why: 'UDP 会话默认超时较短。链式代理延迟比单跳高，如果超时太短游戏/视频等 UDP 应用会频繁重建会话。设 300 秒给链式连接足够的容错窗口。',
-                  },
-                  {
-                    key: 'tcp-keep-alive-interval: 30',
-                    why: '链式代理经过多个节点，中间任一节点的 NAT/防火墙都可能因空闲超时断掉连接。每 30 秒发一次 keep-alive 保持通道活跃，减少无感断连。',
-                  },
-                ].map(({ key, why }) => (
-                  <div key={key} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-3">
-                    <p className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400 mb-1">{key}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{why}</p>
-                  </div>
-                ))}
+            {/* Novproxy 推广 */}
+            <a
+              href="https://novproxy.com/zh/?code=666888"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-lg border border-violet-200 dark:border-violet-800/50 bg-white dark:bg-gray-900 px-3 py-2.5 hover:border-violet-400 dark:hover:border-violet-600 transition-colors group"
+            >
+              <img src="https://novproxy.com/static/img/logo.svg" alt="Novproxy" className="h-4 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-violet-700 dark:group-hover:text-violet-300 leading-tight">最具性价比的住宅 IP</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">解锁 Gemini · Claude · OpenAI</p>
+              </div>
+              <ExternalLink size={11} className="text-gray-400 group-hover:text-violet-500 shrink-0 ml-auto" />
+            </a>
+
+            {/* 风控说明 */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">🛡️ Gemini / Claude / OpenAI 风控策略说明</p>
+
+              {/* Claude */}
+              <div className="rounded-lg bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 px-3 py-2.5 space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <Claude size={14} type="color" />
+                  <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">Claude</p>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">更看重出口 IP 纯净度与地区稳定性，数据中心 IP、VPS 及共享机场出口更容易触发验证或限制。</p>
+              </div>
+
+              {/* Gemini */}
+              <div className="rounded-lg bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 px-3 py-2.5 space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Gemini size={14} type="color" />
+                  <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">Gemini / Gemini Advanced</p>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                  对账号环境与 IP 一致性高度敏感。Google 会综合比对
+                  <strong className="text-gray-700 dark:text-gray-300"> 账号注册地、付款地、登录 IP </strong>
+                  三者一致性，任意一项不匹配均可能触发限制。
+                </p>
+                <div className="rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-2.5 py-2 space-y-1">
+                  <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">⚠️ Gemini Advanced 风控尤为严格</p>
+                  <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">
+                    绑定 Google 账号付费订阅，属于高价值账号，Google 对异常登录的容忍度极低。
+                    使用数据中心 IP 或共享机场出口（同一 IP 上百人并发）极易被标记为高风险，
+                    轻则频繁弹出二次验证、功能受限，重则触发账号异常锁定或订阅失效。
+                    建议使用与账号归属地一致的固定住宅 IP，且避免频繁切换出口节点。
+                  </p>
+                </div>
+                <div className="rounded-md bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/40 px-2.5 py-2 space-y-1">
+                  <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400">🚨 Antigravity（反重力）风控极严</p>
+                  <p className="text-[10px] text-orange-600 dark:text-orange-500 leading-relaxed">
+                    Antigravity 是 Google 内部针对 AI 服务的专项反滥用系统，比普通 Gemini 检测维度更多、更激进。
+                    除 IP 归属地外，还会分析设备指纹、账号行为模式、API 请求频率及账单地址一致性。
+                    机场 IP 几乎必触发；即使是住宅 IP，若该段 IP 被大量用户使用也会被标记。
+                    <strong className="text-orange-700 dark:text-orange-400"> 独享住宅 IP + 固定出口</strong> 是目前通过率最高的方案。
+                  </p>
+                </div>
+              </div>
+
+              {/* OpenAI */}
+              <div className="rounded-lg bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 px-3 py-2.5 space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <OpenAI size={14} />
+                  <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">OpenAI / ChatGPT</p>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                  综合评估出口 IP 的 ASN 信誉、地理位置及历史行为。数据中心 IP（AS 号为云服务商）和高并发共享机场出口
+                  是触发"Access denied"或账号封禁的最主要原因。
+                  Plus / API 账户因绑定信用卡，同样会做账单地区与登录 IP 的一致性校验——
+                  建议使用与注册地相同的住宅 IP，避免切换节点后反复绕过 Cloudflare 检测。
+                </p>
+              </div>
+
+              {/* 原生 IP 好处卡片 */}
+              <div className="rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 px-3 py-2.5 space-y-1.5">
+                <p className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">🏠 原生住宅 IP 的好处</p>
+                <ul className="space-y-1 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                  <li className="flex gap-1.5"><span className="text-indigo-400 shrink-0">•</span>来自真实家庭宽带，IP 信誉高、无机房标记，通过率远高于数据中心 IP</li>
+                  <li className="flex gap-1.5"><span className="text-indigo-400 shrink-0">•</span>固定出口保持账号环境一致，减少验证码、异地提醒与二次校验</li>
+                  <li className="flex gap-1.5"><span className="text-indigo-400 shrink-0">•</span>配合 <code className="bg-white dark:bg-gray-800 px-1 rounded border border-gray-200 dark:border-gray-700 font-mono text-[10px]">dialer-proxy</code> 链式出口，保留机场速度，最终出口切到住宅 IP</li>
+                  <li className="flex gap-1.5"><span className="text-indigo-400 shrink-0">•</span>解锁 Gemini · Claude · OpenAI，同时适用于流媒体、金融、电商等 IP 敏感服务</li>
+                </ul>
               </div>
             </div>
 
@@ -1203,11 +1264,11 @@ export default function NodeManager() {
               </p>
               <div className="relative bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 pr-10">
                 <p className="text-xs text-gray-700 dark:text-gray-300 font-mono leading-relaxed select-all">
-                  如何在 Clash 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过日本节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 proxies / proxy-groups / rules 配置示例。
+                  如何在 Clash 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过港澳台新节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。
                 </p>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText('如何在 Clash 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过日本节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 proxies / proxy-groups / rules 配置示例。')
+                    navigator.clipboard.writeText('如何在 Clash 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过港澳台新节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。')
                     setAiPromptCopied(true)
                     setTimeout(() => setAiPromptCopied(false), 2000)
                   }}
@@ -1217,6 +1278,77 @@ export default function NodeManager() {
                   {aiPromptCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
                 </button>
               </div>
+            </div>
+
+            {/* 链式代理配置示例 */}
+            <div>
+              <button
+                onClick={() => setShowChainExample(!showChainExample)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+              >
+                <ChevronRight size={13} className={`transition-transform ${showChainExample ? 'rotate-90' : ''}`} />
+                查看完整配置示例（港澳台新节点 → 美国住宅 SOCKS5）
+              </button>
+              {showChainExample && (
+                <div className="space-y-2 mt-2">
+                  {/* 为什么建议港澳台 */}
+                  <div className="rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                    <strong>💡 为什么建议用港澳台新节点做中间跳？</strong><br />
+                    港澳台节点延迟低（通常 &lt; 30ms）、线路质量稳定，作为第一跳几乎不影响整体速度；
+                    相比日欧美节点，两跳总延迟更低，住宅 SOCKS5 拨号握手更快，实际体验更流畅。
+                    此外港澳台机场节点通常走 IPLC/专线，出口稳定，适合对延迟敏感的 AI 服务使用。
+                  </div>
+                  <div className="relative bg-gray-900 dark:bg-gray-950 rounded-lg border border-gray-700 p-3 pr-10 overflow-x-auto">
+                  <pre className="text-[10px] text-green-300 font-mono leading-relaxed whitespace-pre select-all">{`proxies:
+  # 1. 港澳台机场节点（已通过订阅源导入，无需改动）
+  - name: "🇭🇰 香港节点"
+    type: vmess
+    server: hk.example.com
+    port: 443
+    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    alterId: 0
+    cipher: auto
+    tls: true
+    # ← 这里不加 dialer-proxy
+
+  # 2. 美国住宅SOCKS5 加上 dialer-proxy
+  #    含义：连接 us-res.example.com 这条路，先走香港节点
+  #    链路：本地 → 香港节点 → 住宅SOCKS5 → 目标
+  #    出口IP = 美国住宅IP ✓
+  - name: "🇺🇸 美国住宅SOCKS5"
+    type: socks5
+    server: us-res.example.com   # 替换为实际地址
+    port: 1080
+    username: your_user          # 替换为实际账号
+    password: your_pass
+    dialer-proxy: "🇭🇰 香港节点"  # ← 核心：先过香港，再到住宅出口
+
+proxy-groups:
+  - name: "🇺🇸 美国原生出口"
+    type: select
+    proxies:
+      - "🇺🇸 美国住宅SOCKS5"   # ← 选住宅SOCKS5，出口IP = 美国
+      - DIRECT
+
+rules:
+  - GEOSITE,openai,🇺🇸 美国原生出口
+  - GEOSITE,google,🇺🇸 美国原生出口
+  - MATCH,DIRECT`}</pre>
+                    <button
+                      onClick={() => {
+                        const code = `proxies:\n  - name: "🇭🇰 香港节点"\n    type: vmess\n    server: hk.example.com\n    port: 443\n    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\n    alterId: 0\n    cipher: auto\n    tls: true\n\n  - name: "🇺🇸 美国住宅SOCKS5"\n    type: socks5\n    server: us-res.example.com\n    port: 1080\n    username: your_user\n    password: your_pass\n    dialer-proxy: "🇭🇰 香港节点"\n\nproxy-groups:\n  - name: "🇺🇸 美国原生出口"\n    type: select\n    proxies:\n      - "🇺🇸 美国住宅SOCKS5"\n      - DIRECT\n\nrules:\n  - GEOSITE,openai,🇺🇸 美国原生出口\n  - GEOSITE,google,🇺🇸 美国原生出口\n  - MATCH,DIRECT`
+                        navigator.clipboard.writeText(code)
+                        setExampleCopied(true)
+                        setTimeout(() => setExampleCopied(false), 2000)
+                      }}
+                      className="absolute top-2.5 right-2.5 p-1.5 rounded-lg text-gray-500 hover:text-green-400 hover:bg-gray-800 transition-colors"
+                      title="复制示例"
+                    >
+                      {exampleCopied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 参考文档 */}

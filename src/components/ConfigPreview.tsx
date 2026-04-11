@@ -543,17 +543,28 @@ export default function ConfigPreview() {
           </button>
 
           {/* Flow arrays toggle */}
-          <button
-            onClick={() => setFlowArrays((v) => !v)}
-            className={`text-xs px-2 py-1 rounded border transition-colors ${
-              flowArrays
-                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400'
-            }`}
-            title={flowArrays ? '当前：行内压缩模式，点击切换为展开模式' : '当前：展开模式，点击切换为行内压缩模式'}
-          >
-            {flowArrays ? '行内压缩' : '展开模式'}
-          </button>
+          <div className="relative flex items-center gap-1">
+            <button
+              onClick={() => setFlowArrays((v) => !v)}
+              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                flowArrays
+                  ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400'
+              }`}
+              title={flowArrays ? '当前：行内压缩模式，点击切换为展开模式' : '当前：展开模式，点击切换为行内压缩模式'}
+            >
+              {flowArrays ? '行内压缩' : '展开模式'}
+            </button>
+            {flowArrays && (
+              <span className="relative group/tip cursor-default select-none text-[10px] text-amber-600 dark:text-amber-400">
+                ⚠️ 不推荐
+                <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 rounded-lg bg-gray-900 dark:bg-gray-700 text-white text-[11px] leading-relaxed px-2.5 py-2 opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 shadow-lg whitespace-normal text-center">
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700" />
+                  行内压缩使用 YAML flow 语法，部分 Mihomo 版本可能无法正确解析，建议使用展开模式
+                </span>
+              </span>
+            )}
+          </div>
 
           <div className="flex gap-2 ml-auto">
             <button

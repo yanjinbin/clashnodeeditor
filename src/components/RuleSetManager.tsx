@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -85,7 +85,26 @@ function RuleOrderNotice() {
       </button>
 
       {open && (
-        <div className="mt-3 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-900/10 p-3 space-y-1.5">
+        <div className="mt-3 space-y-2">
+          {/* 核心机制说明 */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-800/60 px-3.5 py-3 space-y-2">
+            <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+              <span className="text-indigo-500">⚡</span> 规则引擎工作原理
+            </p>
+            <div className="flex items-stretch gap-2 text-[10px]">
+              <div className="flex flex-col items-center gap-0.5 shrink-0 pt-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                <div className="w-px flex-1 bg-gradient-to-b from-indigo-300 to-transparent" />
+              </div>
+              <div className="space-y-2 text-gray-500 dark:text-gray-400 leading-relaxed pb-1">
+                <p>每条出站流量（网址/IP 访问请求）进入规则引擎后，<strong className="text-gray-700 dark:text-gray-300">从上到下逐条比对</strong>，命中第一条匹配规则后立即路由到对应代理组，<strong className="text-gray-700 dark:text-gray-300">停止后续匹配</strong>。</p>
+                <p>规则分两类：<strong className="text-gray-700 dark:text-gray-300">规则集（RULE-SET）</strong> 引用外部域名/IP 列表，适合批量匹配；<strong className="text-gray-700 dark:text-gray-300">自定义规则</strong> 支持 DOMAIN、DOMAIN-SUFFIX、IP-CIDR、GEOIP、GEOSITE、MATCH 等精确控制，优先级由位置决定。</p>
+                <p>最后一条 <code className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded">MATCH</code> 为兜底规则，所有未命中流量均走此出口，<strong className="text-gray-700 dark:text-gray-300">必须存在且置于末尾</strong>。</p>
+              </div>
+            </div>
+          </div>
+
+        <div className="rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-900/10 p-3 space-y-1.5">
           {RULE_ORDER_STEPS.map((step, i) => (
             <div key={step.label} className="flex items-start gap-2">
               <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 w-4 text-right shrink-0 mt-0.5">{i + 1}</span>
@@ -100,6 +119,7 @@ function RuleOrderNotice() {
           <p className="text-[9px] text-gray-400 dark:text-gray-600 pt-1 border-t border-indigo-100 dark:border-indigo-900/40">
             规则按顺序匹配，命中即停止。在「自定义规则」区可拖拽调整 RULE-SET 与手动规则的相对位置。
           </p>
+        </div>
         </div>
       )}
     </div>
@@ -625,7 +645,7 @@ function SortableProviderRow({
 
 // ── Manual Rules ──────────────────────────────────────────────────────────────
 function ManualRulesSection() {
-  const { rules, addRule, removeRule, reorderRules, proxyGroups, ruleProviders } = useAppStore()
+  const { rules, addRule, removeRule, reorderRules, proxyGroups, ruleProviders, resetRules } = useAppStore()
   const [newRule, setNewRule] = useState({
     type: 'DOMAIN',
     payload: '',
@@ -634,6 +654,19 @@ function ManualRulesSection() {
   })
   const [activeId, setActiveId] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(true)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const confirmResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleResetClick = () => {
+    if (confirmReset) {
+      resetRules()
+      setConfirmReset(false)
+      if (confirmResetTimer.current) clearTimeout(confirmResetTimer.current)
+    } else {
+      setConfirmReset(true)
+      confirmResetTimer.current = setTimeout(() => setConfirmReset(false), 3000)
+    }
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -660,20 +693,35 @@ function ManualRulesSection() {
   return (
     <div className="p-4">
       {/* Header */}
-      <button
-        onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1.5 w-full text-left mb-3"
-      >
-        <Shield size={13} className="text-gray-500" />
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide flex-1">
-          自定义规则
-          <span className="text-xs font-normal text-gray-400 normal-case ml-1">({rules.length})</span>
-        </h2>
-        <ChevronDown
-          size={14}
-          className={`text-gray-400 transition-transform ${expanded ? '' : '-rotate-90'}`}
-        />
-      </button>
+      <div className="flex items-center gap-2 mb-3">
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center gap-1.5 flex-1 text-left"
+        >
+          <Shield size={13} className="text-gray-500" />
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide flex-1">
+            自定义规则
+            <span className="text-xs font-normal text-gray-400 normal-case ml-1">({rules.length})</span>
+          </h2>
+          <ChevronDown
+            size={14}
+            className={`text-gray-400 transition-transform ${expanded ? '' : '-rotate-90'}`}
+          />
+        </button>
+        {rules.length > 0 && (
+          <button
+            onClick={handleResetClick}
+            className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors shrink-0 ${
+              confirmReset
+                ? 'bg-red-500 border-red-500 text-white hover:bg-red-600'
+                : 'border-red-200 dark:border-red-800/50 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+            }`}
+          >
+            <Trash2 size={11} />
+            {confirmReset ? '确认重置？' : '重置'}
+          </button>
+        )}
+      </div>
 
       {expanded && (
         <>

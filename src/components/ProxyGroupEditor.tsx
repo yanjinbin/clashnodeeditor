@@ -47,7 +47,7 @@ const GROUP_TYPES: { value: ProxyGroupType; label: string; desc: string }[] = [
 ]
 
 export default function ProxyGroupEditor() {
-  const { sources, manualProxies, proxyGroups, addProxyGroup, removeProxyGroup, updateProxyGroup, addProxyToGroup, removeProxyFromGroup, reorderProxiesInGroup, reorderProxyGroups } =
+  const { sources, manualProxies, proxyGroups, addProxyGroup, removeProxyGroup, updateProxyGroup, addProxyToGroup, removeProxyFromGroup, reorderProxiesInGroup, reorderProxyGroups, resetProxyGroups } =
     useAppStore()
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [editingGroup, setEditingGroup] = useState<string | null>(null)
@@ -80,6 +80,57 @@ export default function ProxyGroupEditor() {
   }
 
   const listRef = useRef<HTMLDivElement>(null)
+  const [showPresets, setShowPresets] = useState(false)
+  const presetsRef = useRef<HTMLDivElement>(null)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const confirmResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleResetClick = () => {
+    if (confirmReset) {
+      resetProxyGroups()
+      setConfirmReset(false)
+      if (confirmResetTimer.current) clearTimeout(confirmResetTimer.current)
+    } else {
+      setConfirmReset(true)
+      confirmResetTimer.current = setTimeout(() => setConfirmReset(false), 3000)
+    }
+  }
+
+  const PRESETS: { icon: string; name: string; type: ProxyGroupType; interval?: number; tolerance?: number }[] = [
+    { icon: '♻️', name: '自动选择', type: 'url-test', interval: 300, tolerance: 50 },
+    { icon: '🌐', name: '节点选择', type: 'select' },
+    { icon: '🛡️', name: '故障转移', type: 'fallback', interval: 300 },
+    { icon: '📺', name: '油管', type: 'url-test', interval: 300, tolerance: 50 },
+    { icon: '🐦', name: '社交媒体', type: 'fallback', interval: 300 },
+    { icon: '🇺🇸', name: '美国住宅 IP 出口', type: 'select' },
+    { icon: '🇯🇵', name: '日本住宅 IP 出口', type: 'select' },
+  ]
+
+  useEffect(() => {
+    if (!showPresets) return
+    const handler = (e: MouseEvent) => {
+      if (!presetsRef.current?.contains(e.target as Node)) setShowPresets(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showPresets])
+
+  const handleAddPreset = (preset: typeof PRESETS[number]) => {
+    setShowPresets(false)
+    const id = addProxyGroup({
+      name: `${preset.icon} ${preset.name}`,
+      type: preset.type,
+      proxies: [],
+      url: 'http://www.gstatic.com/generate_204',
+      interval: preset.interval ?? 300,
+      ...(preset.tolerance !== undefined ? { tolerance: preset.tolerance } : {}),
+    })
+    setExpandedGroups((prev) => new Set([...prev, id]))
+    setEditingGroup(id)
+    setTimeout(() => {
+      listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
+    }, 50)
+  }
 
   const handleAddGroup = () => {
     const id = addProxyGroup({
@@ -125,13 +176,59 @@ export default function ProxyGroupEditor() {
         <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
           代理组配置
         </h2>
-        <button
-          onClick={handleAddGroup}
-          className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shadow-sm shadow-indigo-200 dark:shadow-none transition-all"
-        >
-          <Plus size={14} />
-          新建分组
-        </button>
+        <div className="flex items-center gap-2">
+          {proxyGroups.length > 0 && (
+            <button
+              onClick={handleResetClick}
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                confirmReset
+                  ? 'bg-red-500 border-red-500 text-white hover:bg-red-600'
+                  : 'border-red-200 dark:border-red-800/50 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+              }`}
+            >
+              <Trash2 size={11} />
+              {confirmReset ? '确认重置？' : '重置'}
+            </button>
+          )}
+          {/* 预设模板 */}
+          <div className="relative" ref={presetsRef}>
+            <button
+              onClick={() => setShowPresets((v) => !v)}
+              className="flex items-center gap-1.5 px-3.5 py-2 border border-indigo-200 dark:border-indigo-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-xl transition-all"
+            >
+              <ChevronDown size={13} className={`transition-transform ${showPresets ? 'rotate-180' : ''}`} />
+              预设模板
+            </button>
+            {showPresets && (
+              <div className="absolute right-0 top-full mt-1.5 w-60 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+                {PRESETS.map((p) => (
+                  <button
+                    key={p.name}
+                    onClick={() => handleAddPreset(p)}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-gray-700 dark:text-gray-300 transition-colors text-left"
+                  >
+                    <span className="text-sm shrink-0">{p.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div>{p.name}</div>
+                      <div className="text-[10px] text-gray-400 font-mono mt-0.5 flex gap-1.5">
+                        <span>{p.type}</span>
+                        {p.interval !== undefined && <span>· {p.interval}s</span>}
+                        {p.tolerance !== undefined && <span>· ±{p.tolerance}ms</span>}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={handleAddGroup}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shadow-sm shadow-indigo-200 dark:shadow-none transition-all"
+          >
+            <Plus size={14} />
+            新建分组
+          </button>
+        </div>
       </div>
 
       <div ref={listRef} className="p-4 space-y-3">
