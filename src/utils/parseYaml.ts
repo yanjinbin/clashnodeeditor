@@ -137,7 +137,10 @@ export function generateClashConfig(
     'unified-delay': settings['unified-delay'],
     ...(settings['udp-timeout'] !== undefined ? { 'udp-timeout': settings['udp-timeout'] } : {}),
     ...(settings['tcp-keep-alive-interval'] !== undefined ? { 'tcp-keep-alive-interval': settings['tcp-keep-alive-interval'] } : {}),
+    ...(settings.udp !== undefined ? { udp: settings.udp } : {}),
     ...(settings.profile ? { profile: settings.profile } : {}),
+    // TUN 虚拟网卡：仅当 enable=true 或用户明确配置时才输出，避免所有人被强制开启
+    ...(settings.tun?.enable ? { tun: settings.tun } : {}),
     dns: settings.dns,
     sniffer: settings.sniffer,
     proxies,

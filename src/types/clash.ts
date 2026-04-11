@@ -122,7 +122,15 @@ export interface SnifferConfig {
   enable: boolean
   'parse-pure-ip'?: boolean
   sniff: Record<string, { ports: (number | string)[] }>
+  'force-domain'?: string[]
   'skip-domain'?: string[]
+}
+
+export interface TunConfig {
+  enable: boolean
+  stack?: 'system' | 'gvisor' | 'mixed'
+  'auto-route'?: boolean
+  'auto-detect-interface'?: boolean
 }
 
 export interface GeoxUrl {
@@ -142,11 +150,15 @@ export interface ClashGlobalSettings {
   'unified-delay'?: boolean
   'udp-timeout'?: number
   'tcp-keep-alive-interval'?: number
+  /** 全局禁用 UDP，链式代理 / Google / Gemini 场景推荐设 false */
+  udp?: boolean
   'find-process-mode'?: string
   'geodata-mode'?: boolean
   'geox-url'?: GeoxUrl
   'global-client-fingerprint'?: string
   profile?: { 'store-selected'?: boolean; 'store-fake-ip'?: boolean }
+  /** TUN 虚拟网卡，接管全流量 */
+  tun?: TunConfig
   sniffer?: SnifferConfig
   dns: DnsConfig
 }
@@ -161,15 +173,25 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   'find-process-mode': 'off',
   'geodata-mode': true,
   'geox-url': {
-    geoip: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat',
-    geosite: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat',
-    mmdb: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb',
+    geoip:    'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat',
+    geosite:  'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat',
+    mmdb:     'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb',
   },
   'global-client-fingerprint': 'chrome',
   'tcp-concurrent': true,
   'unified-delay': true,
+  // udp-timeout: UDP 连接超时秒数（非节点容差）
   'udp-timeout': 300,
   'tcp-keep-alive-interval': 30,
+  // 全局禁 UDP：链式代理 / 原生 IP / Gemini 场景更稳定，避免 QUIC 绕过代理导致 IP 不一致
+  udp: false,
+  // TUN 虚拟网卡 — 默认关闭；需要接管全流量时改为 enable: true
+  tun: {
+    enable: false,
+    stack: 'system',
+    'auto-route': true,
+    'auto-detect-interface': true,
+  },
   profile: {
     'store-selected': true,
     'store-fake-ip': true,
@@ -180,14 +202,15 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     sniff: {
       HTTP: { ports: [80, '8080-8880'] },
       TLS:  { ports: [443, 8443] },
+      QUIC: { ports: [443, 8443] },
     },
     'skip-domain': [
       'Mijia Cloud',
       '+.apple.com',
       'msftconnecttest.com',
-      '+.ntp.org',
+      'msftncsi.com',
       'time.*.com',
-      'dhcp.*.com',
+      'ntp*.*.com',
       '+.local',
     ],
   },
@@ -199,20 +222,30 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     'fake-ip-filter': [
       '*.lan',
       '*.local',
-      '+.ntp.org',
-      'time.*.com',
+      'time*.*.com',
       '+.stun.*.*',
+      'ntp*.*.com',
       'localhost.ptlogin2.qq.com',
       'time.*.gov',
       'time.*.edu.cn',
-      'ntp*.*.com',
     ],
+    'use-hosts': true,
     'respect-rules': true,
-    'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29'],
-    nameserver: ['223.5.5.5', '119.29.29.29'],
+    // 仅用于解析上游 DNS 域名（dns.google、cloudflare-dns.com 等）
+    'default-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
+    // 专门解析代理节点服务器域名，国内 DNS 稳定直连
+    'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
+    nameserver: ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
     'nameserver-policy': {
-      'geosite:cn':  ['223.5.5.5', '119.29.29.29'],
-      'geosite:gfw': ['https://dns.cloudflare.com/dns-query', 'https://dns.google/dns-query'],
+      // 国内域名走国内 DNS
+      'geosite:cn':  ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
+      // 非国内域名走境外加密 DNS，防污染
+      'geosite:geolocation-!cn': [
+        'https://cloudflare-dns.com/dns-query',
+        'https://dns.google/dns-query',
+        '1.1.1.1',
+        '8.8.8.8',
+      ],
     },
   },
 }
@@ -228,11 +261,13 @@ export interface ClashConfig {
   'unified-delay'?: boolean
   'udp-timeout'?: number
   'tcp-keep-alive-interval'?: number
+  udp?: boolean
   'find-process-mode'?: string
   'geodata-mode'?: boolean
   'geox-url'?: GeoxUrl
   'global-client-fingerprint'?: string
   profile?: { 'store-selected'?: boolean; 'store-fake-ip'?: boolean }
+  tun?: TunConfig
   sniffer?: SnifferConfig
   dns?: DnsConfig
   proxies?: Proxy[]

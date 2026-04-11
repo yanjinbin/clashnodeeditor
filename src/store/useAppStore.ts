@@ -464,7 +464,12 @@ export const useAppStore = create<AppState>()(
     },
 
     updateDnsFallbackFilter: (updates) => {
-      set((state) => { Object.assign(state.globalSettings.dns['fallback-filter'], updates) })
+      set((state) => {
+        if (!state.globalSettings.dns['fallback-filter']) {
+          state.globalSettings.dns['fallback-filter'] = {} as DnsFallbackFilter
+        }
+        Object.assign(state.globalSettings.dns['fallback-filter']!, updates)
+      })
     },
 
     getAllProxies: () => [
