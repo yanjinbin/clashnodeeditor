@@ -105,22 +105,23 @@ export interface DnsFallbackFilter {
 export interface DnsConfig {
   enable: boolean
   ipv6: boolean
-  'default-nameserver': string[]
+  'default-nameserver'?: string[]
   'enhanced-mode': string
   'fake-ip-range': string
   'fake-ip-filter'?: string[]
-  'use-hosts': boolean
+  'use-hosts'?: boolean
   'respect-rules': boolean
   'proxy-server-nameserver': string[]
   nameserver: string[]
   'nameserver-policy'?: Record<string, string[]>
-  fallback: string[]
-  'fallback-filter': DnsFallbackFilter
+  fallback?: string[]
+  'fallback-filter'?: DnsFallbackFilter
 }
 
 export interface SnifferConfig {
   enable: boolean
-  sniff: Record<string, { ports: number[] }>
+  'parse-pure-ip'?: boolean
+  sniff: Record<string, { ports: (number | string)[] }>
   'skip-domain'?: string[]
 }
 
@@ -139,10 +140,13 @@ export interface ClashGlobalSettings {
   'external-controller': string
   'tcp-concurrent'?: boolean
   'unified-delay'?: boolean
+  'udp-timeout'?: number
+  'tcp-keep-alive-interval'?: number
   'find-process-mode'?: string
   'geodata-mode'?: boolean
   'geox-url'?: GeoxUrl
   'global-client-fingerprint'?: string
+  profile?: { 'store-selected'?: boolean; 'store-fake-ip'?: boolean }
   sniffer?: SnifferConfig
   dns: DnsConfig
 }
@@ -154,9 +158,7 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   mode: 'rule',
   'log-level': 'info',
   'external-controller': '127.0.0.1:9090',
-  'tcp-concurrent': true,
-  'unified-delay': true,
-  'find-process-mode': 'strict',
+  'find-process-mode': 'off',
   'geodata-mode': true,
   'geox-url': {
     geoip: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat',
@@ -164,52 +166,53 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     mmdb: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb',
   },
   'global-client-fingerprint': 'chrome',
+  'tcp-concurrent': true,
+  'unified-delay': true,
+  'udp-timeout': 300,
+  'tcp-keep-alive-interval': 30,
+  profile: {
+    'store-selected': true,
+    'store-fake-ip': true,
+  },
   sniffer: {
     enable: true,
+    'parse-pure-ip': true,
     sniff: {
-      HTTP:  { ports: [80, 8080] },
-      TLS:   { ports: [443, 8443] },
-      QUIC:  { ports: [443, 8443] },
+      HTTP: { ports: [80, '8080-8880'] },
+      TLS:  { ports: [443, 8443] },
     },
-    'skip-domain': ['Mijia Cloud', '+.apple.com'],
+    'skip-domain': [
+      'Mijia Cloud',
+      '+.apple.com',
+      'msftconnecttest.com',
+      '+.ntp.org',
+      'time.*.com',
+      'dhcp.*.com',
+      '+.local',
+    ],
   },
   dns: {
     enable: true,
     ipv6: false,
-    'default-nameserver': ['223.5.5.5', '119.29.29.29'],
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
     'fake-ip-filter': [
-      '*.lan', '*.local', 'localhost.ptlogin2.qq.com',
-      '*.ntp.org.cn', 'time.*.com', 'time.*.gov', '*.time.edu.cn',
-      'ntp.*.com', '+.stun.*.*', '+.stun.*.*.*',
-      'heartbeat.belkin.com', '*.msftconnecttest.com', '*.msftncsi.com',
-      'xbox.*.microsoft.com', '*.xboxlive.com',
+      '*.lan',
+      '*.local',
+      '+.ntp.org',
+      'time.*.com',
+      '+.stun.*.*',
+      'localhost.ptlogin2.qq.com',
+      'time.*.gov',
+      'time.*.edu.cn',
+      'ntp*.*.com',
     ],
-    'use-hosts': true,
     'respect-rules': true,
-    'proxy-server-nameserver': [
-      'https://doh.pub/dns-query',
-      'https://dns.alidns.com/dns-query',
-    ],
-    nameserver: [
-      'https://doh.pub/dns-query',
-      'https://dns.alidns.com/dns-query',
-    ],
+    'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29'],
+    nameserver: ['223.5.5.5', '119.29.29.29'],
     'nameserver-policy': {
-      'geosite:cn': ['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query'],
-      'geosite:geolocation-!cn': ['https://1.1.1.1/dns-query', 'https://dns.google/dns-query'],
-    },
-    fallback: [
-      'https://1.1.1.1/dns-query',
-      'https://dns.google/dns-query',
-    ],
-    'fallback-filter': {
-      geoip: true,
-      'geoip-code': 'CN',
-      geosite: ['gfw'],
-      ipcidr: ['240.0.0.0/4', '0.0.0.0/8'],
-      domain: ['+.google.com', '+.facebook.com', '+.youtube.com'],
+      'geosite:cn':  ['223.5.5.5', '119.29.29.29'],
+      'geosite:gfw': ['https://dns.cloudflare.com/dns-query', 'https://dns.google/dns-query'],
     },
   },
 }
@@ -223,10 +226,13 @@ export interface ClashConfig {
   'external-controller'?: string
   'tcp-concurrent'?: boolean
   'unified-delay'?: boolean
+  'udp-timeout'?: number
+  'tcp-keep-alive-interval'?: number
   'find-process-mode'?: string
   'geodata-mode'?: boolean
   'geox-url'?: GeoxUrl
   'global-client-fingerprint'?: string
+  profile?: { 'store-selected'?: boolean; 'store-fake-ip'?: boolean }
   sniffer?: SnifferConfig
   dns?: DnsConfig
   proxies?: Proxy[]
@@ -273,14 +279,14 @@ function preset(
 }
 
 export const PRESET_RULE_PROVIDERS: RuleProvider[] = [
-  preset('reject',       'domain',    'REJECT', true),
-  preset('private',      'domain',    'DIRECT', true),
-  preset('google',       'domain',    'PROXY',  false),
-  preset('direct',       'domain',    'DIRECT', true),
-  preset('gfw',          'domain',    'PROXY',  false),
-  preset('telegramcidr', 'ipcidr',    'PROXY',  false, true),
-  preset('cncidr',       'ipcidr',    'DIRECT', true,  true),
-  preset('lancidr',      'ipcidr',    'DIRECT', true,  true),
+  preset('reject',       'domain',    'REJECT',       true),
+  preset('private',      'domain',    'DIRECT',       true),
+  preset('google',       'domain',    '♻️ 自动选择', true),
+  preset('direct',       'domain',    'DIRECT',       true),
+  preset('gfw',          'domain',    'PROXY',        false),
+  preset('telegramcidr', 'ipcidr',    'PROXY',        false, true),
+  preset('cncidr',       'ipcidr',    'DIRECT',       true,  true),
+  preset('lancidr',      'ipcidr',    'DIRECT',       true,  true),
 ]
 
 function bm7(
@@ -305,19 +311,19 @@ function bm7(
 }
 
 export const BLACKMATRIX7_RULE_PROVIDERS: RuleProvider[] = [
-  bm7('openai',       'OpenAI/OpenAI.yaml',            'PROXY',  true),
-  bm7('claude',       'Claude/Claude.yaml',            'PROXY',  true),
-  bm7('gemini',       'Gemini/Gemini.yaml',            'PROXY',  true),
-  bm7('copilot',      'Copilot/Copilot.yaml',          'PROXY',  false),
-  bm7('youtube-music','YouTubeMusic/YouTubeMusic.yaml','PROXY',  false, 1209600),
-  bm7('youtube',      'YouTube/YouTube.yaml',          'PROXY',  false),
-  bm7('telegram',     'Telegram/Telegram.yaml',        'PROXY',  false, 1209600),
-  bm7('twitter',      'Twitter/Twitter.yaml',          'PROXY',  false, 1209600),
-  bm7('tiktok',       'TikTok/TikTok.yaml',            'PROXY',  false, 1209600),
-  bm7('linkedin',     'LinkedIn/LinkedIn.yaml',        'PROXY',  false, 1209600),
-  bm7('docker',       'Docker/Docker.yaml',            'PROXY',  false, 1209600),
-  bm7('GoogleFCM',    'GoogleFCM/GoogleFCM.yaml',      'DIRECT', false, 1209600),
-  bm7('cn',           'China/China.yaml',             'DIRECT', true),
+  bm7('openai',       'OpenAI/OpenAI.yaml',             '♻️ 自动选择', true),
+  bm7('claude',       'Claude/Claude.yaml',             '♻️ 自动选择', true),
+  bm7('gemini',       'Gemini/Gemini.yaml',             '♻️ 自动选择', true),
+  bm7('copilot',      'Copilot/Copilot.yaml',           '♻️ 自动选择', true),
+  bm7('youtube-music','YouTubeMusic/YouTubeMusic.yaml', '♻️ 自动选择', true,  1209600),
+  bm7('youtube',      'YouTube/YouTube.yaml',           '♻️ 自动选择', true),
+  bm7('telegram',     'Telegram/Telegram.yaml',         '♻️ 自动选择', true,  1209600),
+  bm7('twitter',      'Twitter/Twitter.yaml',           '♻️ 自动选择', true,  1209600),
+  bm7('tiktok',       'TikTok/TikTok.yaml',             '♻️ 自动选择', true,  1209600),
+  bm7('linkedin',     'LinkedIn/LinkedIn.yaml',         '♻️ 自动选择', true,  1209600),
+  bm7('docker',       'Docker/Docker.yaml',             '♻️ 自动选择', true,  1209600),
+  bm7('GoogleFCM',    'GoogleFCM/GoogleFCM.yaml',       'DIRECT',      false, 1209600),
+  bm7('cn',           'China/China.yaml',               'DIRECT',      true),
 ]
 
 export const BUILT_IN_PROXIES: string[] = []

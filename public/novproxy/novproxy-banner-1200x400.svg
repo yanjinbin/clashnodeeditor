@@ -1,0 +1,116 @@
+<svg width="1200" height="400" viewBox="0 0 1200 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="20" y1="0" x2="1180" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#061223"/>
+      <stop offset="0.58" stop-color="#0B1B33"/>
+      <stop offset="1" stop-color="#0A2840"/>
+    </linearGradient>
+    <radialGradient id="flare" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(948 178) rotate(174.99) scale(306 224)">
+      <stop stop-color="#2DEAFF" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#2DEAFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cta" x1="0" y1="0" x2="0" y2="70" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2BF0BA"/>
+      <stop offset="1" stop-color="#00C77D"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="400" rx="28" fill="url(#bg)"/>
+  <circle cx="960" cy="196" r="170" fill="url(#flare)"/>
+
+  <g opacity="0.14">
+    <path d="M742 48H1148" stroke="#9FE2FF"/>
+    <path d="M742 86H1148" stroke="#9FE2FF"/>
+    <path d="M742 124H1148" stroke="#9FE2FF"/>
+    <path d="M742 162H1148" stroke="#9FE2FF"/>
+    <path d="M742 200H1148" stroke="#9FE2FF"/>
+    <path d="M742 238H1148" stroke="#9FE2FF"/>
+    <path d="M742 276H1148" stroke="#9FE2FF"/>
+    <path d="M742 314H1148" stroke="#9FE2FF"/>
+    <path d="M778 26V356" stroke="#9FE2FF"/>
+    <path d="M818 26V356" stroke="#9FE2FF"/>
+    <path d="M858 26V356" stroke="#9FE2FF"/>
+    <path d="M898 26V356" stroke="#9FE2FF"/>
+    <path d="M938 26V356" stroke="#9FE2FF"/>
+    <path d="M978 26V356" stroke="#9FE2FF"/>
+    <path d="M1018 26V356" stroke="#9FE2FF"/>
+    <path d="M1058 26V356" stroke="#9FE2FF"/>
+    <path d="M1098 26V356" stroke="#9FE2FF"/>
+  </g>
+
+  <g transform="translate(56 42)">
+    <rect width="42" height="42" rx="13" fill="#0E2741" stroke="#7FEFFF" stroke-opacity="0.28"/>
+    <circle cx="14" cy="15" r="4" fill="#29F0C7"/>
+    <circle cx="28" cy="14" r="3.5" fill="#73D8FF"/>
+    <circle cx="21" cy="28" r="3.5" fill="#FFFFFF"/>
+    <path d="M14 15L28 14L21 28L14 15Z" stroke="#8AF4FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="58" y="28" fill="#F5FBFF" font-size="24" font-weight="700" letter-spacing="2">NOVPROXY</text>
+  </g>
+
+  <text x="56" y="138" fill="#FFFFFF" font-size="48" font-weight="800">最具性价比的住宅 IP 提供商</text>
+  <text x="56" y="194" fill="#AABFD1" font-size="23" font-weight="600">Novproxy 的快速海外 IP，应用于社交媒体、账号管理等业务场景。</text>
+
+  <g transform="translate(56 226)">
+    <rect width="192" height="70" rx="22" fill="url(#cta)"/>
+    <text x="96" y="45" text-anchor="middle" fill="#FFFFFF" font-size="21" font-weight="800">免费试用</text>
+  </g>
+
+  <g transform="translate(268 226)">
+    <rect width="192" height="70" rx="22" fill="white" fill-opacity="0.08"/>
+    <rect x="1" y="1" width="190" height="68" rx="21" stroke="#A9EEFF" stroke-opacity="0.55" stroke-width="2"/>
+    <text x="96" y="45" text-anchor="middle" fill="#EAF8FF" font-size="21" font-weight="800">获得定价</text>
+  </g>
+
+  <g transform="translate(772 58)">
+    <circle cx="170" cy="138" r="108" fill="#09192F" fill-opacity="0.58" stroke="#98F6FF" stroke-opacity="0.34" stroke-width="2"/>
+    <path d="M90 104L134 72L186 62L240 82L290 122" stroke="#7DEBFF" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M106 216L158 242L218 244L272 214L314 170" stroke="#7DEBFF" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M186 62L170 138L158 242" stroke="#7DEBFF" stroke-opacity="0.7" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M290 122L170 138L106 216" stroke="#7DEBFF" stroke-opacity="0.5" stroke-width="2.5" stroke-linecap="round"/>
+    <g fill="#08192E" stroke="#9AF8FF" stroke-width="2.5">
+      <circle cx="90" cy="104" r="10"/>
+      <circle cx="134" cy="72" r="9"/>
+      <circle cx="186" cy="62" r="10"/>
+      <circle cx="240" cy="82" r="9"/>
+      <circle cx="290" cy="122" r="10"/>
+      <circle cx="106" cy="216" r="9"/>
+      <circle cx="158" cy="242" r="10"/>
+      <circle cx="218" cy="244" r="9"/>
+      <circle cx="272" cy="214" r="10"/>
+      <circle cx="314" cy="170" r="9"/>
+      <circle cx="170" cy="138" r="15"/>
+    </g>
+    <g fill="#8DF7FF">
+      <circle cx="90" cy="104" r="4"/>
+      <circle cx="186" cy="62" r="4"/>
+      <circle cx="290" cy="122" r="4"/>
+      <circle cx="158" cy="242" r="4"/>
+      <circle cx="272" cy="214" r="4"/>
+      <circle cx="170" cy="138" r="5"/>
+    </g>
+    <rect x="14" y="242" width="132" height="58" rx="16" fill="#081A30" fill-opacity="0.74" stroke="#92F4FF" stroke-opacity="0.24"/>
+    <text x="32" y="266" fill="#9AB6CB" font-size="12" font-weight="600">Success Rate</text>
+    <text x="32" y="287" fill="#FFFFFF" font-size="21" font-weight="800">99.9%</text>
+  </g>
+
+  <g transform="translate(52 336)">
+    <rect width="132" height="40" rx="20" fill="white" fill-opacity="0.08"/>
+    <text x="66" y="26" text-anchor="middle" fill="#EFFAFF" font-size="15" font-weight="700">高质量</text>
+  </g>
+  <g transform="translate(198 336)">
+    <rect width="148" height="40" rx="20" fill="white" fill-opacity="0.08"/>
+    <text x="74" y="26" text-anchor="middle" fill="#EFFAFF" font-size="15" font-weight="700">纯净度高</text>
+  </g>
+  <g transform="translate(360 336)">
+    <rect width="174" height="40" rx="20" fill="white" fill-opacity="0.08"/>
+    <text x="87" y="26" text-anchor="middle" fill="#EFFAFF" font-size="15" font-weight="700">成功率99.9%</text>
+  </g>
+  <g transform="translate(548 336)">
+    <rect width="188" height="40" rx="20" fill="white" fill-opacity="0.08"/>
+    <text x="94" y="26" text-anchor="middle" fill="#EFFAFF" font-size="15" font-weight="700">全天技术支持</text>
+  </g>
+  <g transform="translate(750 336)">
+    <rect width="218" height="40" rx="20" fill="white" fill-opacity="0.08"/>
+    <text x="109" y="26" text-anchor="middle" fill="#EFFAFF" font-size="15" font-weight="700">流量永不过期</text>
+  </g>
+</svg>

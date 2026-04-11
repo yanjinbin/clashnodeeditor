@@ -1,0 +1,185 @@
+<svg width="1240" height="560" viewBox="0 0 1240 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="74" y1="40" x2="1180" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#071426"/>
+      <stop offset="0.58" stop-color="#0C1E37"/>
+      <stop offset="1" stop-color="#092A43"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(967 136) rotate(95.486) scale(252 328)">
+      <stop stop-color="#29E7FF" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#29E7FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1092 426) rotate(180) scale(286 226)">
+      <stop stop-color="#4C8DFF" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#4C8DFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="primary" x1="112" y1="0" x2="112" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#28F0B4"/>
+      <stop offset="1" stop-color="#00C97B"/>
+    </linearGradient>
+    <linearGradient id="secondaryStroke" x1="0" y1="0" x2="276" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C2F8FF" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#5DAEFF" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="networkStroke" x1="818" y1="70" x2="1144" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8EF7FF"/>
+      <stop offset="1" stop-color="#5A7FFF"/>
+    </linearGradient>
+    <filter id="blurLg" x="-120" y="-120" width="1480" height="800" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+    <filter id="softShadow" x="-40" y="-40" width="400" height="180" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feOffset dy="18"/>
+      <feGaussianBlur stdDeviation="20"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.024 0 0 0 0 0.231 0 0 0 0 0.447 0 0 0 0.35 0"/>
+      <feBlend in2="SourceGraphic" result="shape"/>
+    </filter>
+    <filter id="pillShadow" x="-20" y="-20" width="280" height="100" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feOffset dy="10"/>
+      <feGaussianBlur stdDeviation="12"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.035 0 0 0 0 0.19 0 0 0 0 0.40 0 0 0 0.25 0"/>
+      <feBlend in2="SourceGraphic" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="1240" height="560" rx="32" fill="url(#bg)"/>
+
+  <g opacity="0.65">
+    <path d="M0 96C162 46 290 31 423 36C548 41 648 70 760 72C904 74 1040 31 1240 0V560H0V96Z" fill="url(#glowA)" filter="url(#blurLg)"/>
+    <circle cx="1050" cy="410" r="186" fill="url(#glowB)" filter="url(#blurLg)"/>
+  </g>
+
+  <g opacity="0.18">
+    <path d="M770 72H1176" stroke="#95D8FF"/>
+    <path d="M770 112H1176" stroke="#95D8FF"/>
+    <path d="M770 152H1176" stroke="#95D8FF"/>
+    <path d="M770 192H1176" stroke="#95D8FF"/>
+    <path d="M770 232H1176" stroke="#95D8FF"/>
+    <path d="M770 272H1176" stroke="#95D8FF"/>
+    <path d="M770 312H1176" stroke="#95D8FF"/>
+    <path d="M770 352H1176" stroke="#95D8FF"/>
+    <path d="M770 392H1176" stroke="#95D8FF"/>
+    <path d="M770 432H1176" stroke="#95D8FF"/>
+    <path d="M810 32V488" stroke="#95D8FF"/>
+    <path d="M850 32V488" stroke="#95D8FF"/>
+    <path d="M890 32V488" stroke="#95D8FF"/>
+    <path d="M930 32V488" stroke="#95D8FF"/>
+    <path d="M970 32V488" stroke="#95D8FF"/>
+    <path d="M1010 32V488" stroke="#95D8FF"/>
+    <path d="M1050 32V488" stroke="#95D8FF"/>
+    <path d="M1090 32V488" stroke="#95D8FF"/>
+    <path d="M1130 32V488" stroke="#95D8FF"/>
+  </g>
+
+  <g transform="translate(84 62)">
+    <g opacity="0.95">
+      <rect x="0" y="0" width="52" height="52" rx="15" fill="#0E2741" stroke="rgba(143,239,255,0.35)"/>
+      <circle cx="18" cy="18" r="5" fill="#2AF0C5"/>
+      <circle cx="34" cy="17" r="4" fill="#75D9FF"/>
+      <circle cx="27" cy="34" r="4" fill="#FFFFFF"/>
+      <path d="M18 18L34 17L27 34L18 18Z" stroke="#8CF4FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <text x="68" y="34" fill="#F4FBFF" font-size="29" font-weight="700" letter-spacing="2">NOVPROXY</text>
+  </g>
+
+  <text x="84" y="178" fill="#FFFFFF" font-size="62" font-weight="800">最具性价比的住宅 IP 提供商</text>
+  <text x="84" y="256" fill="#A8BED2" font-size="28" font-weight="600">Novproxy 的快速海外 IP，应用于社交媒体、账号管理等业务场景。</text>
+
+  <g transform="translate(84 306)" filter="url(#softShadow)">
+    <rect width="226" height="84" rx="24" fill="url(#primary)"/>
+    <text x="113" y="53" text-anchor="middle" fill="#FFFFFF" font-size="24" font-weight="800">免费试用</text>
+  </g>
+
+  <g transform="translate(332 306)">
+    <rect width="226" height="84" rx="24" fill="rgba(255,255,255,0.08)"/>
+    <rect x="1" y="1" width="224" height="82" rx="23" stroke="url(#secondaryStroke)" stroke-width="2"/>
+    <text x="113" y="53" text-anchor="middle" fill="#EAF8FF" font-size="24" font-weight="800">获得定价</text>
+  </g>
+
+  <g transform="translate(780 72)">
+    <circle cx="208" cy="188" r="138" fill="rgba(9,22,39,0.56)" stroke="rgba(144,235,255,0.38)" stroke-width="2"/>
+    <circle cx="208" cy="188" r="109" stroke="rgba(123,223,255,0.28)" stroke-width="1.5"/>
+    <circle cx="208" cy="188" r="78" stroke="rgba(123,223,255,0.2)" stroke-width="1.5"/>
+
+    <path d="M82 161C118 118 158 94 212 88C263 82 319 103 356 145" stroke="url(#networkStroke)" stroke-width="3" stroke-linecap="round"/>
+    <path d="M120 264C162 293 215 307 270 296C314 288 354 267 382 229" stroke="url(#networkStroke)" stroke-width="3" stroke-linecap="round"/>
+    <path d="M206 50V326" stroke="rgba(142,247,255,0.4)" stroke-width="2"/>
+    <path d="M74 189H344" stroke="rgba(142,247,255,0.32)" stroke-width="2"/>
+    <path d="M139 95L278 280" stroke="rgba(142,247,255,0.22)" stroke-width="1.5"/>
+    <path d="M300 108L153 269" stroke="rgba(142,247,255,0.16)" stroke-width="1.5"/>
+
+    <g fill="#07182D" stroke="#97F8FF" stroke-width="2.5">
+      <circle cx="116" cy="132" r="12"/>
+      <circle cx="161" cy="96" r="10"/>
+      <circle cx="214" cy="88" r="12"/>
+      <circle cx="276" cy="106" r="10"/>
+      <circle cx="330" cy="145" r="13"/>
+      <circle cx="128" cy="252" r="10"/>
+      <circle cx="190" cy="286" r="12"/>
+      <circle cx="256" cy="287" r="11"/>
+      <circle cx="323" cy="250" r="12"/>
+      <circle cx="368" cy="201" r="10"/>
+      <circle cx="206" cy="188" r="18"/>
+    </g>
+
+    <g fill="#8DF7FF">
+      <circle cx="116" cy="132" r="4"/>
+      <circle cx="214" cy="88" r="4"/>
+      <circle cx="330" cy="145" r="4"/>
+      <circle cx="190" cy="286" r="4"/>
+      <circle cx="323" cy="250" r="4"/>
+      <circle cx="206" cy="188" r="6"/>
+    </g>
+
+    <path d="M116 132L161 96L214 88L276 106L330 145" stroke="#7DEBFF" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M128 252L190 286L256 287L323 250L368 201" stroke="#7DEBFF" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M214 88L206 188L190 286" stroke="rgba(125,235,255,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M330 145L206 188L128 252" stroke="rgba(125,235,255,0.5)" stroke-width="2.5" stroke-linecap="round"/>
+
+    <g opacity="0.78">
+      <rect x="14" y="278" width="124" height="74" rx="18" fill="rgba(8,27,49,0.72)" stroke="rgba(147,244,255,0.28)"/>
+      <text x="34" y="311" fill="#9AB6CB" font-size="13" font-weight="600">Global Routes</text>
+      <text x="34" y="339" fill="#FFFFFF" font-size="22" font-weight="800">99.9%</text>
+      <text x="88" y="339" fill="#A8BED2" font-size="13" font-weight="600">Success</text>
+    </g>
+
+    <g opacity="0.78">
+      <rect x="274" y="20" width="118" height="66" rx="18" fill="rgba(8,27,49,0.72)" stroke="rgba(147,244,255,0.28)"/>
+      <text x="294" y="48" fill="#9AB6CB" font-size="13" font-weight="600">Node Quality</text>
+      <text x="294" y="71" fill="#FFFFFF" font-size="20" font-weight="800">Premium</text>
+    </g>
+  </g>
+
+  <g transform="translate(22 466)" filter="url(#pillShadow)">
+    <rect width="188" height="56" rx="28" fill="rgba(255,255,255,0.08)"/>
+    <circle cx="28" cy="28" r="12" stroke="#C0F6FF" stroke-width="2"/>
+    <path d="M23 31L27 25L31 29L35 22" stroke="#C0F6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="54" y="35" fill="#EFFAFF" font-size="18" font-weight="700">高质量</text>
+  </g>
+  <g transform="translate(230 466)" filter="url(#pillShadow)">
+    <rect width="188" height="56" rx="28" fill="rgba(255,255,255,0.08)"/>
+    <circle cx="28" cy="24" r="8" stroke="#C0F6FF" stroke-width="2"/>
+    <path d="M28 33C35 33 40 27 40 21" stroke="#C0F6FF" stroke-width="2" stroke-linecap="round"/>
+    <path d="M28 44C37 40 44 33 47 24" stroke="#C0F6FF" stroke-width="2" stroke-linecap="round"/>
+    <text x="54" y="35" fill="#EFFAFF" font-size="18" font-weight="700">纯净度高</text>
+  </g>
+  <g transform="translate(438 466)" filter="url(#pillShadow)">
+    <rect width="212" height="56" rx="28" fill="rgba(255,255,255,0.08)"/>
+    <circle cx="28" cy="28" r="12" stroke="#C0F6FF" stroke-width="2"/>
+    <path d="M28 28L34 24" stroke="#C0F6FF" stroke-width="2" stroke-linecap="round"/>
+    <path d="M28 28V20" stroke="#C0F6FF" stroke-width="2" stroke-linecap="round"/>
+    <text x="54" y="35" fill="#EFFAFF" font-size="18" font-weight="700">成功率99.9%</text>
+  </g>
+  <g transform="translate(670 466)" filter="url(#pillShadow)">
+    <rect width="236" height="56" rx="28" fill="rgba(255,255,255,0.08)"/>
+    <path d="M20 27C20 19 25 14 32 14C39 14 44 19 44 27V30C44 38 39 43 32 43" stroke="#C0F6FF" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 27H14" stroke="#C0F6FF" stroke-width="2" stroke-linecap="round"/>
+    <path d="M44 27H50" stroke="#C0F6FF" stroke-width="2" stroke-linecap="round"/>
+    <text x="60" y="35" fill="#EFFAFF" font-size="18" font-weight="700">全天技术支持</text>
+  </g>
+  <g transform="translate(926 466)" filter="url(#pillShadow)">
+    <rect width="292" height="56" rx="28" fill="rgba(255,255,255,0.08)"/>
+    <path d="M18 28C18 22 22 18 28 18C34 18 38 22 44 28C50 34 54 38 60 38C66 38 70 34 70 28C70 22 66 18 60 18" stroke="#C0F6FF" stroke-width="2" stroke-linecap="round"/>
+    <text x="82" y="35" fill="#EFFAFF" font-size="18" font-weight="700">流量永不过期</text>
+  </g>
+</svg>

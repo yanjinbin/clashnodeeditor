@@ -186,14 +186,14 @@ function SettingsPanel() {
           <BlurInput value={dns['fake-ip-range']} onChange={(v) => updDns('fake-ip-range', v)} className="w-full" />
         </Row>
         <Row label="use-hosts">
-          <Toggle checked={dns['use-hosts']} onChange={(v) => updDns('use-hosts', v)} />
+          <Toggle checked={dns['use-hosts'] ?? false} onChange={(v) => updDns('use-hosts', v)} />
         </Row>
         <Row label="respect-rules">
           <Toggle checked={dns['respect-rules']} onChange={(v) => updDns('respect-rules', v)} />
         </Row>
         <Row label="default-nameserver">
           <BlurInput
-            value={joinArr(dns['default-nameserver'])}
+            value={joinArr(dns['default-nameserver'] ?? [])}
             onChange={(v) => updDns('default-nameserver', parseArr(v))}
             placeholder="223.5.5.5, 119.29.29.29"
             className="w-full"
@@ -217,7 +217,7 @@ function SettingsPanel() {
         </Row>
         <Row label="fallback (DoH)">
           <BlurInput
-            value={joinArr(dns.fallback)}
+            value={joinArr(dns.fallback ?? [])}
             onChange={(v) => updDns('fallback', parseArr(v))}
             placeholder="https://1.1.1.1/dns-query"
             className="w-full"
@@ -235,14 +235,14 @@ function SettingsPanel() {
 
       <Section title="Fallback Filter" defaultOpen={false}>
         <Row label="geoip">
-          <Toggle checked={ff.geoip} onChange={(v) => updFF('geoip', v)} />
+          <Toggle checked={ff?.geoip ?? false} onChange={(v) => updFF('geoip', v)} />
         </Row>
         <Row label="geoip-code">
-          <BlurInput value={ff['geoip-code']} onChange={(v) => updFF('geoip-code', v)} className="w-16" />
+          <BlurInput value={ff?.['geoip-code'] ?? 'CN'} onChange={(v) => updFF('geoip-code', v)} className="w-16" />
         </Row>
         <Row label="geosite">
           <BlurInput
-            value={joinArr(ff.geosite)}
+            value={joinArr(ff?.geosite ?? [])}
             onChange={(v) => updFF('geosite', parseArr(v))}
             placeholder="gfw"
             className="w-full"
@@ -250,7 +250,7 @@ function SettingsPanel() {
         </Row>
         <Row label="ipcidr">
           <BlurInput
-            value={joinArr(ff.ipcidr)}
+            value={joinArr(ff?.ipcidr ?? [])}
             onChange={(v) => updFF('ipcidr', parseArr(v))}
             placeholder="240.0.0.0/4"
             className="w-full"
@@ -258,7 +258,7 @@ function SettingsPanel() {
         </Row>
         <Row label="domain">
           <BlurInput
-            value={joinArr(ff.domain)}
+            value={joinArr(ff?.domain ?? [])}
             onChange={(v) => updFF('domain', parseArr(v))}
             placeholder="+.google.com, +.youtube.com"
             className="w-full"

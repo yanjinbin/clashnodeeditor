@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAppStore } from './store/useAppStore'
 import SourceManager from './components/SourceManager'
 import NodeManager from './components/NodeManager'
@@ -5,7 +6,7 @@ import ProxyGroupEditor from './components/ProxyGroupEditor'
 import RuleSetManager from './components/RuleSetManager'
 import ConfigPreview from './components/ConfigPreview'
 import AdBanner from './components/AdBanner'
-import { Globe, Server, Users, Shield, FileText } from 'lucide-react'
+import { Globe, Server, Users, Shield, FileText, RotateCcw, X, ZoomIn } from 'lucide-react'
 
 const TABS = [
   { id: 'sources' as const, label: '订阅源', icon: Globe },
@@ -21,8 +22,24 @@ const AD_SLOT_RIGHT = '1439725312'
 // 左右广告列宽 — xl:144px，与 max-w-5xl(1024px) 合计 1312px ≤ 1280px 时自动隐藏
 const AD_COL = 'w-36' // 144px
 
+const RESET_LABELS: Record<string, string> = {
+  sources: '清空订阅源',
+  nodes:   '清空手动节点',
+  groups:  '重置代理组',
+  rules:   '重置规则',
+  preview: '重置全局设置',
+}
+
 export default function App() {
-  const { activeTab, setActiveTab } = useAppStore()
+  const { activeTab, setActiveTab, resetTab } = useAppStore()
+  const [confirming, setConfirming] = useState(false)
+  const [bannerZoom, setBannerZoom] = useState(false)
+
+  function handleResetClick() {
+    if (!confirming) { setConfirming(true); return }
+    resetTab(activeTab)
+    setConfirming(false)
+  }
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
@@ -40,7 +57,7 @@ export default function App() {
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-200 dark:shadow-indigo-900/40 shrink-0">
                   <span className="text-base leading-none select-none">✈️</span>
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h1 className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">
                     多源机场节点配置编辑器 — Clash 订阅合并 & 代理组管理工具
                   </h1>
@@ -48,9 +65,32 @@ export default function App() {
                     {new Date(__BUILD_TIME__).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}
                   </p>
                 </div>
+
+                {/* 推广 banner */}
+                <div className="shrink-0 flex items-center gap-1.5">
+                  <a
+                    href="https://novproxy.com/zh/?code=q5mwcaudt"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-lg overflow-hidden border border-indigo-200 dark:border-indigo-800 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all"
+                  >
+                    <img
+                      src="/novproxy/novproxy-banner-1220x552.svg"
+                      alt="NovProxy 最具性价比的住宅 IP 提供商"
+                      className="h-10 w-auto object-cover"
+                    />
+                  </a>
+                  <button
+                    onClick={() => setBannerZoom(true)}
+                    className="p-1 rounded text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                    title="放大查看"
+                  >
+                    <ZoomIn size={13} />
+                  </button>
+                </div>
               </div>
 
-              <nav className="flex gap-0.5 px-5 pt-2" role="tablist">
+              <nav className="flex items-end gap-0.5 px-5 pt-2" role="tablist">
                 {TABS.map((tab) => {
                   const Icon = tab.icon
                   const active = activeTab === tab.id
@@ -59,7 +99,7 @@ export default function App() {
                       key={tab.id}
                       role="tab"
                       aria-selected={active}
-                      onClick={() => setActiveTab(tab.id)}
+                      onClick={() => { setActiveTab(tab.id); setConfirming(false) }}
                       className={[
                         'relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl transition-all select-none',
                         active
@@ -75,6 +115,24 @@ export default function App() {
                     </button>
                   )
                 })}
+
+                {/* 重置按钮 — 右对齐，两步确认防误触 */}
+                <div className="ml-auto flex items-center pb-1">
+                  <button
+                    onClick={handleResetClick}
+                    onBlur={() => setConfirming(false)}
+                    title={RESET_LABELS[activeTab]}
+                    className={[
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all select-none',
+                      confirming
+                        ? 'bg-red-500 text-white hover:bg-red-600'
+                        : 'text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40',
+                    ].join(' ')}
+                  >
+                    <RotateCcw size={13} />
+                    <span>{confirming ? '确认重置?' : RESET_LABELS[activeTab]}</span>
+                  </button>
+                </div>
               </nav>
             </div>
           </div>
@@ -109,6 +167,35 @@ export default function App() {
         </aside>
 
       </main>
+
+      {/* 图片灯箱 */}
+      {bannerZoom && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setBannerZoom(false)}
+        >
+          <div className="relative max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <a
+              href="https://novproxy.com/zh/?code=q5mwcaudt"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setBannerZoom(false)}
+            >
+              <img
+                src="/novproxy/novproxy-banner-1220x552.svg"
+                alt="NovProxy 最具性价比的住宅 IP 提供商"
+                className="w-full rounded-2xl shadow-2xl hover:opacity-95 transition-opacity"
+              />
+            </a>
+            <button
+              onClick={() => setBannerZoom(false)}
+              className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
