@@ -35,5 +35,13 @@ export default defineConfig({
   define: {
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
+  server: {
+    watch: {
+      // Ignore AI-agent / runtime state directories that change constantly during dev.
+      // Both patterns are required: `**/.omx` covers the dir itself,
+      // `**/.omx/**` covers all files inside it (same for .codex).
+      ignored: ['**/.omx', '**/.omx/**', '**/.codex', '**/.codex/**'],
+    },
+  },
   plugins: [react(), tailwindcss(), devProxyPlugin()],
 })
