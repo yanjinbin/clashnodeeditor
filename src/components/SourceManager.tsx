@@ -320,7 +320,7 @@ function SubscriptionInfoBar({ info }: { info: SubscriptionInfo }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function SourceManager() {
-  const { sources, proxyGroups, addSource, updateSource, removeSource } = useAppStore()
+  const { sources, proxyGroups, addSource, updateSource, removeSource, resetSources } = useAppStore()
   const [newUrl, setNewUrl] = useState('')
   const [newName, setNewName] = useState('')
   const [newUa, setNewUa] = useState(DEFAULT_USER_AGENT)
@@ -328,6 +328,19 @@ export default function SourceManager() {
   const nameInputRef = useRef<HTMLInputElement>(null)
   const [refreshingAll, setRefreshingAll] = useState(false)
   const [refreshProgress, setRefreshProgress] = useState<{ done: number; total: number } | null>(null)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const confirmResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleResetClick = () => {
+    if (confirmReset) {
+      resetSources()
+      setConfirmReset(false)
+      if (confirmResetTimer.current) clearTimeout(confirmResetTimer.current)
+    } else {
+      setConfirmReset(true)
+      confirmResetTimer.current = setTimeout(() => setConfirmReset(false), 3000)
+    }
+  }
 
   // Global dup summary for the top banner
   const { dupProxyCount: totalDupProxy, dupGroupCount: totalDupGroup } = useMemo(() => {
@@ -418,6 +431,20 @@ export default function SourceManager() {
           <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
             机场订阅源
           </h2>
+          <div className="flex items-center gap-2">
+          {sources.length > 0 && (
+            <button
+              onClick={handleResetClick}
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                confirmReset
+                  ? 'bg-red-500 border-red-500 text-white hover:bg-red-600'
+                  : 'border-red-200 dark:border-red-800/50 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+              }`}
+            >
+              <Trash2 size={11} />
+              {confirmReset ? '确认重置？' : '重置'}
+            </button>
+          )}
           {hasRefreshableSources && (
             <button
               onClick={handleRefreshAll}
@@ -431,6 +458,7 @@ export default function SourceManager() {
               }
             </button>
           )}
+        </div>
         </div>
 
         <div className="flex items-start gap-2 mb-3 px-3 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/15 border border-emerald-200 dark:border-emerald-800/60">

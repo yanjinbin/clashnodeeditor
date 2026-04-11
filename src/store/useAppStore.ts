@@ -48,6 +48,8 @@ interface AppState {
   reorderRules: (oldIndex: number, newIndex: number) => void
 
   setActiveTab: (tab: AppState['activeTab']) => void
+  showChainExample: boolean
+  setShowChainExample: (v: boolean) => void
 
   // Proxy node editing
   updateProxy: (sourceId: string, proxyIndex: number, updates: Partial<Proxy>) => void
@@ -63,6 +65,12 @@ interface AppState {
   getAllProxyNames: () => string[]
 
   importFullConfig: (config: ClashConfig) => void
+
+  // Reset actions
+  resetSources: () => void
+  resetManualProxies: () => void
+  resetProxyGroups: () => void
+  resetRules: () => void
 }
 
 function generateId() {
@@ -146,6 +154,7 @@ export const useAppStore = create<AppState>()(
     ],
 
     activeTab: 'sources',
+    showChainExample: false,
 
     // ── Sources ──────────────────────────────────────────────────────────────
 
@@ -359,6 +368,10 @@ export const useAppStore = create<AppState>()(
       set((state) => { state.activeTab = tab })
     },
 
+    setShowChainExample: (v) => {
+      set((state) => { state.showChainExample = v })
+    },
+
     updateProxy: (sourceId, proxyIndex, updates) => {
       set((state) => {
         const src = state.sources.find((s) => s.id === sourceId)
@@ -558,6 +571,52 @@ export const useAppStore = create<AppState>()(
         if (config.dns) Object.assign(state.globalSettings.dns, config.dns)
       })
     },
+
+    resetSources: () => set((state) => { state.sources = [] }),
+
+    resetManualProxies: () => set((state) => { state.manualProxies = [] }),
+
+    resetProxyGroups: () => set((state) => {
+      state.proxyGroups = [
+        { id: generateId(), name: 'PROXY', type: 'select', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300 },
+        { id: generateId(), name: '♻️ 自动选择', type: 'url-test', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50, autoAllNodes: true },
+      ]
+    }),
+
+    resetRules: () => set((state) => {
+      const g = generateId
+      state.rules = [
+        { id: g(), type: 'DOMAIN-SUFFIX', payload: 'local',          target: 'DIRECT' },
+        { id: g(), type: 'IP-CIDR',       payload: '127.0.0.0/8',    target: 'DIRECT' },
+        { id: g(), type: 'IP-CIDR',       payload: '10.0.0.0/8',     target: 'DIRECT' },
+        { id: g(), type: 'IP-CIDR',       payload: '172.16.0.0/12',  target: 'DIRECT' },
+        { id: g(), type: 'IP-CIDR',       payload: '192.168.0.0/16', target: 'DIRECT' },
+        { id: g(), type: 'GEOIP',         payload: 'LAN',            target: 'DIRECT', noResolve: true },
+        { id: g(), type: 'RULE-SET',      payload: 'private',        target: 'DIRECT' },
+        { id: g(), type: 'RULE-SET',      payload: 'lancidr',        target: 'DIRECT', noResolve: true },
+        { id: g(), type: 'RULE-SET',      payload: 'reject',         target: 'REJECT' },
+        { id: g(), type: 'RULE-SET',      payload: 'openai',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'claude',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'copilot',        target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'gemini',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'docker',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'youtube-music',  target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'youtube',        target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'google',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'telegram',       target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'twitter',        target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'tiktok',         target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'linkedin',       target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'GoogleFCM',      target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'direct',         target: 'DIRECT' },
+        { id: g(), type: 'RULE-SET',      payload: 'gfw',            target: 'PROXY' },
+        { id: g(), type: 'RULE-SET',      payload: 'telegramcidr',   target: 'PROXY',  noResolve: true },
+        { id: g(), type: 'RULE-SET',      payload: 'cncidr',         target: 'DIRECT', noResolve: true },
+        { id: g(), type: 'RULE-SET',      payload: 'cn',             target: 'DIRECT' },
+        { id: g(), type: 'GEOIP',         payload: 'CN',             target: 'DIRECT', noResolve: true },
+        { id: g(), type: 'MATCH',         payload: '',               target: '♻️ 自动选择' },
+      ]
+    }),
   })),
   {
     name: 'clash-node-editor-v1',

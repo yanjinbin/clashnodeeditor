@@ -4,7 +4,7 @@ import NodeManager from './components/NodeManager'
 import ProxyGroupEditor from './components/ProxyGroupEditor'
 import RuleSetManager from './components/RuleSetManager'
 import ConfigPreview from './components/ConfigPreview'
-import AdBanner from './components/AdBanner'
+import NovproxyBanner from './components/NovproxyBanner'
 import { Globe, Server, Users, Shield, FileText } from 'lucide-react'
 
 const TABS = [
@@ -15,10 +15,7 @@ const TABS = [
   { id: 'preview' as const, label: '预览导出', icon: FileText },
 ]
 
-const AD_SLOT_LEFT  = '9398106385'
-const AD_SLOT_RIGHT = '1439725312'
-
-// 左右广告列宽 — xl:144px，与 max-w-5xl(1024px) 合计 1312px ≤ 1280px 时自动隐藏
+// 左右 banner 列宽 — xl:144px，与 max-w-5xl(1024px) 合计 1312px ≤ 1280px 时自动隐藏
 const AD_COL = 'w-36' // 144px
 
 export default function App() {
@@ -89,7 +86,7 @@ export default function App() {
 
         {/* 左侧广告列 — xl(≥1280px) 起显示 */}
         <aside className={`hidden xl:flex flex-col ${AD_COL} shrink-0 overflow-y-auto pt-3 px-2 gap-4 bg-gray-50 dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800`}>
-          <AdBanner slot={AD_SLOT_LEFT} />
+          <NovproxyBanner />
         </aside>
 
         {/* 主内容区 */}
@@ -105,7 +102,7 @@ export default function App() {
 
         {/* 右侧广告列 */}
         <aside className={`hidden xl:flex flex-col ${AD_COL} shrink-0 overflow-y-auto pt-3 px-2 gap-4 bg-gray-50 dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800`}>
-          <AdBanner slot={AD_SLOT_RIGHT} />
+          <NovproxyBanner />
         </aside>
 
       </main>
