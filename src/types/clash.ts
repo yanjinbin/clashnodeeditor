@@ -19,6 +19,7 @@ export interface ProxyGroup {
   name: string
   type: ProxyGroupType
   proxies: string[]
+  timeout?: number
   url?: string
   interval?: number
   tolerance?: number
@@ -57,6 +58,7 @@ export interface ImportedProxyGroup {
   name: string
   type: string
   proxies: string[]
+  timeout?: number
   url?: string
   interval?: number
   tolerance?: number
@@ -185,9 +187,9 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   'tcp-keep-alive-interval': 30,
   // 全局禁 UDP：链式代理 / 原生 IP / Gemini 场景更稳定，避免 QUIC 绕过代理导致 IP 不一致
   udp: false,
-  // TUN 虚拟网卡 — 默认关闭；需要接管全流量时改为 enable: true
+  // TUN 虚拟网卡 — 默认开启，导出配置时接管全流量
   tun: {
-    enable: false,
+    enable: true,
     stack: 'system',
     'auto-route': true,
     'auto-detect-interface': true,
@@ -202,15 +204,13 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     sniff: {
       HTTP: { ports: [80, '8080-8880'] },
       TLS:  { ports: [443, 8443] },
-      QUIC: { ports: [443, 8443] },
     },
+    'force-domain': ['+'],
     'skip-domain': [
       'Mijia Cloud',
       '+.apple.com',
       'msftconnecttest.com',
-      'msftncsi.com',
       'time.*.com',
-      'ntp*.*.com',
       '+.local',
     ],
   },
@@ -225,9 +225,6 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
       'time*.*.com',
       '+.stun.*.*',
       'ntp*.*.com',
-      'localhost.ptlogin2.qq.com',
-      'time.*.gov',
-      'time.*.edu.cn',
     ],
     'use-hosts': true,
     'respect-rules': true,
@@ -243,8 +240,6 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
       'geosite:geolocation-!cn': [
         'https://cloudflare-dns.com/dns-query',
         'https://dns.google/dns-query',
-        '1.1.1.1',
-        '8.8.8.8',
       ],
     },
   },
@@ -275,6 +270,7 @@ export interface ClashConfig {
     name: string
     type: string
     proxies: string[]
+    timeout?: number
     url?: string
     interval?: number
     tolerance?: number
@@ -314,14 +310,14 @@ function preset(
 }
 
 export const PRESET_RULE_PROVIDERS: RuleProvider[] = [
-  preset('reject',       'domain',    'REJECT',       true),
+  preset('reject',       'domain',    'REJECT',       false),
   preset('private',      'domain',    'DIRECT',       true),
-  preset('google',       'domain',    '♻️ 自动选择', true),
-  preset('direct',       'domain',    'DIRECT',       true),
-  preset('gfw',          'domain',    'PROXY',        false),
-  preset('telegramcidr', 'ipcidr',    'PROXY',        false, true),
-  preset('cncidr',       'ipcidr',    'DIRECT',       true,  true),
-  preset('lancidr',      'ipcidr',    'DIRECT',       true,  true),
+  preset('google',       'domain',    '🇺🇸｜美国出口', true),
+  preset('direct',       'domain',    'DIRECT',       false),
+  preset('gfw',          'domain',    '♻️ 自动选择', false),
+  preset('telegramcidr', 'ipcidr',    '♻️ 自动选择', false, true),
+  preset('cncidr',       'ipcidr',    'DIRECT',       false, true),
+  preset('lancidr',      'ipcidr',    'DIRECT',       false, true),
 ]
 
 function bm7(
@@ -346,19 +342,19 @@ function bm7(
 }
 
 export const BLACKMATRIX7_RULE_PROVIDERS: RuleProvider[] = [
-  bm7('openai',       'OpenAI/OpenAI.yaml',             '♻️ 自动选择', true),
-  bm7('claude',       'Claude/Claude.yaml',             '♻️ 自动选择', true),
-  bm7('gemini',       'Gemini/Gemini.yaml',             '♻️ 自动选择', true),
-  bm7('copilot',      'Copilot/Copilot.yaml',           '♻️ 自动选择', true),
-  bm7('youtube-music','YouTubeMusic/YouTubeMusic.yaml', '♻️ 自动选择', true,  1209600),
-  bm7('youtube',      'YouTube/YouTube.yaml',           '♻️ 自动选择', true),
-  bm7('telegram',     'Telegram/Telegram.yaml',         '♻️ 自动选择', true,  1209600),
-  bm7('twitter',      'Twitter/Twitter.yaml',           '♻️ 自动选择', true,  1209600),
-  bm7('tiktok',       'TikTok/TikTok.yaml',             '♻️ 自动选择', true,  1209600),
-  bm7('linkedin',     'LinkedIn/LinkedIn.yaml',         '♻️ 自动选择', true,  1209600),
+  bm7('openai',       'OpenAI/OpenAI.yaml',             '🇺🇸｜美国出口', true),
+  bm7('claude',       'Claude/Claude.yaml',             '🇯🇵｜日本出口', true),
+  bm7('gemini',       'Gemini/Gemini.yaml',             '🇺🇸｜美国出口', true),
+  bm7('copilot',      'Copilot/Copilot.yaml',           '🇺🇸｜美国出口', true),
+  bm7('youtube-music','YouTubeMusic/YouTubeMusic.yaml', '📺 油管', true,  1209600),
+  bm7('youtube',      'YouTube/YouTube.yaml',           '📺 油管', true),
+  bm7('telegram',     'Telegram/Telegram.yaml',         '🐦 社交媒体', true,  1209600),
+  bm7('twitter',      'Twitter/Twitter.yaml',           '🐦 社交媒体', true,  1209600),
+  bm7('tiktok',       'TikTok/TikTok.yaml',             '🐦 社交媒体', true,  1209600),
+  bm7('linkedin',     'LinkedIn/LinkedIn.yaml',         '🐦 社交媒体', true,  1209600),
   bm7('docker',       'Docker/Docker.yaml',             '♻️ 自动选择', true,  1209600),
   bm7('GoogleFCM',    'GoogleFCM/GoogleFCM.yaml',       'DIRECT',      false, 1209600),
-  bm7('cn',           'China/China.yaml',               'DIRECT',      true),
+  bm7('cn',           'China/China.yaml',               'DIRECT',      false),
 ]
 
 export const BUILT_IN_PROXIES: string[] = []
