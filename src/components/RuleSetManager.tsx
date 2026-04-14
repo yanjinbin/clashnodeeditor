@@ -565,7 +565,7 @@ function SortableProviderRow({
                     ? 'border-red-400 text-red-500 dark:text-red-400'
                     : `border-gray-200 dark:border-gray-700 ${targetColor[provider.target] ?? 'text-indigo-600 dark:text-indigo-400'}`
                 }`}
-                title={!targetInList ? `代理组 "${provider.target}" 不存在，Clash 加载时会报 proxy not found` : undefined}
+                title={!targetInList ? `代理组 "${provider.target}" 不存在，Mihomo 加载时会报 proxy not found` : undefined}
               >
                 {selectOptions.map((t) => (
                   <option key={t} value={t} className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800">
@@ -873,7 +873,7 @@ function SortableRuleItem({
             ? 'text-red-500 dark:text-red-400'
             : (targetColor[rule.target] ?? 'text-purple-600 dark:text-purple-400')
         }`}
-        title={!targetValid ? `代理组 "${rule.target}" 不存在，Clash 加载时会报 proxy not found` : undefined}
+        title={!targetValid ? `代理组 "${rule.target}" 不存在，Mihomo 加载时会报 proxy not found` : undefined}
       >
         → {rule.target}{!targetValid && ' ⚠'}
       </span>

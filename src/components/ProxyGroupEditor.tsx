@@ -550,6 +550,9 @@ function GroupCard({
           {group.type}
         </span>
         <span className="flex-1 text-sm font-semibold text-gray-900 dark:text-gray-100">{group.name}</span>
+        {group.hidden && (
+          <span className="text-xs px-2 py-0.5 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 shrink-0 font-medium border border-amber-200 dark:border-amber-800/50">隐藏</span>
+        )}
         {group.autoAllNodes ? (
           <span className="text-xs px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 shrink-0 font-medium border border-emerald-200 dark:border-emerald-800/50">自动全部节点</span>
         ) : (
@@ -632,6 +635,35 @@ function GroupCard({
               </div>
             </div>
           )}
+          {/* lazy + hidden toggles */}
+          <div className="flex items-center gap-4 pt-1">
+            {group.type !== 'select' && group.type !== 'relay' && (
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <button
+                  role="switch"
+                  aria-checked={group.lazy ?? true}
+                  onClick={() => onUpdate({ lazy: !(group.lazy ?? true) })}
+                  className={`relative inline-flex h-4 w-7 shrink-0 rounded-full border-2 border-transparent transition-colors ${(group.lazy ?? true) ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                >
+                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${(group.lazy ?? true) ? 'translate-x-3' : 'translate-x-0'}`} />
+                </button>
+                <span className="text-xs text-gray-500 dark:text-gray-400">lazy</span>
+                <span className="text-[10px] text-gray-400">跳过未活跃节点的测速</span>
+              </label>
+            )}
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <button
+                role="switch"
+                aria-checked={group.hidden ?? false}
+                onClick={() => onUpdate({ hidden: !(group.hidden ?? false) })}
+                className={`relative inline-flex h-4 w-7 shrink-0 rounded-full border-2 border-transparent transition-colors ${(group.hidden ?? false) ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+              >
+                <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${(group.hidden ?? false) ? 'translate-x-3' : 'translate-x-0'}`} />
+              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400">hidden</span>
+              <span className="text-[10px] text-gray-400">在 Dashboard 中隐藏此组</span>
+            </label>
+          </div>
         </div>
       )}
 

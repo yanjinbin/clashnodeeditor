@@ -37,6 +37,7 @@ export function parseYamlFull(text: string): { proxies: Proxy[], groups: Importe
         name: g.name,
         type: g.type,
         proxies: Array.isArray(g.proxies) ? g.proxies : [],
+        timeout: g.timeout,
         url: g.url,
         interval: g.interval,
         tolerance: g.tolerance,
@@ -105,10 +106,12 @@ export function generateClashConfig(
     name: string
     type: string
     proxies: string[]
+    timeout?: number
     url?: string
     interval?: number
     tolerance?: number
     lazy?: boolean
+    hidden?: boolean
   }>,
   /** All rule providers — RULE-SET rules generated from enabled ones */
   ruleProviders: RuleProvider[],
@@ -131,13 +134,16 @@ export function generateClashConfig(
     'external-controller': settings['external-controller'],
     'find-process-mode': settings['find-process-mode'],
     'geodata-mode': settings['geodata-mode'],
+    ...(settings['geo-auto-update'] !== undefined ? { 'geo-auto-update': settings['geo-auto-update'] } : {}),
+    ...(settings['geo-update-interval'] !== undefined ? { 'geo-update-interval': settings['geo-update-interval'] } : {}),
     'geox-url': settings['geox-url'],
     'global-client-fingerprint': settings['global-client-fingerprint'],
     'tcp-concurrent': settings['tcp-concurrent'],
     'unified-delay': settings['unified-delay'],
     ...(settings['udp-timeout'] !== undefined ? { 'udp-timeout': settings['udp-timeout'] } : {}),
-    ...(settings['tcp-keep-alive-interval'] !== undefined ? { 'tcp-keep-alive-interval': settings['tcp-keep-alive-interval'] } : {}),
+    ...(settings['keep-alive-interval'] !== undefined ? { 'keep-alive-interval': settings['keep-alive-interval'] } : {}),
     ...(settings.udp !== undefined ? { udp: settings.udp } : {}),
+    ...('prefer-h3' in settings && settings['prefer-h3'] !== undefined ? { 'prefer-h3': settings['prefer-h3'] } : {}),
     ...(settings.profile ? { profile: settings.profile } : {}),
     // TUN 虚拟网卡：仅当 enable=true 或用户明确配置时才输出，避免所有人被强制开启
     ...(settings.tun?.enable ? { tun: settings.tun } : {}),

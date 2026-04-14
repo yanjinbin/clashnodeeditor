@@ -77,10 +77,27 @@ function Section({ title, defaultOpen = true, children }: { title: string; defau
 }
 
 /** Label + control row */
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="relative group/tip inline-flex items-center">
+      <span className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 text-[10px] font-semibold text-gray-400 dark:text-gray-500 cursor-help">
+        ?
+      </span>
+      <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 w-56 rounded-lg bg-gray-900 dark:bg-gray-700 text-white text-[11px] leading-relaxed px-2.5 py-2 opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 shadow-lg whitespace-normal">
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700" />
+        {text}
+      </span>
+    </span>
+  )
+}
+
+function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-36 shrink-0 text-xs text-gray-500 dark:text-gray-400 leading-tight">{label}</span>
+      <span className="w-36 shrink-0 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 leading-tight">
+        <span>{label}</span>
+        {hint ? <InfoTip text={hint} /> : null}
+      </span>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   )
@@ -103,8 +120,22 @@ function SettingsPanel() {
 
   return (
     <div className="space-y-4">
+      {/* Documentation banner */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
+        <span className="shrink-0">📖</span>
+        <span>完整参数说明：</span>
+        <a
+          href="https://wiki.metacubex.one/config/general/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-blue-900 dark:hover:text-blue-100 font-medium"
+        >
+          wiki.metacubex.one/config/general
+        </a>
+      </div>
+
       <Section title="基本设置">
-        <Row label="mixed-port">
+        <Row label="mixed-port" hint="HTTP/SOCKS5 混合代理监听端口，应用设置系统代理时填此端口。">
           <BlurInput
             type="number"
             value={gs['mixed-port']}
@@ -112,86 +143,189 @@ function SettingsPanel() {
             className="w-20"
           />
         </Row>
-        <Row label="allow-lan">
+        <Row label="allow-lan" hint="允许局域网内其他设备（手机、电视等）将此机器作为代理网关使用。">
           <Toggle checked={gs['allow-lan']} onChange={(v) => updateGlobalSettings({ 'allow-lan': v })} />
         </Row>
-        <Row label="bind-address">
+        <Row label="bind-address" hint="代理监听的网卡/IP。* 表示所有网卡；填具体 IP 则只在该网卡监听。">
           <BlurInput value={gs['bind-address']} onChange={(v) => updateGlobalSettings({ 'bind-address': v })} className="w-full" />
         </Row>
-        <Row label="mode">
+        <Row label="mode" hint="控制默认流量走规则、全局代理或直连。">
           <select value={gs.mode} onChange={(e) => updateGlobalSettings({ mode: e.target.value })} className={sel}>
             {['rule', 'global', 'direct'].map((m) => <option key={m}>{m}</option>)}
           </select>
         </Row>
-        <Row label="log-level">
+        <Row label="log-level" hint="控制日志详细程度。">
           <select value={gs['log-level']} onChange={(e) => updateGlobalSettings({ 'log-level': e.target.value })} className={sel}>
             {['debug', 'info', 'warning', 'error', 'silent'].map((l) => <option key={l}>{l}</option>)}
           </select>
         </Row>
-        <Row label="external-controller">
+        <Row label="external-controller" hint="RESTful API 监听地址，Yacd / MetaCubeXD 等面板通过此地址管理 Mihomo。对外暴露时务必设置 secret。">
           <BlurInput value={gs['external-controller']} onChange={(v) => updateGlobalSettings({ 'external-controller': v })} className="w-full" />
         </Row>
-        <Row label="tcp-concurrent">
+        <Row label="tcp-concurrent" hint="同时向多个目标 IP 发起连接，取最快响应（类 Happy Eyeballs），减少因单路握手超时造成的等待。">
           <Toggle checked={gs['tcp-concurrent'] ?? false} onChange={(v) => updateGlobalSettings({ 'tcp-concurrent': v })} />
         </Row>
-        <Row label="unified-delay">
+        <Row label="unified-delay" hint="延迟测试时显示 本地→中转→落地 的端到端总延迟，而非只测本地到代理的一段。">
           <Toggle checked={gs['unified-delay'] ?? false} onChange={(v) => updateGlobalSettings({ 'unified-delay': v })} />
         </Row>
-        <Row label="find-process-mode">
+        <Row label="udp" hint="全局 UDP 开关。关闭后可消除 QUIC 流量绕过代理导致的 IP 漂移（TCP/UDP 同时可见时 Google 等平台会触发风控）。">
+          <Toggle checked={gs.udp ?? false} onChange={(v) => updateGlobalSettings({ udp: v })} />
+        </Row>
+        {!(gs.udp ?? false) && (
+          <div className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2 leading-relaxed">
+            <span className="font-semibold">防 IP 漂移提示：</span>
+            {' '}UDP 已关闭，但 Chrome 仍会用 QUIC（UDP）绕过代理直连，导致<strong>机场节点</strong>和<strong>原生 IP 节点</strong>的真实地址同时泄露，造成 IP 漂移。
+            建议在 Chrome 地址栏打开{' '}
+            <code className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 rounded">chrome://flags/#enable-quic</code>
+            {' '}，将 <em>Experimental QUIC protocol</em> 设为 <strong>Disabled</strong>。
+          </div>
+        )}
+        <Row label="udp-timeout" hint="UDP 会话静默超时（秒）。超过此时间无流量则释放 NAT 映射。300 秒适合游戏和视频场景。">
+          <BlurInput
+            type="number"
+            value={gs['udp-timeout'] ?? 300}
+            onChange={(v) => updateGlobalSettings({ 'udp-timeout': parseInt(v) || 300 })}
+            className="w-20"
+          />
+        </Row>
+        <Row label="keep-alive-interval" hint="TCP/UDP 保活探测间隔（秒）。定期发送探活包，防止中间 NAT/路由器在无流量时静默断开连接。15 秒适合移动网络场景。">
+          <BlurInput
+            type="number"
+            value={gs['keep-alive-interval'] ?? 15}
+            onChange={(v) => updateGlobalSettings({ 'keep-alive-interval': parseInt(v) || 15 })}
+            className="w-20"
+          />
+        </Row>
+        <Row label="find-process-mode" hint="进程匹配模式。off=关闭，strict=按需，always=强制。链式代理建议设为 off，减少无效查询开销。">
           <select value={gs['find-process-mode'] ?? 'strict'} onChange={(e) => updateGlobalSettings({ 'find-process-mode': e.target.value })} className={sel}>
             {['always', 'strict', 'off'].map((m) => <option key={m}>{m}</option>)}
           </select>
         </Row>
-        <Row label="global-fingerprint">
+        <Row label="global-fingerprint" hint="为所有节点统一 TLS/JA3 指纹，降低 Google、Cloudflare 等识别为异常流量的概率。建议每节点单独设 client-fingerprint 优先。">
           <select value={gs['global-client-fingerprint'] ?? 'chrome'} onChange={(e) => updateGlobalSettings({ 'global-client-fingerprint': e.target.value })} className={sel}>
             {['chrome', 'firefox', 'safari', 'ios', 'android', 'edge', '360', 'qq', 'random'].map((f) => <option key={f}>{f}</option>)}
           </select>
         </Row>
+        <Row label="prefer-h3" hint="优先使用 HTTP/3（QUIC）协议与代理节点通信。需同时开启 udp，否则实际无效；开启后可能增加被识别为代理流量的概率。">
+          <Toggle checked={gs['prefer-h3'] ?? false} onChange={(v) => updateGlobalSettings({ 'prefer-h3': v })} />
+        </Row>
       </Section>
 
       <Section title="Sniffer（嗅探）" defaultOpen={false}>
-        <Row label="enable">
+        <Row label="enable" hint="对 HTTP/TLS 流量嗅探域名，将裸 IP 请求反向映射回域名，确保基于域名的分流规则命中。链式代理下有极小性能开销。">
           <Toggle
             checked={gs.sniffer?.enable ?? false}
             onChange={(v) => updateGlobalSettings({ sniffer: { ...gs.sniffer!, enable: v } })}
           />
         </Row>
-        <p className="text-[10px] text-gray-400 dark:text-gray-600 leading-snug pl-1">
-          开启后 Clash 可识别 HTTP/TLS/QUIC 流量的真实域名，让域名规则覆盖直连 IP 请求。
-        </p>
+        <Row label="parse-pure-ip" hint="对裸 IP 连接（无域名）也尝试嗅探，结合 fake-ip 模式将 IP 反查为域名后再匹配规则。">
+          <Toggle
+            checked={gs.sniffer?.['parse-pure-ip'] ?? false}
+            onChange={(v) => updateGlobalSettings({ sniffer: { ...gs.sniffer!, 'parse-pure-ip': v } })}
+          />
+        </Row>
+        <Row label="force-dns-mapping" hint="强制将 IP 连接通过 DNS 映射表反查为域名（parse-pure-ip 增强版），让没有域名的 IP 请求也能命中域名规则。">
+          <Toggle
+            checked={gs.sniffer?.['force-dns-mapping'] ?? false}
+            onChange={(v) => updateGlobalSettings({ sniffer: { ...gs.sniffer!, 'force-dns-mapping': v } })}
+          />
+        </Row>
+        <Row label="override-destination" hint="将嗅探到的真实域名覆盖连接的目标地址，让下游节点用域名而非 IP 建立连接，避免 IP 直连被 SNI 检测。">
+          <Toggle
+            checked={gs.sniffer?.['override-destination'] ?? false}
+            onChange={(v) => updateGlobalSettings({ sniffer: { ...gs.sniffer!, 'override-destination': v } })}
+          />
+        </Row>
+      </Section>
+
+      <Section title="TUN" defaultOpen={false}>
+        <Row label="enable" hint="创建虚拟网卡接管系统全部流量，让分流规则对所有应用完整生效（包括不走系统代理的程序）。">
+          <Toggle
+            checked={gs.tun?.enable ?? false}
+            onChange={(v) => updateGlobalSettings({ tun: { ...gs.tun!, enable: v } })}
+          />
+        </Row>
+        <Row label="stack" hint="协议栈。mixed=同时处理 TCP/UDP（推荐）；system=性能最优但部分系统兼容性差；gvisor=用户态协议栈，兼容性最好。">
+          <select
+            value={gs.tun?.stack ?? 'mixed'}
+            onChange={(e) => updateGlobalSettings({ tun: { ...gs.tun!, stack: e.target.value as 'system' | 'gvisor' | 'mixed' } })}
+            className={sel}
+          >
+            {['system', 'gvisor', 'mixed'].map((m) => <option key={m}>{m}</option>)}
+          </select>
+        </Row>
+        <Row label="auto-route" hint="自动向系统路由表注入规则，将流量引导进 TUN 网卡。关闭后需手动配置路由。">
+          <Toggle
+            checked={gs.tun?.['auto-route'] ?? true}
+            onChange={(v) => updateGlobalSettings({ tun: { ...gs.tun!, 'auto-route': v } })}
+          />
+        </Row>
+        <Row label="auto-redirect" hint="自动将非 TUN 的 TCP 流量 redirect 进 TUN，确保全量接管。推荐与 auto-route 同时开启。">
+          <Toggle
+            checked={gs.tun?.['auto-redirect'] ?? true}
+            onChange={(v) => updateGlobalSettings({ tun: { ...gs.tun!, 'auto-redirect': v } })}
+          />
+        </Row>
+        <Row label="auto-detect-if" hint="自动识别默认出口网卡并绑定 TUN，避免路由回环或走错物理网卡。">
+          <Toggle
+            checked={gs.tun?.['auto-detect-interface'] ?? true}
+            onChange={(v) => updateGlobalSettings({ tun: { ...gs.tun!, 'auto-detect-interface': v } })}
+          />
+        </Row>
       </Section>
 
       <Section title="GeoData" defaultOpen={false}>
-        <Row label="geodata-mode">
+        <Row label="geodata-mode" hint="使用 dat 格式 GeoData（MetaCubeX 增强版），匹配精度优于 mmdb。关闭则使用 mmdb 格式。">
           <Toggle checked={gs['geodata-mode'] ?? false} onChange={(v) => updateGlobalSettings({ 'geodata-mode': v })} />
         </Row>
-        <p className="text-[10px] text-gray-400 dark:text-gray-600 leading-snug pl-1">
-          启用后使用 MetaCubeX .dat 格式 GeoIP/GeoSite 数据库，精度更高。数据从 jsdelivr CDN 下载，首次启动需联网。
-        </p>
+        <Row label="geo-auto-update" hint="Mihomo 启动时自动从 geox-url 下载最新 GeoData 文件，无需手动更新。">
+          <Toggle checked={gs['geo-auto-update'] ?? false} onChange={(v) => updateGlobalSettings({ 'geo-auto-update': v })} />
+        </Row>
+        <Row label="geo-update-interval" hint="GeoData 自动更新间隔（小时）。72 = 每 3 天检查一次更新，平衡时效性与网络开销。">
+          <BlurInput
+            type="number"
+            value={gs['geo-update-interval'] ?? 72}
+            onChange={(v) => updateGlobalSettings({ 'geo-update-interval': parseInt(v) || 72 })}
+            className="w-20"
+          />
+        </Row>
       </Section>
 
       <Section title="DNS 设置">
-        <Row label="enable">
+        {/* DNS flow diagram callout */}
+        <div className="flex items-center gap-2 mb-2 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-xs text-amber-700 dark:text-amber-300">
+          <span className="shrink-0">🔍</span>
+          <span>DNS 解析流程图（强烈建议阅读）：</span>
+          <a
+            href="https://wiki.metacubex.one/config/dns/diagram/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline font-medium hover:text-amber-900 dark:hover:text-amber-100"
+          >
+            查看流程图 →
+          </a>
+        </div>
+        <Row label="enable" hint="开启 Mihomo 内置 DNS 模块。关闭则依赖系统 DNS，fake-ip 和 nameserver-policy 均失效。">
           <Toggle checked={dns.enable} onChange={(v) => updDns('enable', v)} />
         </Row>
-        <Row label="ipv6">
+        <Row label="ipv6" hint="是否在 DNS 响应中包含 AAAA 记录（IPv6 地址）。国内大多数场景建议关闭，避免 IPv6 直连绕过代理。">
           <Toggle checked={dns.ipv6} onChange={(v) => updDns('ipv6', v)} />
         </Row>
-        <Row label="enhanced-mode">
+        <Row label="enhanced-mode" hint="fake-ip：返回虚假 IP，连接时再映射为真实地址，速度快；redir-host：返回真实 IP 再路由，兼容性更好但稍慢。">
           <select value={dns['enhanced-mode']} onChange={(e) => updDns('enhanced-mode', e.target.value)} className={sel}>
             {['fake-ip', 'redir-host'].map((m) => <option key={m}>{m}</option>)}
           </select>
         </Row>
-        <Row label="fake-ip-range">
+        <Row label="fake-ip-range" hint="fake-ip 模式分配虚假 IP 的地址段（RFC 5737 保留段）。不应与真实网络地址冲突。">
           <BlurInput value={dns['fake-ip-range']} onChange={(v) => updDns('fake-ip-range', v)} className="w-full" />
         </Row>
-        <Row label="use-hosts">
+        <Row label="use-hosts" hint="DNS 解析时优先查询系统 /etc/hosts 文件，适合内网自定义域名映射。">
           <Toggle checked={dns['use-hosts'] ?? false} onChange={(v) => updDns('use-hosts', v)} />
         </Row>
-        <Row label="respect-rules">
+        <Row label="respect-rules" hint="DNS 查询是否遵守分流规则（即根据规则选择走哪个 DNS）。注意：若规则依赖 DNS 且 DNS 又依赖规则会造成循环死锁，一般建议设为 false。">
           <Toggle checked={dns['respect-rules']} onChange={(v) => updDns('respect-rules', v)} />
         </Row>
-        <Row label="default-nameserver">
+        <Row label="default-nameserver" hint="引导 DNS：仅用于解析 nameserver 列表中 DoH/DoT 服务器的域名（如 dns.google）。必须填纯 IP 型国内 DNS，否则 DoH 地址无法解析导致启动失败。">
           <BlurInput
             value={joinArr(dns['default-nameserver'] ?? [])}
             onChange={(v) => updDns('default-nameserver', parseArr(v))}
@@ -199,23 +333,23 @@ function SettingsPanel() {
             className="w-full"
           />
         </Row>
-        <Row label="nameserver (DoH)">
+        <Row label="nameserver" hint="默认 DNS 服务器，处理所有未被 nameserver-policy 命中的域名查询。可填 IP 或 DoH/DoT 地址。">
           <BlurInput
             value={joinArr(dns.nameserver)}
             onChange={(v) => updDns('nameserver', parseArr(v))}
-            placeholder="https://doh.pub/dns-query"
+            placeholder="223.5.5.5, https://dns.google/dns-query"
             className="w-full"
           />
         </Row>
-        <Row label="proxy-server-ns">
+        <Row label="proxy-server-ns" hint="专用于解析代理节点服务器域名（机场域名）。必须走国内可直连 DNS，防止节点域名被 GFW 污染解析到错误 IP。">
           <BlurInput
             value={joinArr(dns['proxy-server-nameserver'])}
             onChange={(v) => updDns('proxy-server-nameserver', parseArr(v))}
-            placeholder="https://doh.pub/dns-query"
+            placeholder="223.5.5.5, 119.29.29.29"
             className="w-full"
           />
         </Row>
-        <Row label="fallback (DoH)">
+        <Row label="fallback" hint="fallback DNS：当 nameserver 返回的 IP 被 fallback-filter 判定为受污染时，改用这里的 DNS 重新解析。通常填境外加密 DoH。">
           <BlurInput
             value={joinArr(dns.fallback ?? [])}
             onChange={(v) => updDns('fallback', parseArr(v))}
@@ -223,7 +357,7 @@ function SettingsPanel() {
             className="w-full"
           />
         </Row>
-        <Row label="fake-ip-filter">
+        <Row label="fake-ip-filter" hint="这些域名绕过 fake-ip 直接返回真实 IP。适合时间同步(NTP)、IoT 设备、Apple/小米服务等不能用虚假 IP 的场景。">
           <BlurInput
             value={joinArr(dns['fake-ip-filter'] ?? [])}
             onChange={(v) => updDns('fake-ip-filter', parseArr(v))}
@@ -234,13 +368,13 @@ function SettingsPanel() {
       </Section>
 
       <Section title="Fallback Filter" defaultOpen={false}>
-        <Row label="geoip">
+        <Row label="geoip" hint="启用 GeoIP 过滤：若 nameserver 返回的 IP 不属于 geoip-code 指定的国家，则触发 fallback 重新解析。用于过滤被污染的 DNS 结果。">
           <Toggle checked={ff?.geoip ?? false} onChange={(v) => updFF('geoip', v)} />
         </Row>
-        <Row label="geoip-code">
+        <Row label="geoip-code" hint="GeoIP 判定的国家代码。返回 IP 不属于此国家时触发 fallback。通常填 CN，用于识别被污染到境外 IP 的国内域名。">
           <BlurInput value={ff?.['geoip-code'] ?? 'CN'} onChange={(v) => updFF('geoip-code', v)} className="w-16" />
         </Row>
-        <Row label="geosite">
+        <Row label="geosite" hint="这些 geosite 分类下的域名始终触发 fallback（不依赖 GeoIP 判断）。常填 gfw 确保被封锁域名走境外 DNS。">
           <BlurInput
             value={joinArr(ff?.geosite ?? [])}
             onChange={(v) => updFF('geosite', parseArr(v))}
@@ -248,7 +382,7 @@ function SettingsPanel() {
             className="w-full"
           />
         </Row>
-        <Row label="ipcidr">
+        <Row label="ipcidr" hint="这些 IP 段被视为受污染地址，命中时触发 fallback 重新解析。常见值：240.0.0.0/4（虚假 IP 段）。">
           <BlurInput
             value={joinArr(ff?.ipcidr ?? [])}
             onChange={(v) => updFF('ipcidr', parseArr(v))}
@@ -256,7 +390,7 @@ function SettingsPanel() {
             className="w-full"
           />
         </Row>
-        <Row label="domain">
+        <Row label="domain" hint="这些域名始终触发 fallback 解析，无论 nameserver 返回什么结果。适合手动指定已知受污染域名。">
           <BlurInput
             value={joinArr(ff?.domain ?? [])}
             onChange={(v) => updFF('domain', parseArr(v))}
@@ -445,6 +579,7 @@ export default function ConfigPreview() {
       interval: g.interval,
       tolerance: g.tolerance,
       lazy: g.lazy,
+      ...(g.hidden ? { hidden: true } : {}),
     })),
     ruleProviders,
     rules.map((r) => ({ type: r.type, payload: r.payload, target: r.target, noResolve: r.noResolve })),

@@ -39,7 +39,7 @@ export default function App() {
                 </div>
                 <div>
                   <h1 className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">
-                    多源机场节点配置编辑器 — Clash 订阅合并 & 代理组管理工具
+                    多源机场节点配置编辑器 — Mihomo 订阅合并 & 代理组管理工具
                   </h1>
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono leading-tight">
                     {new Date(__BUILD_TIME__).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}

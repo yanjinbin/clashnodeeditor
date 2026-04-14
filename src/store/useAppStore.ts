@@ -73,8 +73,154 @@ interface AppState {
   resetRules: () => void
 }
 
+// ── Expiring localStorage storage (TTL = 12 h) ───────────────────────────────
+
+const TTL_MS = 12 * 60 * 60 * 1000
+
+/** StateStorage adapter — wraps localStorage with a 12-hour expiry envelope. */
+const expiringLocalStorage = {
+  getItem: (name: string): string | null => {
+    try {
+      const raw = localStorage.getItem(name)
+      if (!raw) return null
+      const { data, expiry } = JSON.parse(raw) as { data: unknown; expiry: number }
+      if (Date.now() > expiry) {
+        localStorage.removeItem(name)
+        return null           // expired → rehydrate from defaults
+      }
+      return JSON.stringify(data)
+    } catch {
+      return null
+    }
+  },
+  setItem: (name: string, value: string): void => {
+    try {
+      localStorage.setItem(name, JSON.stringify({
+        data:   JSON.parse(value),
+        expiry: Date.now() + TTL_MS,
+      }))
+    } catch { /* storage quota exceeded — silently skip */ }
+  },
+  removeItem: (name: string): void => { localStorage.removeItem(name) },
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function generateId() {
   return Math.random().toString(36).slice(2, 10)
+}
+
+function createDefaultProxyGroups(): ProxyGroup[] {
+  return [
+    {
+      id: generateId(),
+      name: '♻️ 自动选择',
+      type: 'url-test',
+      proxies: [],
+      timeout: 3000,
+      url: 'https://www.gstatic.com/generate_204',
+      interval: 120,
+      tolerance: 200,
+      lazy: true,
+      autoAllNodes: true,
+    },
+    {
+      id: generateId(),
+      name: '🛡️ 故障转移',
+      type: 'fallback',
+      proxies: [],
+      timeout: 3000,
+      url: 'https://www.gstatic.com/generate_204',
+      interval: 120,
+      lazy: true,
+    },
+    {
+      id: generateId(),
+      name: '🌐 节点选择',
+      type: 'select',
+      proxies: [],
+      url: 'https://www.gstatic.com/generate_204',
+      interval: 120,
+    },
+    {
+      id: generateId(),
+      name: '🇺🇸｜美国出口',
+      type: 'select',
+      proxies: [],
+      url: 'https://www.gstatic.com/generate_204',
+      interval: 120,
+    },
+    {
+      id: generateId(),
+      name: '🇯🇵｜日本出口',
+      type: 'select',
+      proxies: [],
+      url: 'https://www.gstatic.com/generate_204',
+      interval: 120,
+    },
+    {
+      id: generateId(),
+      name: '🍑 claude 专用节点',
+      type: 'select',
+      proxies: [],
+      url: 'https://www.gstatic.com/generate_204',
+      interval: 120,
+      tolerance: 200,
+    },
+    {
+      id: generateId(),
+      name: '🐦 社交媒体',
+      type: 'select',
+      proxies: [],
+      url: 'https://www.gstatic.com/generate_204',
+      interval: 120,
+    },
+    {
+      id: generateId(),
+      name: '📺 油管',
+      type: 'select',
+      proxies: [],
+      url: 'https://www.gstatic.com/generate_204',
+      interval: 120,
+    },
+  ]
+}
+
+function createDefaultRules(): Rule[] {
+  return [
+    { id: generateId(), type: 'AND',           payload: '((RULE-SET,gemini),(DST-PORT,443),(NETWORK,UDP))', target: 'REJECT' },
+    { id: generateId(), type: 'AND',           payload: '((RULE-SET,google),(DST-PORT,443),(NETWORK,UDP))', target: 'REJECT' },
+    { id: generateId(), type: 'AND',           payload: '((DOMAIN-KEYWORD,google),(DST-PORT,443),(NETWORK,UDP))', target: 'REJECT' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'gemini',          target: '🇺🇸｜美国出口' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'google-gemini',   target: '🇺🇸｜美国出口' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'openai',          target: '🇺🇸｜美国出口' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'claude',          target: '🍑 claude 专用节点' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'copilot',         target: '🇺🇸｜美国出口' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'google',          target: '🇺🇸｜美国出口' },
+    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ipleak.net',      target: '🇺🇸｜美国出口' },
+    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'dnsleaktest.com', target: '🇺🇸｜美国出口' },
+    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ipapi.co',        target: '🇺🇸｜美国出口' },
+    { id: generateId(), type: 'DOMAIN',        payload: 'www.ugtop.com',   target: '🇯🇵｜日本出口' },
+    { id: generateId(), type: 'IP-CIDR',       payload: '0.0.0.0/32',      target: 'REJECT-DROP', noResolve: true },
+    { id: generateId(), type: 'IP-CIDR',       payload: '127.0.0.0/8',     target: 'DIRECT', noResolve: true },
+    { id: generateId(), type: 'DOMAIN',        payload: 'localhost',       target: 'DIRECT' },
+    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'local',           target: 'DIRECT' },
+    { id: generateId(), type: 'IP-CIDR',       payload: '10.0.0.0/8',      target: 'DIRECT', noResolve: true },
+    { id: generateId(), type: 'IP-CIDR',       payload: '172.16.0.0/12',   target: 'DIRECT', noResolve: true },
+    { id: generateId(), type: 'IP-CIDR',       payload: '192.168.0.0/16',  target: 'DIRECT', noResolve: true },
+    { id: generateId(), type: 'RULE-SET',      payload: 'private',         target: 'DIRECT' },
+    { id: generateId(), type: 'GEOIP',         payload: 'LAN',             target: 'DIRECT', noResolve: true },
+    { id: generateId(), type: 'RULE-SET',      payload: 'twitter',         target: '🐦 社交媒体' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'twitter-video',   target: '🐦 社交媒体' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',   target: '📺 油管' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'youtube',         target: '📺 油管' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'telegram',        target: '🐦 社交媒体' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'tiktok',          target: '🐦 社交媒体' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'linkedin',        target: '🐦 社交媒体' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'docker',          target: '♻️ 自动选择' },
+    { id: generateId(), type: 'GEOIP',         payload: 'CN',              target: 'DIRECT', noResolve: true },
+    { id: generateId(), type: 'MATCH',         payload: '',                target: '♻️ 自动选择' },
+  ]
 }
 
 export const useAppStore = create<AppState>()(
@@ -84,26 +230,7 @@ export const useAppStore = create<AppState>()(
     manualProxies: [],
     globalSettings: JSON.parse(JSON.stringify(DEFAULT_GLOBAL_SETTINGS)) as ClashGlobalSettings,
 
-    proxyGroups: [
-      {
-        id: generateId(),
-        name: 'PROXY',
-        type: 'select',
-        proxies: [],
-        url: 'http://www.gstatic.com/generate_204',
-        interval: 300,
-      },
-      {
-        id: generateId(),
-        name: '♻️ 自动选择',
-        type: 'url-test',
-        proxies: [],
-        url: 'http://www.gstatic.com/generate_204',
-        interval: 300,
-        tolerance: 50,
-        autoAllNodes: true,
-      },
-    ],
+    proxyGroups: createDefaultProxyGroups(),
 
     // Loyalsoldier presets first, then blackmatrix7 presets
     ruleProviders: [
@@ -113,45 +240,7 @@ export const useAppStore = create<AppState>()(
 
     // Unified ordered rule list — includes both manual rules and inline RULE-SET references.
     // RULE-SET entries are only emitted when their provider is enabled.
-    rules: [
-      // 1) 本地 / 局域网 / 保留地址
-      { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'local',          target: 'DIRECT' },
-      { id: generateId(), type: 'IP-CIDR',       payload: '127.0.0.0/8',    target: 'DIRECT' },
-      { id: generateId(), type: 'IP-CIDR',       payload: '10.0.0.0/8',     target: 'DIRECT' },
-      { id: generateId(), type: 'IP-CIDR',       payload: '172.16.0.0/12',  target: 'DIRECT' },
-      { id: generateId(), type: 'IP-CIDR',       payload: '192.168.0.0/16', target: 'DIRECT' },
-      { id: generateId(), type: 'GEOIP',         payload: 'LAN',            target: 'DIRECT', noResolve: true },
-      { id: generateId(), type: 'RULE-SET',      payload: 'private',        target: 'DIRECT' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'lancidr',        target: 'DIRECT', noResolve: true },
-      // 2) 明确拦截
-      { id: generateId(), type: 'RULE-SET',      payload: 'reject',         target: 'REJECT' },
-      // 4) AI / 开发 / 特定服务
-      { id: generateId(), type: 'RULE-SET',      payload: 'openai',         target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'claude',         target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'copilot',        target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'gemini',         target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'docker',         target: 'PROXY' },
-      // 5) 社交 / 媒体
-      { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',  target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'youtube',        target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'google',         target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'telegram',       target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'twitter',        target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'tiktok',         target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'linkedin',       target: 'PROXY' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'GoogleFCM',      target: 'PROXY' },
-      // 6) 通用规则
-      { id: generateId(), type: 'RULE-SET',      payload: 'direct',         target: 'DIRECT' },
-      { id: generateId(), type: 'RULE-SET',      payload: 'gfw',            target: 'PROXY' },
-      // 7) IP 类规则
-      { id: generateId(), type: 'RULE-SET',      payload: 'telegramcidr',   target: 'PROXY',  noResolve: true },
-      { id: generateId(), type: 'RULE-SET',      payload: 'cncidr',         target: 'DIRECT', noResolve: true },
-      // 8) 国内兜底
-      { id: generateId(), type: 'RULE-SET',      payload: 'cn',             target: 'DIRECT' },
-      { id: generateId(), type: 'GEOIP',         payload: 'CN',             target: 'DIRECT', noResolve: true },
-      // 9) 最终兜底
-      { id: generateId(), type: 'MATCH',         payload: '',               target: '♻️ 自动选择' },
-    ],
+    rules: createDefaultRules(),
 
     activeTab: 'sources',
     showChainExample: false,
@@ -504,10 +593,12 @@ export const useAppStore = create<AppState>()(
             name: g.name,
             type: (g.type as ProxyGroup['type']) || 'select',
             proxies: Array.isArray(g.proxies) ? g.proxies : [],
+            timeout: g.timeout,
             url: g.url,
             interval: g.interval,
             tolerance: g.tolerance,
             lazy: g.lazy,
+            hidden: (g as { hidden?: boolean }).hidden,
           }))
         }
 
@@ -547,11 +638,12 @@ export const useAppStore = create<AppState>()(
               rules.push({ id: generateId(), type: 'MATCH', payload: '', target: parts[1] || 'DIRECT' })
             } else {
               const noResolve = parts[parts.length - 1] === 'no-resolve'
+              const targetIndex = noResolve ? parts.length - 2 : parts.length - 1
               rules.push({
                 id: generateId(),
                 type,
-                payload: parts[1] || '',
-                target: noResolve ? parts[2] || 'DIRECT' : parts[parts.length - 1] || 'DIRECT',
+                payload: parts.slice(1, targetIndex).join(','),
+                target: parts[targetIndex] || 'DIRECT',
                 ...(noResolve ? { noResolve: true } : {}),
               })
             }
@@ -568,10 +660,20 @@ export const useAppStore = create<AppState>()(
         if (config['external-controller']) state.globalSettings['external-controller'] = config['external-controller']
         if (config['tcp-concurrent'] !== undefined) state.globalSettings['tcp-concurrent'] = config['tcp-concurrent']
         if (config['unified-delay'] !== undefined) state.globalSettings['unified-delay'] = config['unified-delay']
+        if (config['udp-timeout'] !== undefined) state.globalSettings['udp-timeout'] = config['udp-timeout']
+        // handle both new field name and legacy tcp-keep-alive-interval
+        if (config['keep-alive-interval'] !== undefined) state.globalSettings['keep-alive-interval'] = config['keep-alive-interval']
+        else if (config['tcp-keep-alive-interval'] !== undefined) state.globalSettings['keep-alive-interval'] = config['tcp-keep-alive-interval']
+        if (config.udp !== undefined) state.globalSettings.udp = config.udp
         if (config['find-process-mode']) state.globalSettings['find-process-mode'] = config['find-process-mode']
         if (config['geodata-mode'] !== undefined) state.globalSettings['geodata-mode'] = config['geodata-mode']
+        if (config['geo-auto-update'] !== undefined) state.globalSettings['geo-auto-update'] = config['geo-auto-update']
+        if (config['geo-update-interval'] !== undefined) state.globalSettings['geo-update-interval'] = config['geo-update-interval']
         if (config['geox-url']) state.globalSettings['geox-url'] = config['geox-url']
         if (config['global-client-fingerprint']) state.globalSettings['global-client-fingerprint'] = config['global-client-fingerprint']
+        if (config.profile) state.globalSettings.profile = config.profile
+        if (config['prefer-h3'] !== undefined) state.globalSettings['prefer-h3'] = config['prefer-h3']
+        if (config.tun) state.globalSettings.tun = config.tun
         if (config.sniffer) state.globalSettings.sniffer = config.sniffer
         if (config.dns) Object.assign(state.globalSettings.dns, config.dns)
       })
@@ -582,50 +684,16 @@ export const useAppStore = create<AppState>()(
     resetManualProxies: () => set((state) => { state.manualProxies = [] }),
 
     resetProxyGroups: () => set((state) => {
-      state.proxyGroups = [
-        { id: generateId(), name: 'PROXY', type: 'select', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300 },
-        { id: generateId(), name: '♻️ 自动选择', type: 'url-test', proxies: [], url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50, autoAllNodes: true },
-      ]
+      state.proxyGroups = createDefaultProxyGroups()
     }),
 
     resetRules: () => set((state) => {
-      const g = generateId
-      state.rules = [
-        { id: g(), type: 'DOMAIN-SUFFIX', payload: 'local',          target: 'DIRECT' },
-        { id: g(), type: 'IP-CIDR',       payload: '127.0.0.0/8',    target: 'DIRECT' },
-        { id: g(), type: 'IP-CIDR',       payload: '10.0.0.0/8',     target: 'DIRECT' },
-        { id: g(), type: 'IP-CIDR',       payload: '172.16.0.0/12',  target: 'DIRECT' },
-        { id: g(), type: 'IP-CIDR',       payload: '192.168.0.0/16', target: 'DIRECT' },
-        { id: g(), type: 'GEOIP',         payload: 'LAN',            target: 'DIRECT', noResolve: true },
-        { id: g(), type: 'RULE-SET',      payload: 'private',        target: 'DIRECT' },
-        { id: g(), type: 'RULE-SET',      payload: 'lancidr',        target: 'DIRECT', noResolve: true },
-        { id: g(), type: 'RULE-SET',      payload: 'reject',         target: 'REJECT' },
-        { id: g(), type: 'RULE-SET',      payload: 'openai',         target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'claude',         target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'copilot',        target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'gemini',         target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'docker',         target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'youtube-music',  target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'youtube',        target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'google',         target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'telegram',       target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'twitter',        target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'tiktok',         target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'linkedin',       target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'GoogleFCM',      target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'direct',         target: 'DIRECT' },
-        { id: g(), type: 'RULE-SET',      payload: 'gfw',            target: 'PROXY' },
-        { id: g(), type: 'RULE-SET',      payload: 'telegramcidr',   target: 'PROXY',  noResolve: true },
-        { id: g(), type: 'RULE-SET',      payload: 'cncidr',         target: 'DIRECT', noResolve: true },
-        { id: g(), type: 'RULE-SET',      payload: 'cn',             target: 'DIRECT' },
-        { id: g(), type: 'GEOIP',         payload: 'CN',             target: 'DIRECT', noResolve: true },
-        { id: g(), type: 'MATCH',         payload: '',               target: '♻️ 自动选择' },
-      ]
+      state.rules = createDefaultRules()
     }),
   })),
   {
     name: 'clash-node-editor-v1',
-    storage: createJSONStorage(() => localStorage),
+    storage: createJSONStorage(() => expiringLocalStorage),
     // Only persist metadata, not the fetched proxy data (can be large).
     // Sources are restored with status='idle' so users know to refresh.
     partialize: (state) => ({

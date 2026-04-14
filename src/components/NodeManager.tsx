@@ -565,9 +565,9 @@ function IpDetectionPanel({ proxy, allGroupNames }: { proxy: Proxy; allGroupName
         )}
       </div>
 
-      {/* Verify in Clash */}
+      {/* Verify in Mihomo */}
       <div>
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">在 Clash 中验证出口 IP</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">在 Mihomo 中验证出口 IP</p>
         <div className="flex items-center gap-2">
           <a
             href="https://whatismyipaddress.com/"
@@ -578,7 +578,7 @@ function IpDetectionPanel({ proxy, allGroupNames }: { proxy: Proxy; allGroupName
             <ExternalLink size={11} />
             whatismyipaddress.com
           </a>
-          <span className="text-xs text-gray-400">— 在 Clash 启用此节点后打开验证</span>
+          <span className="text-xs text-gray-400">— 在 Mihomo 启用此节点后打开验证</span>
         </div>
       </div>
 
@@ -861,7 +861,7 @@ function NodeFormModal({
               <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">链式代理（dialer-proxy）</span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-              选择前置代理后，Clash 会先通过该代理/代理组建立与本节点服务器的连接，实现链式出口。
+              选择前置代理后，Mihomo 会先通过该代理/代理组建立与本节点服务器的连接，实现链式出口。
               <br />例：港澳台新韩节点 → 本节点（美国静态IP）→ 互联网，出口 IP = 美国原生 IP。
             </p>
             <SearchableSelect
@@ -1295,11 +1295,11 @@ export default function NodeManager() {
               </p>
               <div className="relative bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 pr-10">
                 <p className="text-xs text-gray-700 dark:text-gray-300 font-mono leading-relaxed select-all">
-                  如何在 Clash 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过港澳台新节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。
+                  如何在 Mihomo 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过港澳台新节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。
                 </p>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText('如何在 Clash 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过港澳台新节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。')
+                    navigator.clipboard.writeText('如何在 Mihomo 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过港澳台新节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。')
                     setAiPromptCopied(true)
                     setTimeout(() => setAiPromptCopied(false), 2000)
                   }}
