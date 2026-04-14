@@ -37,10 +37,16 @@ export function parseYamlFull(text: string): { proxies: Proxy[], groups: Importe
         name: g.name,
         type: g.type,
         proxies: Array.isArray(g.proxies) ? g.proxies : [],
-        timeout: g.timeout,
+        ...(Array.isArray(g.use) && g.use.length > 0 ? { use: g.use } : {}),
+        ...(g.timeout !== undefined ? { timeout: g.timeout } : {}),
         url: g.url,
         interval: g.interval,
         tolerance: g.tolerance,
+        ...(g.lazy !== undefined ? { lazy: g.lazy } : {}),
+        ...(g.hidden ? { hidden: g.hidden } : {}),
+        ...(g.filter ? { filter: g.filter } : {}),
+        ...(g['exclude-filter'] ? { 'exclude-filter': g['exclude-filter'] } : {}),
+        ...(g.strategy ? { strategy: g.strategy } : {}),
       }))
     : []
   if (proxies.length === 0 && groups.length === 0)
@@ -196,6 +202,13 @@ export function generateClashConfig(
       if (!enabledProviderMap.has(rule.payload)) continue  // skip if provider disabled/missing
       allRuleLines.push(renderRule(rule))
     } else {
+      // For compound rules (AND/OR/NOT), extract any embedded RULE-SET references
+      // so those providers aren't auto-appended as standalone RULE-SET rules later.
+      if (rule.type === 'AND' || rule.type === 'OR' || rule.type === 'NOT') {
+        for (const m of rule.payload.matchAll(/RULE-SET,([^,)]+)/g)) {
+          handledProviders.add(m[1])
+        }
+      }
       allRuleLines.push(renderRule(rule))
     }
   }

@@ -19,6 +19,8 @@ export interface ProxyGroup {
   name: string
   type: ProxyGroupType
   proxies: string[]
+  /** proxy-providers to include (use field in Mihomo) */
+  use?: string[]
   timeout?: number
   url?: string
   interval?: number
@@ -27,6 +29,12 @@ export interface ProxyGroup {
   lazy?: boolean
   /** 在 Dashboard 中隐藏此代理组（仍参与路由），适合中间跳等内部组 */
   hidden?: boolean
+  /** regex filter for selecting proxies by name */
+  filter?: string
+  /** regex to exclude proxies by name */
+  'exclude-filter'?: string
+  /** load-balance strategy */
+  strategy?: string
   /** 生成配置时自动填入所有订阅节点（不含代理组） */
   autoAllNodes?: boolean
 }
@@ -61,10 +69,16 @@ export interface ImportedProxyGroup {
   name: string
   type: string
   proxies: string[]
+  use?: string[]
   timeout?: number
   url?: string
   interval?: number
   tolerance?: number
+  lazy?: boolean
+  hidden?: boolean
+  filter?: string
+  'exclude-filter'?: string
+  strategy?: string
 }
 
 export interface SubscriptionInfo {
@@ -209,11 +223,6 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   'udp-timeout': 300,
   // TCP/UDP 保活探测间隔（秒），防止中间 NAT/路由器静默关闭长连接
   'keep-alive-interval': 15,
-  // 全局关闭 UDP：消除 QUIC 流量与 TCP 流量出口不一致导致的 IP 漂移
-  // Google/Gemini 等平台在同一账号检测到 TCP/UDP 来自不同 IP 时会触发风控
-  udp: false,
-  // 是否优先使用 HTTP/3（QUIC）与节点通信，需 udp=true 才有实际效果
-  'prefer-h3': false,
   // TUN 虚拟网卡：创建内核级网卡接管全部系统流量，让分流规则对所有进程生效
   tun: {
     enable: true,
@@ -241,12 +250,14 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     sniff: {
       TLS:  { ports: [443, 8443] },
       HTTP: { ports: [80, 8080] },
+      QUIC: { ports: [443, 8443] },
     },
     // 强制对这些域名嗅探，即使它们已有 DNS 映射
     'force-domain': ['+.v2ex.com'],
     'skip-domain': [
       'Mijia Cloud',
       '+.push.apple.com',
+      '+.apple.com',
       '+.mi.com',
       '+.xiaomi.com',
       '+.local',
@@ -374,11 +385,16 @@ export interface ClashConfig {
     name: string
     type: string
     proxies: string[]
+    use?: string[]
     timeout?: number
     url?: string
     interval?: number
     tolerance?: number
     lazy?: boolean
+    hidden?: boolean
+    filter?: string
+    'exclude-filter'?: string
+    strategy?: string
   }>
   'rule-providers'?: Record<string, {
     type: string
@@ -405,7 +421,7 @@ function preset(
     behavior,
     url: `https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/${id}.${ext}`,
     path: `./ruleset/${id}.yaml`,
-    interval: 86400,
+    interval: 43200,
     target,
     enabled,
     noResolve,
@@ -416,7 +432,7 @@ function preset(
 export const PRESET_RULE_PROVIDERS: RuleProvider[] = [
   preset('reject',       'domain',    'REJECT',       false),
   preset('private',      'domain',    'DIRECT',       true),
-  preset('google',       'domain',    '🇺🇸｜美国出口', true),
+  preset('google',       'domain',    '🗽 美国出口', true),
   preset('direct',       'domain',    'DIRECT',       false),
   preset('gfw',          'domain',    '♻️ 自动选择', false),
   preset('telegramcidr', 'ipcidr',    '♻️ 自动选择', false, true),
@@ -429,7 +445,7 @@ function bm7(
   filePath: string,
   target: string,
   enabled = false,
-  interval = 86400
+  interval = 43200
 ): RuleProvider {
   return {
     id: `bm7-${id}`,
@@ -446,41 +462,31 @@ function bm7(
 }
 
 export const BLACKMATRIX7_RULE_PROVIDERS: RuleProvider[] = [
-  bm7('openai',       'OpenAI/OpenAI.yaml',             '🇺🇸｜美国出口', true),
-  bm7('claude',       'Claude/Claude.yaml',             '🇯🇵｜日本出口', true),
-  bm7('gemini',       'Gemini/Gemini.yaml',             '🇺🇸｜美国出口', true),
-  bm7('copilot',      'Copilot/Copilot.yaml',           '🇺🇸｜美国出口', true),
-  bm7('youtube-music','YouTubeMusic/YouTubeMusic.yaml', '📺 油管', true,  1209600),
+  bm7('openai',       'OpenAI/OpenAI.yaml',             '🗽 美国出口', true),
+  bm7('claude',       'Claude/Claude.yaml',             '🪬 Claude专用', true),
+  bm7('gemini',       'Gemini/Gemini.yaml',             '🗽 美国出口', true),
+  bm7('copilot',      'Copilot/Copilot.yaml',           '🗽 美国出口', true),
+  bm7('github',       'GitHub/GitHub.yaml',             '🪬 Claude专用', true),
+  bm7('youtube-music','YouTubeMusic/YouTubeMusic.yaml', '📺 油管', true),
   bm7('youtube',      'YouTube/YouTube.yaml',           '📺 油管', true),
-  bm7('telegram',     'Telegram/Telegram.yaml',         '🐦 社交媒体', true,  1209600),
-  bm7('twitter',      'Twitter/Twitter.yaml',           '🐦 社交媒体', true,  1209600),
-  bm7('tiktok',       'TikTok/TikTok.yaml',             '🐦 社交媒体', true,  1209600),
-  bm7('linkedin',     'LinkedIn/LinkedIn.yaml',         '🐦 社交媒体', true,  1209600),
-  bm7('docker',       'Docker/Docker.yaml',             '♻️ 自动选择', true,  1209600),
-  bm7('GoogleFCM',    'GoogleFCM/GoogleFCM.yaml',       'DIRECT',      false, 1209600),
+  bm7('telegram',     'Telegram/Telegram.yaml',         '📺 油管', true),
+  bm7('twitter',      'Twitter/Twitter.yaml',           '📡 社交媒体', true),
+  bm7('tiktok',       'TikTok/TikTok.yaml',             '📺 油管', true),
+  bm7('linkedin',     'LinkedIn/LinkedIn.yaml',         '📡 社交媒体', true),
+  bm7('microsoft',    'Microsoft/Microsoft.yaml',       '📺 油管', true),
+  bm7('tencent',      'Tencent/Tencent.yaml',           'DIRECT',      true),
+  bm7('docker',       'Docker/Docker.yaml',             '♻️ 自动选择', true),
+  bm7('GoogleFCM',    'GoogleFCM/GoogleFCM.yaml',       'DIRECT',      false),
   bm7('cn',           'China/China.yaml',               'DIRECT',      false),
-  // yanjinbin 自定义规则集
   {
-    id: 'yj-twitter-video',
+    id: 'twitter-video',
     name: 'twitter-video',
     type: 'http',
     behavior: 'classical',
     url: 'https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@master/twitter-video.yaml',
     path: './ruleset/twitter-video.yaml',
-    interval: 86400,
-    target: '🐦 社交媒体',
-    enabled: true,
-    isPreset: true,
-  },
-  {
-    id: 'yj-google-gemini',
-    name: 'google-gemini',
-    type: 'http',
-    behavior: 'classical',
-    url: 'https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@master/google-gemini.yaml',
-    path: './ruleset/google-gemini.yaml',
-    interval: 86400,
-    target: '🇺🇸｜美国出口',
+    interval: 2592000,
+    target: '📺 油管',
     enabled: true,
     isPreset: true,
   },

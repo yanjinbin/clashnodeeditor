@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
-import { Copy, Download, Check, FileText, ChevronRight, CheckCircle, XCircle, Upload, X, ShieldCheck } from 'lucide-react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { Copy, Download, Check, FileText, ChevronRight, CheckCircle, XCircle, Upload, X, ShieldCheck, RotateCcw, Pencil } from 'lucide-react'
 import yaml from 'js-yaml'
 import { useAppStore } from '../store/useAppStore'
 import { generateClashConfig } from '../utils/parseYaml'
@@ -563,6 +563,9 @@ export default function ConfigPreview() {
   const [softWrap, setSoftWrap] = useState(false)
   const [flowArrays, setFlowArrays] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  /** null = follow generated; string = user has manually edited */
+  const [manualYaml, setManualYaml] = useState<string | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const allProxies = [...sources.flatMap((s) => s.proxies), ...manualProxies]
   const enabledProviders = ruleProviders.filter((p) => p.enabled)
@@ -575,11 +578,16 @@ export default function ConfigPreview() {
       name: g.name,
       type: g.type,
       proxies: g.autoAllNodes ? allProxyNames : g.proxies,
+      ...(g.use && g.use.length > 0 ? { use: g.use } : {}),
+      ...(g.timeout !== undefined ? { timeout: g.timeout } : {}),
       url: g.url,
       interval: g.interval,
       tolerance: g.tolerance,
       lazy: g.lazy,
       ...(g.hidden ? { hidden: true } : {}),
+      ...(g.filter ? { filter: g.filter } : {}),
+      ...(g['exclude-filter'] ? { 'exclude-filter': g['exclude-filter'] } : {}),
+      ...(g.strategy ? { strategy: g.strategy } : {}),
     })),
     ruleProviders,
     rules.map((r) => ({ type: r.type, payload: r.payload, target: r.target, noResolve: r.noResolve })),
@@ -587,32 +595,37 @@ export default function ConfigPreview() {
     flowArrays
   )
 
-  // Validate generated YAML by re-parsing it
+  const displayYaml = manualYaml ?? configYaml
+
   const yamlValidation = useMemo(() => {
     try {
-      yaml.load(configYaml)
+      yaml.load(displayYaml)
       return { valid: true, error: undefined }
     } catch (e) {
       return { valid: false, error: (e as Error).message }
     }
-  }, [configYaml])
+  }, [displayYaml])
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(configYaml)
+  const handleCopy = useCallback(async () => {
+    await navigator.clipboard.writeText(displayYaml)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-  }
+  }, [displayYaml])
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     const name = filename.trim() || 'config.yaml'
-    const blob = new Blob([configYaml], { type: 'text/yaml' })
+    const blob = new Blob([displayYaml], { type: 'text/yaml' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = name.endsWith('.yaml') || name.endsWith('.yml') ? name : `${name}.yaml`
     a.click()
     URL.revokeObjectURL(url)
-  }
+  }, [displayYaml, filename])
+
+  const handleReset = useCallback(() => {
+    setManualYaml(null)
+  }, [])
 
   return (
     <div className="flex h-full min-h-0">
@@ -701,7 +714,23 @@ export default function ConfigPreview() {
             )}
           </div>
 
-          <div className="flex gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto">
+            {manualYaml !== null && (
+              <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
+                <Pencil size={11} />
+                已手动编辑
+              </span>
+            )}
+            {manualYaml !== null && (
+              <button
+                onClick={handleReset}
+                title="丢弃手动编辑，恢复自动生成内容"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-amber-400 dark:border-amber-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 dark:text-amber-400 transition-colors"
+              >
+                <RotateCcw size={13} />
+                重置
+              </button>
+            )}
             <button
               onClick={() => setShowImport(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
@@ -726,13 +755,15 @@ export default function ConfigPreview() {
           </div>
         </div>
 
-        {/* Code area — fills all remaining height, no padding so it's truly edge-to-edge */}
+        {/* Code area — editable textarea */}
         <div className="flex-1 min-h-0 overflow-hidden bg-gray-950">
-          <div className="h-full overflow-auto">
-            <pre className={`p-4 text-xs text-green-300 font-mono leading-relaxed ${softWrap ? 'whitespace-pre-wrap break-all' : 'whitespace-pre'}`}>
-              {configYaml}
-            </pre>
-          </div>
+          <textarea
+            ref={textareaRef}
+            value={displayYaml}
+            onChange={(e) => setManualYaml(e.target.value)}
+            spellCheck={false}
+            className={`w-full h-full p-4 text-xs text-green-300 font-mono leading-relaxed bg-gray-950 resize-none focus:outline-none ${softWrap ? 'whitespace-pre-wrap break-all' : 'whitespace-pre overflow-x-auto'}`}
+          />
         </div>
 
         {/* Stats bar */}

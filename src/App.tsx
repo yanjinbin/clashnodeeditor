@@ -5,7 +5,8 @@ import ProxyGroupEditor from './components/ProxyGroupEditor'
 import RuleSetManager from './components/RuleSetManager'
 import ConfigPreview from './components/ConfigPreview'
 import NovproxyBanner from './components/NovproxyBanner'
-import { Globe, Server, Users, Shield, FileText } from 'lucide-react'
+import { useVersionCheck } from './hooks/useVersionCheck'
+import { Globe, Server, Users, Shield, FileText, RefreshCw } from 'lucide-react'
 
 const TABS = [
   { id: 'sources' as const, label: '订阅源', icon: Globe },
@@ -20,9 +21,24 @@ const AD_COL = 'w-36' // 144px
 
 export default function App() {
   const { activeTab, setActiveTab } = useAppStore()
+  const { needsUpdate, countdown, reloadNow } = useVersionCheck()
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+
+      {/* ── 版本更新横幅 ────────────────────────────────────────────────── */}
+      {needsUpdate && (
+        <div className="shrink-0 flex items-center justify-center gap-3 px-4 py-2 bg-indigo-600 text-white text-xs font-medium z-50">
+          <RefreshCw size={13} className="animate-spin" />
+          <span>检测到新版本，将在 <strong>{countdown}</strong> 秒后自动刷新页面…</span>
+          <button
+            onClick={reloadNow}
+            className="ml-2 px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 transition-colors font-semibold"
+          >
+            立即刷新
+          </button>
+        </div>
+      )}
 
       {/* ── Header：三列对齐，spacer 宽度与广告列一致 ─────────────────── */}
       <header className="shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">

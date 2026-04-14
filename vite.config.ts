@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import type { Plugin } from 'vite'
+import { writeFileSync } from 'fs'
+import { resolve } from 'path'
 
 /** Dev-only middleware that mirrors the Vercel Edge Function at api/proxy.ts */
 function devProxyPlugin(): Plugin {
@@ -31,9 +33,24 @@ function devProxyPlugin(): Plugin {
   }
 }
 
+const BUILD_TIME = new Date().toISOString()
+
+/** Writes public/version.json at build time so the running app can detect updates */
+function versionPlugin(): Plugin {
+  return {
+    name: 'write-version',
+    buildStart() {
+      writeFileSync(
+        resolve(__dirname, 'public/version.json'),
+        JSON.stringify({ buildTime: BUILD_TIME })
+      )
+    },
+  }
+}
+
 export default defineConfig({
   define: {
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    __BUILD_TIME__: JSON.stringify(BUILD_TIME),
   },
   server: {
     watch: {
@@ -43,5 +60,5 @@ export default defineConfig({
       ignored: ['**/.omx', '**/.omx/**', '**/.codex', '**/.codex/**'],
     },
   },
-  plugins: [react(), tailwindcss(), devProxyPlugin()],
+  plugins: [react(), tailwindcss(), devProxyPlugin(), versionPlugin()],
 })
