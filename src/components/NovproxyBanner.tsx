@@ -1,7 +1,7 @@
 export default function NovproxyBanner() {
   return (
     <a
-      href="https://novproxy.com/zh/?code=666888"
+      href="https://m.novproxy.com/invite/666888"
       target="_blank"
       rel="noopener noreferrer"
       className="block w-full"

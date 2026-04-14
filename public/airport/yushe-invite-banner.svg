@@ -1,0 +1,66 @@
+<svg width="140" height="360" viewBox="0 0 140 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ys-bg" x1="14" y1="8" x2="126" y2="352" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2C160A"/>
+      <stop offset="0.54" stop-color="#5B2B12"/>
+      <stop offset="1" stop-color="#0D5A62"/>
+    </linearGradient>
+    <linearGradient id="ys-card" x1="18" y1="108" x2="118" y2="332" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7E8" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#CCFBF1" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="ys-pill" x1="14" y1="0" x2="126" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#2DD4BF"/>
+    </linearGradient>
+    <radialGradient id="ys-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(102 62) rotate(119.476) scale(82 78.228)">
+      <stop stop-color="#FDBA74" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#FDBA74" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="ys-shadow" x="-16" y="88" width="172" height="258" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feOffset dy="10"/>
+      <feGaussianBlur stdDeviation="10"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.14902 0 0 0 0 0.0666667 0 0 0 0 0.0117647 0 0 0 0.32 0"/>
+      <feBlend in2="SourceGraphic" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="140" height="360" rx="16" fill="url(#ys-bg)"/>
+  <circle cx="102" cy="62" r="48" fill="url(#ys-glow)"/>
+
+  <path d="M0 280C19 270 38 264 59 263C82 262 108 269 140 284V360H0V280Z" fill="#0D5360" fill-opacity="0.88"/>
+  <path d="M0 305C25 293 48 290 74 297C102 305 118 318 140 332V360H0V305Z" fill="#11717A" fill-opacity="0.78"/>
+  <path d="M98 82C107 82 115 90 115 101C115 112 107 121 98 121C89 121 81 112 81 101C81 90 89 82 98 82Z" fill="#FFD7A0" fill-opacity="0.24"/>
+  <path d="M78 116L96 104L117 120C120 122 120 127 117 129L98 144L77 129C74 127 74 121 78 116Z" fill="#FFF3DD" fill-opacity="0.18"/>
+  <path d="M16 250C28 244 37 244 48 250C59 256 68 256 80 250C91 244 100 244 111 250C120 254 126 255 134 253" stroke="#BDFCF5" stroke-opacity="0.68" stroke-width="2" stroke-linecap="round"/>
+  <path d="M10 264C22 258 31 258 42 264C53 270 62 270 74 264C85 258 94 258 105 264C114 268 122 269 130 267" stroke="#BDFCF5" stroke-opacity="0.46" stroke-width="2" stroke-linecap="round"/>
+
+  <g filter="url(#ys-shadow)">
+    <rect x="10" y="101" width="120" height="232" rx="18" fill="url(#ys-card)"/>
+    <rect x="10.75" y="101.75" width="118.5" height="230.5" rx="17.25" stroke="#FFF4E2" stroke-opacity="0.18" stroke-width="1.5"/>
+  </g>
+
+  <rect x="18" y="16" width="56" height="20" rx="10" fill="#FFF9EC" fill-opacity="0.12"/>
+  <text x="46" y="30" text-anchor="middle" fill="#FFF4DA" font-size="10" font-weight="700" font-family="'PingFang SC','Microsoft YaHei',sans-serif">机场邀请</text>
+
+  <text x="20" y="66" fill="#FFFFFF" font-size="22" font-weight="800" font-family="'PingFang SC','Microsoft YaHei',sans-serif">渔舍✈️</text>
+  <text x="20" y="84" fill="#FDE7C2" font-size="10" font-weight="600" font-family="'PingFang SC','Microsoft YaHei',sans-serif">YuShe Access</text>
+
+  <text x="20" y="132" fill="#FFF8EE" font-size="11" font-weight="700" font-family="'PingFang SC','Microsoft YaHei',sans-serif">注册链接</text>
+  <text x="20" y="150" fill="#F7DEC0" font-size="8.5" font-weight="500" font-family="'SFMono-Regular','Cascadia Code',monospace">my.yushe.org/#/</text>
+  <text x="20" y="163" fill="#F7DEC0" font-size="8.5" font-weight="500" font-family="'SFMono-Regular','Cascadia Code',monospace">register?code=</text>
+
+  <rect x="18" y="176" width="104" height="26" rx="13" fill="url(#ys-pill)"/>
+  <text x="70" y="193.5" text-anchor="middle" fill="#221204" font-size="11" font-weight="900" letter-spacing="1.4" font-family="'SFMono-Regular','Cascadia Code',monospace">KITVDFtX</text>
+
+  <rect x="18" y="215" width="104" height="54" rx="14" fill="#2A160C" fill-opacity="0.34"/>
+  <text x="28" y="234" fill="#FFF7EA" font-size="9.5" font-weight="700" font-family="'PingFang SC','Microsoft YaHei',sans-serif">直达入口</text>
+  <text x="28" y="249" fill="#F7E1C7" font-size="8" font-weight="500" font-family="'SFMono-Regular','Cascadia Code',monospace">https://my.yushe.org</text>
+  <text x="28" y="261" fill="#F7E1C7" font-size="8" font-weight="500" font-family="'SFMono-Regular','Cascadia Code',monospace">/#/register</text>
+
+  <rect x="18" y="282" width="104" height="32" rx="16" fill="#FFFDF8" fill-opacity="0.08"/>
+  <rect x="18.75" y="282.75" width="102.5" height="30.5" rx="15.25" stroke="#FFECC8" stroke-opacity="0.25" stroke-width="1.5"/>
+  <text x="70" y="302.5" text-anchor="middle" fill="#FFF7EA" font-size="10.5" font-weight="700" font-family="'PingFang SC','Microsoft YaHei',sans-serif">点击卡片直达</text>
+
+  <text x="20" y="338" fill="#FFF0D8" font-size="8.5" font-weight="600" font-family="'PingFang SC','Microsoft YaHei',sans-serif">暖色灯光 + 渔舍水波</text>
+</svg>

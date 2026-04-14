@@ -4,6 +4,7 @@ import NodeManager from './components/NodeManager'
 import ProxyGroupEditor from './components/ProxyGroupEditor'
 import RuleSetManager from './components/RuleSetManager'
 import ConfigPreview from './components/ConfigPreview'
+import AirportInviteBanner from './components/AirportInviteBanner'
 import NovproxyBanner from './components/NovproxyBanner'
 import { useVersionCheck } from './hooks/useVersionCheck'
 import { Globe, Server, Users, Shield, FileText, RefreshCw } from 'lucide-react'
@@ -103,6 +104,11 @@ export default function App() {
         {/* 左侧广告列 — xl(≥1280px) 起显示 */}
         <aside className={`hidden xl:flex flex-col ${AD_COL} shrink-0 overflow-y-auto pt-3 px-2 gap-4 bg-gray-50 dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800`}>
           <NovproxyBanner />
+          <AirportInviteBanner
+            href="https://shanhai.cfd/#/register?code=GrELQII8"
+            imageSrc="/airport/shanhai-invite-banner.svg"
+            title="山海✈️ 机场邀请链接"
+          />
         </aside>
 
         {/* 主内容区 */}
@@ -119,6 +125,11 @@ export default function App() {
         {/* 右侧广告列 */}
         <aside className={`hidden xl:flex flex-col ${AD_COL} shrink-0 overflow-y-auto pt-3 px-2 gap-4 bg-gray-50 dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800`}>
           <NovproxyBanner />
+          <AirportInviteBanner
+            href="https://my.yushe.org/#/register?code=KITVDFtX"
+            imageSrc="/airport/yushe-invite-banner.svg"
+            title="渔舍✈️ 机场邀请链接"
+          />
         </aside>
 
       </main>

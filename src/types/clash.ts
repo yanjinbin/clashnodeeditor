@@ -164,6 +164,11 @@ export interface GeoxUrl {
   mmdb?: string
 }
 
+export interface ExternalControllerCorsConfig {
+  'allow-origins': string[]
+  'allow-private-network'?: boolean
+}
+
 export interface ClashGlobalSettings {
   'mixed-port': number
   'allow-lan': boolean
@@ -171,6 +176,11 @@ export interface ClashGlobalSettings {
   mode: string
   'log-level': string
   'external-controller': string
+  'external-controller-cors'?: ExternalControllerCorsConfig
+  secret?: string
+  'external-ui'?: string
+  'external-ui-name'?: string
+  'external-ui-url'?: string
   'tcp-concurrent'?: boolean
   'unified-delay'?: boolean
   'udp-timeout'?: number
@@ -203,6 +213,14 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   // warning 减少无意义日志输出；调试时可改为 debug
   'log-level': 'warning',
   'external-controller': '127.0.0.1:9090',
+  'external-controller-cors': {
+    'allow-origins': ['*'],
+    'allow-private-network': true,
+  },
+  secret: '',
+  'external-ui': './ui',
+  'external-ui-name': 'zashboard',
+  'external-ui-url': 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip',
   'find-process-mode': 'off',
   'geodata-mode': true,
   // 开启后 Mihomo 启动时自动拉取最新 GeoData 文件
@@ -362,6 +380,11 @@ export interface ClashConfig {
   mode?: string
   'log-level'?: string
   'external-controller'?: string
+  'external-controller-cors'?: ExternalControllerCorsConfig
+  secret?: string
+  'external-ui'?: string
+  'external-ui-name'?: string
+  'external-ui-url'?: string
   'tcp-concurrent'?: boolean
   'unified-delay'?: boolean
   'udp-timeout'?: number

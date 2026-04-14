@@ -1,0 +1,66 @@
+<svg width="140" height="360" viewBox="0 0 140 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sh-bg" x1="10" y1="6" x2="126" y2="354" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A1C32"/>
+      <stop offset="0.58" stop-color="#12395D"/>
+      <stop offset="1" stop-color="#1C6C79"/>
+    </linearGradient>
+    <linearGradient id="sh-card" x1="20" y1="116" x2="120" y2="330" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7FCFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#D1FAE5" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="sh-pill" x1="14" y1="0" x2="126" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#34D399"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+    <radialGradient id="sh-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(104 54) rotate(118.841) scale(88 74.2555)">
+      <stop stop-color="#7DD3FC" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#7DD3FC" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="sh-shadow" x="-16" y="88" width="172" height="258" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feOffset dy="10"/>
+      <feGaussianBlur stdDeviation="10"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.0313725 0 0 0 0 0.160784 0 0 0 0 0.27451 0 0 0 0.34 0"/>
+      <feBlend in2="SourceGraphic" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="140" height="360" rx="16" fill="url(#sh-bg)"/>
+  <circle cx="103" cy="54" r="50" fill="url(#sh-glow)"/>
+
+  <path d="M0 262C21 250 34 238 47 216C60 194 75 175 96 164C108 158 122 155 140 154V360H0V262Z" fill="#08324D" fill-opacity="0.85"/>
+  <path d="M0 292C20 282 40 278 61 282C84 286 103 296 140 315V360H0V292Z" fill="#0A5160" fill-opacity="0.86"/>
+  <path d="M6 118C18 101 27 88 36 88C45 88 53 101 64 118H6Z" fill="#D4F4FF" fill-opacity="0.22"/>
+  <path d="M44 118C61 89 74 70 87 70C101 70 114 89 134 118H44Z" fill="#E8FFF7" fill-opacity="0.26"/>
+  <path d="M13 251C29 246 39 246 56 251C73 256 82 256 99 251C115 246 124 246 134 249" stroke="#BAF7FF" stroke-opacity="0.7" stroke-width="2" stroke-linecap="round"/>
+  <path d="M9 266C25 261 35 261 52 266C69 271 78 271 95 266C111 261 121 261 131 264" stroke="#BAF7FF" stroke-opacity="0.52" stroke-width="2" stroke-linecap="round"/>
+
+  <g filter="url(#sh-shadow)">
+    <rect x="10" y="101" width="120" height="232" rx="18" fill="url(#sh-card)"/>
+    <rect x="10.75" y="101.75" width="118.5" height="230.5" rx="17.25" stroke="#D9F7FF" stroke-opacity="0.18" stroke-width="1.5"/>
+  </g>
+
+  <rect x="18" y="16" width="56" height="20" rx="10" fill="#E6FFFB" fill-opacity="0.13"/>
+  <text x="46" y="30" text-anchor="middle" fill="#DDF9FF" font-size="10" font-weight="700" font-family="'PingFang SC','Microsoft YaHei',sans-serif">机场邀请</text>
+
+  <text x="20" y="66" fill="#FFFFFF" font-size="22" font-weight="800" font-family="'PingFang SC','Microsoft YaHei',sans-serif">山海✈️</text>
+  <text x="20" y="84" fill="#BFEAF8" font-size="10" font-weight="600" font-family="'PingFang SC','Microsoft YaHei',sans-serif">ShanHai Access</text>
+
+  <text x="20" y="132" fill="#EAFCFF" font-size="11" font-weight="700" font-family="'PingFang SC','Microsoft YaHei',sans-serif">注册链接</text>
+  <text x="20" y="150" fill="#CDEAF4" font-size="8.5" font-weight="500" font-family="'SFMono-Regular','Cascadia Code',monospace">shanhai.cfd/#/</text>
+  <text x="20" y="163" fill="#CDEAF4" font-size="8.5" font-weight="500" font-family="'SFMono-Regular','Cascadia Code',monospace">register?code=</text>
+
+  <rect x="18" y="176" width="104" height="26" rx="13" fill="url(#sh-pill)"/>
+  <text x="70" y="193.5" text-anchor="middle" fill="#03212B" font-size="11" font-weight="900" letter-spacing="1.4" font-family="'SFMono-Regular','Cascadia Code',monospace">GrELQII8</text>
+
+  <rect x="18" y="215" width="104" height="54" rx="14" fill="#061C2F" fill-opacity="0.4"/>
+  <text x="28" y="234" fill="#E9FCFF" font-size="9.5" font-weight="700" font-family="'PingFang SC','Microsoft YaHei',sans-serif">直达入口</text>
+  <text x="28" y="249" fill="#A8DDE9" font-size="8" font-weight="500" font-family="'SFMono-Regular','Cascadia Code',monospace">https://shanhai.cfd</text>
+  <text x="28" y="261" fill="#A8DDE9" font-size="8" font-weight="500" font-family="'SFMono-Regular','Cascadia Code',monospace">/#/register</text>
+
+  <rect x="18" y="282" width="104" height="32" rx="16" fill="#F8FFFE" fill-opacity="0.1"/>
+  <rect x="18.75" y="282.75" width="102.5" height="30.5" rx="15.25" stroke="#D6FBFF" stroke-opacity="0.28" stroke-width="1.5"/>
+  <text x="70" y="302.5" text-anchor="middle" fill="#ECFEFF" font-size="10.5" font-weight="700" font-family="'PingFang SC','Microsoft YaHei',sans-serif">点击卡片直达</text>
+
+  <text x="20" y="338" fill="#D8FBFF" font-size="8.5" font-weight="600" font-family="'PingFang SC','Microsoft YaHei',sans-serif">山系轮廓 + 海面波纹</text>
+</svg>

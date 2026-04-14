@@ -131,30 +131,86 @@ export function generateClashConfig(
   settings: ClashGlobalSettings = DEFAULT_GLOBAL_SETTINGS,
   flowArrays = false
 ): string {
+  const normalizedSettings: ClashGlobalSettings = {
+    ...DEFAULT_GLOBAL_SETTINGS,
+    ...settings,
+    'external-controller-cors': settings['external-controller-cors']
+      ? {
+          ...DEFAULT_GLOBAL_SETTINGS['external-controller-cors'],
+          ...settings['external-controller-cors'],
+          'allow-origins': settings['external-controller-cors']['allow-origins']
+            ?? DEFAULT_GLOBAL_SETTINGS['external-controller-cors']?.['allow-origins']
+            ?? ['*'],
+        }
+      : DEFAULT_GLOBAL_SETTINGS['external-controller-cors'],
+    'geox-url': settings['geox-url']
+      ? { ...DEFAULT_GLOBAL_SETTINGS['geox-url'], ...settings['geox-url'] }
+      : DEFAULT_GLOBAL_SETTINGS['geox-url'],
+    profile: settings.profile
+      ? { ...DEFAULT_GLOBAL_SETTINGS.profile, ...settings.profile }
+      : DEFAULT_GLOBAL_SETTINGS.profile,
+    tun: settings.tun
+      ? { ...DEFAULT_GLOBAL_SETTINGS.tun, ...settings.tun }
+      : DEFAULT_GLOBAL_SETTINGS.tun,
+    sniffer: settings.sniffer
+      ? {
+          ...DEFAULT_GLOBAL_SETTINGS.sniffer,
+          ...settings.sniffer,
+          sniff: settings.sniffer.sniff
+            ? {
+                ...DEFAULT_GLOBAL_SETTINGS.sniffer!.sniff,
+                ...settings.sniffer.sniff,
+              }
+            : DEFAULT_GLOBAL_SETTINGS.sniffer!.sniff,
+        }
+      : DEFAULT_GLOBAL_SETTINGS.sniffer,
+    dns: {
+      ...DEFAULT_GLOBAL_SETTINGS.dns,
+      ...settings.dns,
+      'fallback-filter': settings.dns?.['fallback-filter']
+        ? {
+            ...DEFAULT_GLOBAL_SETTINGS.dns['fallback-filter'],
+            ...settings.dns['fallback-filter'],
+          }
+        : DEFAULT_GLOBAL_SETTINGS.dns['fallback-filter'],
+      'nameserver-policy': settings.dns?.['nameserver-policy']
+        ? {
+            ...DEFAULT_GLOBAL_SETTINGS.dns['nameserver-policy'],
+            ...settings.dns['nameserver-policy'],
+          }
+        : DEFAULT_GLOBAL_SETTINGS.dns['nameserver-policy'],
+    },
+  }
+
   const config: ClashConfig = {
-    'mixed-port': settings['mixed-port'],
-    'allow-lan': settings['allow-lan'],
-    'bind-address': settings['bind-address'],
-    mode: settings.mode,
-    'log-level': settings['log-level'],
-    'external-controller': settings['external-controller'],
-    'find-process-mode': settings['find-process-mode'],
-    'geodata-mode': settings['geodata-mode'],
-    ...(settings['geo-auto-update'] !== undefined ? { 'geo-auto-update': settings['geo-auto-update'] } : {}),
-    ...(settings['geo-update-interval'] !== undefined ? { 'geo-update-interval': settings['geo-update-interval'] } : {}),
-    'geox-url': settings['geox-url'],
-    'global-client-fingerprint': settings['global-client-fingerprint'],
-    'tcp-concurrent': settings['tcp-concurrent'],
-    'unified-delay': settings['unified-delay'],
-    ...(settings['udp-timeout'] !== undefined ? { 'udp-timeout': settings['udp-timeout'] } : {}),
-    ...(settings['keep-alive-interval'] !== undefined ? { 'keep-alive-interval': settings['keep-alive-interval'] } : {}),
-    ...(settings.udp !== undefined ? { udp: settings.udp } : {}),
-    ...('prefer-h3' in settings && settings['prefer-h3'] !== undefined ? { 'prefer-h3': settings['prefer-h3'] } : {}),
-    ...(settings.profile ? { profile: settings.profile } : {}),
+    'mixed-port': normalizedSettings['mixed-port'],
+    'allow-lan': normalizedSettings['allow-lan'],
+    'bind-address': normalizedSettings['bind-address'],
+    mode: normalizedSettings.mode,
+    'log-level': normalizedSettings['log-level'],
+    'external-controller': normalizedSettings['external-controller'],
+    ...(normalizedSettings['external-controller-cors'] ? { 'external-controller-cors': normalizedSettings['external-controller-cors'] } : {}),
+    ...(normalizedSettings.secret !== undefined ? { secret: normalizedSettings.secret } : {}),
+    ...(normalizedSettings['external-ui'] !== undefined ? { 'external-ui': normalizedSettings['external-ui'] } : {}),
+    ...(normalizedSettings['external-ui-name'] !== undefined ? { 'external-ui-name': normalizedSettings['external-ui-name'] } : {}),
+    ...(normalizedSettings['external-ui-url'] !== undefined ? { 'external-ui-url': normalizedSettings['external-ui-url'] } : {}),
+    'find-process-mode': normalizedSettings['find-process-mode'],
+    'geodata-mode': normalizedSettings['geodata-mode'],
+    ...(normalizedSettings['geo-auto-update'] !== undefined ? { 'geo-auto-update': normalizedSettings['geo-auto-update'] } : {}),
+    ...(normalizedSettings['geo-update-interval'] !== undefined ? { 'geo-update-interval': normalizedSettings['geo-update-interval'] } : {}),
+    'geox-url': normalizedSettings['geox-url'],
+    'global-client-fingerprint': normalizedSettings['global-client-fingerprint'],
+    'tcp-concurrent': normalizedSettings['tcp-concurrent'],
+    'unified-delay': normalizedSettings['unified-delay'],
+    ...(normalizedSettings['udp-timeout'] !== undefined ? { 'udp-timeout': normalizedSettings['udp-timeout'] } : {}),
+    ...(normalizedSettings['keep-alive-interval'] !== undefined ? { 'keep-alive-interval': normalizedSettings['keep-alive-interval'] } : {}),
+    ...(normalizedSettings.udp !== undefined ? { udp: normalizedSettings.udp } : {}),
+    ...('prefer-h3' in normalizedSettings && normalizedSettings['prefer-h3'] !== undefined ? { 'prefer-h3': normalizedSettings['prefer-h3'] } : {}),
+    ...(normalizedSettings.profile ? { profile: normalizedSettings.profile } : {}),
     // TUN 虚拟网卡：仅当 enable=true 或用户明确配置时才输出，避免所有人被强制开启
-    ...(settings.tun?.enable ? { tun: settings.tun } : {}),
-    dns: settings.dns,
-    sniffer: settings.sniffer,
+    ...(normalizedSettings.tun?.enable ? { tun: normalizedSettings.tun } : {}),
+    dns: normalizedSettings.dns,
+    sniffer: normalizedSettings.sniffer,
     proxies,
     'proxy-groups': proxyGroups,
   }

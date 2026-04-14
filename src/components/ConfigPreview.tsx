@@ -162,6 +162,42 @@ function SettingsPanel() {
         <Row label="external-controller" hint="RESTful API 监听地址，Yacd / MetaCubeXD 等面板通过此地址管理 Mihomo。对外暴露时务必设置 secret。">
           <BlurInput value={gs['external-controller']} onChange={(v) => updateGlobalSettings({ 'external-controller': v })} className="w-full" />
         </Row>
+        <Row label="secret" hint="控制 API 的鉴权密钥。局域网或公网暴露 external-controller 时必须设置，空字符串表示不启用鉴权。">
+          <BlurInput value={gs.secret ?? ''} onChange={(v) => updateGlobalSettings({ secret: v })} className="w-full" />
+        </Row>
+        <Row label="cors origins" hint="允许访问外部控制 API 的来源。默认 * 方便本地 Web UI 面板直接接入。多个来源用逗号分隔。">
+          <BlurInput
+            value={joinArr(gs['external-controller-cors']?.['allow-origins'] ?? ['*'])}
+            onChange={(v) => updateGlobalSettings({
+              'external-controller-cors': {
+                ...gs['external-controller-cors'],
+                'allow-origins': parseArr(v).length > 0 ? parseArr(v) : ['*'],
+              },
+            })}
+            className="w-full"
+          />
+        </Row>
+        <Row label="allow-private-network" hint="允许浏览器发起 Private Network Access 预检，通过 Web UI 从局域网访问 Mihomo 控制 API。">
+          <Toggle
+            checked={gs['external-controller-cors']?.['allow-private-network'] ?? true}
+            onChange={(v) => updateGlobalSettings({
+              'external-controller-cors': {
+                ...gs['external-controller-cors'],
+                'allow-origins': gs['external-controller-cors']?.['allow-origins'] ?? ['*'],
+                'allow-private-network': v,
+              },
+            })}
+          />
+        </Row>
+        <Row label="external-ui" hint="Mihomo 存放 Web UI 静态文件的目录。下载完成后默认挂载到这个路径。">
+          <BlurInput value={gs['external-ui'] ?? './ui'} onChange={(v) => updateGlobalSettings({ 'external-ui': v })} className="w-full" />
+        </Row>
+        <Row label="external-ui-name" hint="默认启用的 Web UI 名称。这里预设为 zashboard。">
+          <BlurInput value={gs['external-ui-name'] ?? 'zashboard'} onChange={(v) => updateGlobalSettings({ 'external-ui-name': v })} className="w-full" />
+        </Row>
+        <Row label="external-ui-url" hint="首次启动时用于下载 Web UI 压缩包的地址。默认拉取 zashboard 最新 dist.zip。">
+          <BlurInput value={gs['external-ui-url'] ?? ''} onChange={(v) => updateGlobalSettings({ 'external-ui-url': v })} className="w-full" />
+        </Row>
         <Row label="tcp-concurrent" hint="同时向多个目标 IP 发起连接，取最快响应（类 Happy Eyeballs），减少因单路握手超时造成的等待。">
           <Toggle checked={gs['tcp-concurrent'] ?? false} onChange={(v) => updateGlobalSettings({ 'tcp-concurrent': v })} />
         </Row>

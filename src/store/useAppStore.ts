@@ -245,12 +245,74 @@ function createDefaultRules(): Rule[] {
   ]
 }
 
+function createDefaultGlobalSettings(): ClashGlobalSettings {
+  return JSON.parse(JSON.stringify(DEFAULT_GLOBAL_SETTINGS)) as ClashGlobalSettings
+}
+
+function mergeGlobalSettings(persisted?: Partial<ClashGlobalSettings>): ClashGlobalSettings {
+  const defaults = createDefaultGlobalSettings()
+  if (!persisted) return defaults
+
+  return {
+    ...defaults,
+    ...persisted,
+    'external-controller-cors': persisted['external-controller-cors']
+      ? {
+          ...defaults['external-controller-cors'],
+          ...persisted['external-controller-cors'],
+          'allow-origins': persisted['external-controller-cors']['allow-origins']
+            ?? defaults['external-controller-cors']?.['allow-origins']
+            ?? ['*'],
+        }
+      : defaults['external-controller-cors'],
+    'geox-url': persisted['geox-url']
+      ? { ...defaults['geox-url'], ...persisted['geox-url'] }
+      : defaults['geox-url'],
+    profile: persisted.profile
+      ? { ...defaults.profile, ...persisted.profile }
+      : defaults.profile,
+    tun: persisted.tun
+      ? { ...defaults.tun, ...persisted.tun }
+      : defaults.tun,
+    sniffer: persisted.sniffer
+      ? {
+          ...defaults.sniffer,
+          ...persisted.sniffer,
+          sniff: persisted.sniffer.sniff
+            ? {
+                ...defaults.sniffer!.sniff,
+                ...persisted.sniffer.sniff,
+              }
+            : defaults.sniffer!.sniff,
+        }
+      : defaults.sniffer,
+    dns: persisted.dns
+      ? {
+          ...defaults.dns,
+          ...persisted.dns,
+          'fallback-filter': persisted.dns['fallback-filter']
+            ? {
+                ...defaults.dns['fallback-filter'],
+                ...persisted.dns['fallback-filter'],
+              }
+            : defaults.dns['fallback-filter'],
+          'nameserver-policy': persisted.dns['nameserver-policy']
+            ? {
+                ...defaults.dns['nameserver-policy'],
+                ...persisted.dns['nameserver-policy'],
+              }
+            : defaults.dns['nameserver-policy'],
+        }
+      : defaults.dns,
+  }
+}
+
 export const useAppStore = create<AppState>()(
   persist(
     immer((set, get) => ({
     sources: [],
     manualProxies: [],
-    globalSettings: JSON.parse(JSON.stringify(DEFAULT_GLOBAL_SETTINGS)) as ClashGlobalSettings,
+    globalSettings: createDefaultGlobalSettings(),
 
     proxyGroups: createDefaultProxyGroups(),
 
@@ -691,6 +753,11 @@ export const useAppStore = create<AppState>()(
         if (config.mode) state.globalSettings.mode = config.mode
         if (config['log-level']) state.globalSettings['log-level'] = config['log-level']
         if (config['external-controller']) state.globalSettings['external-controller'] = config['external-controller']
+        if (config['external-controller-cors']) state.globalSettings['external-controller-cors'] = config['external-controller-cors']
+        if (config.secret !== undefined) state.globalSettings.secret = config.secret
+        if (config['external-ui'] !== undefined) state.globalSettings['external-ui'] = config['external-ui']
+        if (config['external-ui-name'] !== undefined) state.globalSettings['external-ui-name'] = config['external-ui-name']
+        if (config['external-ui-url'] !== undefined) state.globalSettings['external-ui-url'] = config['external-ui-url']
         if (config['tcp-concurrent'] !== undefined) state.globalSettings['tcp-concurrent'] = config['tcp-concurrent']
         if (config['unified-delay'] !== undefined) state.globalSettings['unified-delay'] = config['unified-delay']
         if (config['udp-timeout'] !== undefined) state.globalSettings['udp-timeout'] = config['udp-timeout']
@@ -727,6 +794,16 @@ export const useAppStore = create<AppState>()(
   {
     name: 'clash-node-editor-v1',
     storage: createJSONStorage(() => expiringLocalStorage),
+    merge: (persistedState, currentState) => {
+      const persisted = persistedState as Partial<AppState> | undefined
+      if (!persisted) return currentState
+
+      return {
+        ...currentState,
+        ...persisted,
+        globalSettings: mergeGlobalSettings(persisted.globalSettings),
+      }
+    },
     // Only persist metadata, not the fetched proxy data (can be large).
     // Sources are restored with status='idle' so users know to refresh.
     partialize: (state) => ({
