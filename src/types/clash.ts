@@ -156,6 +156,7 @@ export interface TunConfig {
   'auto-route'?: boolean
   'auto-redirect'?: boolean
   'auto-detect-interface'?: boolean
+  'inet6-address'?: string[]
 }
 
 export interface GeoxUrl {
@@ -252,6 +253,8 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     'auto-route': true,
     // 自动识别默认出口网卡并绑定，避免路由回环
     'auto-detect-interface': true,
+    // IPv6 TUN 地址段；开启后 TUN 网卡同时监听 IPv6，避免 IPv6 流量绕过
+    'inet6-address': ['fc00::a/112'],
   },
   profile: {
     'store-selected': true,

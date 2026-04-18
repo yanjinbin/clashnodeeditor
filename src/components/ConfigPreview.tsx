@@ -308,6 +308,19 @@ function SettingsPanel() {
             onChange={(v) => updateGlobalSettings({ tun: { ...gs.tun!, 'auto-detect-interface': v } })}
           />
         </Row>
+        <Row label="inet6-address" hint="TUN 网卡的 IPv6 地址段（如 fc00::a/112）。开启后 TUN 同时监听 IPv6，防止 IPv6 流量绕过代理。留空则仅 IPv4。">
+          <input
+            type="text"
+            value={(gs.tun?.['inet6-address'] ?? []).join(', ')}
+            onChange={(e) => {
+              const val = e.target.value.trim()
+              const addrs = val ? val.split(',').map((s) => s.trim()).filter(Boolean) : []
+              updateGlobalSettings({ tun: { ...gs.tun!, 'inet6-address': addrs } })
+            }}
+            placeholder="fc00::a/112"
+            className="w-48 rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800"
+          />
+        </Row>
       </Section>
 
       <Section title="GeoData" defaultOpen={false}>
