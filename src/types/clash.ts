@@ -124,9 +124,11 @@ export interface DnsFallbackFilter {
 export interface DnsConfig {
   enable: boolean
   ipv6: boolean
+  listen?: string
   'default-nameserver'?: string[]
   'enhanced-mode': string
   'fake-ip-range': string
+  'fake-ip-filter-mode'?: string
   'fake-ip-filter'?: string[]
   'use-hosts'?: boolean
   'respect-rules': boolean
@@ -172,6 +174,7 @@ export interface ExternalControllerCorsConfig {
 
 export interface ClashGlobalSettings {
   'mixed-port': number
+  'redir-port'?: number
   'allow-lan': boolean
   'bind-address': string
   mode: string
@@ -204,8 +207,10 @@ export interface ClashGlobalSettings {
   'prefer-h3'?: boolean
   /** TUN 虚拟网卡，接管全流量 */
   tun?: TunConfig
+  hosts?: Record<string, string>
   sniffer?: SnifferConfig
   dns: DnsConfig
+  'routing-mark'?: number
 }
 
 export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
@@ -261,6 +266,7 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     // IPv6 TUN 地址段；开启后 TUN 网卡同时监听 IPv6，避免 IPv6 流量绕过
     'inet6-address': [],
   },
+  hosts: {},
   profile: {
     'store-selected': true,
     'store-fake-ip': true,
@@ -304,8 +310,10 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   dns: {
     enable: true,
     ipv6: false,
+    listen: ':53',
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
+    'fake-ip-filter-mode': 'blacklist',
     // 这些域名绕过 fake-ip，返回真实 IP（时间同步、NTP、IoT 设备、游戏主机等）
     'fake-ip-filter': [
       // 内网 / 本地
@@ -377,10 +385,135 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
       ],
     },
   },
+  'routing-mark': 6666,
+}
+
+export const MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS: ClashGlobalSettings = {
+  ...DEFAULT_GLOBAL_SETTINGS,
+  'mixed-port': 7890,
+  'redir-port': 23457,
+  'allow-lan': true,
+  mode: 'rule',
+  'log-level': 'error',
+  'external-controller': '192.168.50.1:9990',
+  'external-ui': 'dashboard',
+  'external-ui-name': 'zashboard',
+  'external-ui-url': 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip',
+  secret: 'clash',
+  'unified-delay': true,
+  ipv6: false,
+  'find-process-mode': 'off',
+  profile: {
+    'store-selected': false,
+    'store-fake-ip': false,
+  },
+  'geodata-mode': true,
+  'geo-auto-update': true,
+  'geo-update-interval': 72,
+  'geox-url': {
+    geoip: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat',
+    geosite: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat',
+    mmdb: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb',
+  },
+  hosts: {
+    'services.googleapis.cn': '74.125.193.94',
+    'time.android.com': '203.107.6.88',
+  },
+  sniffer: {
+    enable: true,
+    'parse-pure-ip': true,
+    'force-dns-mapping': true,
+    'override-destination': true,
+    sniff: {
+      TLS: { ports: [443, 8443] },
+      HTTP: { ports: [80, 8080] },
+    },
+    'force-domain': ['+.v2ex.com'],
+    'skip-domain': [
+      'Mijia Cloud',
+      '+.push.apple.com',
+      '+.apple.com',
+      '+.mi.com',
+      '+.xiaomi.com',
+      '+.local',
+      'msftconnecttest.com',
+      'time.*.com',
+      '+.ntp.org',
+      '+.weixin.qq.com',
+      '+.wx.qq.com',
+      '+.wechat.com',
+      '+.mmobject.com',
+      '+.mmfile.com',
+      '+.qpic.cn',
+      '+.qlogo.cn',
+      '+.qq.com',
+      '+.tencent.com',
+      '+.tencent.cn',
+    ],
+  },
+  dns: {
+    ...DEFAULT_GLOBAL_SETTINGS.dns,
+    enable: true,
+    ipv6: false,
+    listen: ':23453',
+    'enhanced-mode': 'fake-ip',
+    'fake-ip-range': '198.18.0.1/16',
+    'fake-ip-filter-mode': 'whitelist',
+    'fake-ip-filter': [
+      '*.lan',
+      '*.local',
+      '*.localdomain',
+      '*.internal',
+      'time.*.com',
+      'time.*.gov',
+      'ntp.*.com',
+      '*.ntp.org',
+      'pool.ntp.org',
+      '+.stun.*.*',
+      '+.stun.*.*.*',
+      'stun.*.*',
+      '+.push.apple.com',
+      '+.apple.com',
+      '+.icloud.com',
+      '+.mi.com',
+      '+.xiaomi.com',
+      '+.mijia.com',
+      '+.io.mi.com',
+      'home.miot-spec.com',
+      '+.tuya.com',
+      '+.aqara.com',
+      '+.weixin.qq.com',
+      '+.wx.qq.com',
+      '+.wechat.com',
+      '+.qq.com',
+      '+.tencent.com',
+      '+.tencent.cn',
+      'msftconnecttest.com',
+      'connectivitycheck.gstatic.com',
+    ],
+    'default-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
+    nameserver: ['119.29.29.29', '223.5.5.5', '114.114.114.114'],
+    'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29'],
+    'use-hosts': true,
+    'respect-rules': true,
+    fallback: [
+      'https://1.1.1.1/dns-query#♻️ 自动选择',
+      'https://8.8.8.8/dns-query#♻️ 自动选择',
+    ],
+    'fallback-filter': {
+      geoip: true,
+      'geoip-code': 'CN',
+      geosite: ['gfw'],
+      ipcidr: [],
+      domain: [],
+    },
+  },
+  'routing-mark': 255,
 }
 
 export interface ClashConfig {
   'mixed-port'?: number
+  'redir-port'?: number
   'allow-lan'?: boolean
   'bind-address'?: string
   mode?: string
@@ -408,8 +541,10 @@ export interface ClashConfig {
   profile?: { 'store-selected'?: boolean; 'store-fake-ip'?: boolean }
   'prefer-h3'?: boolean
   tun?: TunConfig
+  hosts?: Record<string, string>
   sniffer?: SnifferConfig
   dns?: DnsConfig
+  'routing-mark'?: number
   proxies?: Proxy[]
   'proxy-groups'?: Array<{
     name: string

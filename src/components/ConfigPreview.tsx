@@ -4,6 +4,7 @@ import yaml from 'js-yaml'
 import { useAppStore } from '../store/useAppStore'
 import { generateClashConfig } from '../utils/parseYaml'
 import ValidationPanel from './ValidationPanel'
+import { MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS } from '../types/clash'
 import type { ClashConfig, DnsConfig, DnsFallbackFilter } from '../types/clash'
 
 // ── Tiny helpers ──────────────────────────────────────────────────────────────
@@ -13,6 +14,28 @@ function parseArr(s: string): string[] {
 }
 function joinArr(a: string[]): string {
   return a.join(', ')
+}
+
+function parseHostEntries(s: string): Record<string, string> {
+  return s
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .reduce<Record<string, string>>((acc, line) => {
+      const normalized = line.replace(/\s+/g, ' ')
+      const [host, ip] = normalized.includes('=')
+        ? normalized.split('=').map((part) => part.trim())
+        : normalized.split(' ').map((part) => part.trim())
+      if (host && ip) acc[host] = ip
+      return acc
+    }, {})
+}
+
+function stringifyHostEntries(hosts?: Record<string, string>): string {
+  if (!hosts) return ''
+  return Object.entries(hosts)
+    .map(([host, ip]) => `${host} ${ip}`)
+    .join('\n')
 }
 
 /** Text input that syncs to store on blur to avoid per-keystroke re-renders */
@@ -117,6 +140,15 @@ function SettingsPanel() {
     updateDnsFallbackFilter({ [k]: v } as Partial<DnsFallbackFilter>)
 
   const sel = 'text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none'
+  const applyMerlinPreset = () => {
+    const merlin = JSON.parse(JSON.stringify(MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS)) as typeof MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS
+    const { dns: merlinDns, ...merlinTopLevel } = merlin
+    updateGlobalSettings(merlinTopLevel)
+    updateDnsSettings(merlinDns)
+    if (merlinDns['fallback-filter']) {
+      updateDnsFallbackFilter(merlinDns['fallback-filter'])
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -133,6 +165,47 @@ function SettingsPanel() {
           wiki.metacubex.one/config/general
         </a>
       </div>
+
+      <Section title="Merlin Clash 路由器" defaultOpen={false}>
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] leading-relaxed text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300">
+          一键套用 Merlin Clash 路由器插件常见全局参数，包括 `redir-port`、`routing-mark`、`dns.listen`、`dashboard` 面板地址和兼容的 fake-ip 策略；应用后仍可继续逐项微调。
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={applyMerlinPreset}
+            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
+          >
+            应用 Merlin 模板
+          </button>
+          <span className="text-[11px] text-gray-500 dark:text-gray-400">
+            按用户提供的 Merlin Clash 插件参数预填
+          </span>
+        </div>
+        <Row label="redir-port" hint="Merlin Clash 路由器插件常用的 redir 监听端口。透明代理模式下通常需要显式导出。">
+          <BlurInput
+            type="number"
+            value={gs['redir-port'] ?? 23457}
+            onChange={(v) => updateGlobalSettings({ 'redir-port': parseInt(v) || 23457 })}
+            className="w-20"
+          />
+        </Row>
+        <Row label="routing-mark" hint="Linux fwmark。Merlin 插件做策略路由时通常依赖该值与 ip rule / iptables 配套。">
+          <BlurInput
+            type="number"
+            value={gs['routing-mark'] ?? 255}
+            onChange={(v) => updateGlobalSettings({ 'routing-mark': parseInt(v) || 255 })}
+            className="w-20"
+          />
+        </Row>
+        <Row label="hosts" hint="导出到 YAML 的静态 hosts 映射。每行一个，格式为 domain ip，例如 services.googleapis.cn 74.125.193.94。">
+          <textarea
+            value={stringifyHostEntries(gs.hosts)}
+            onChange={(e) => updateGlobalSettings({ hosts: parseHostEntries(e.target.value) })}
+            placeholder={'services.googleapis.cn 74.125.193.94\ntime.android.com 203.107.6.88'}
+            className="min-h-[68px] w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-xs font-mono dark:border-gray-600 dark:bg-gray-800"
+          />
+        </Row>
+      </Section>
 
       <Section title="基本设置">
         <Row label="mixed-port" hint="HTTP/SOCKS5 混合代理监听端口，应用设置系统代理时填此端口。">
@@ -203,6 +276,9 @@ function SettingsPanel() {
         </Row>
         <Row label="unified-delay" hint="延迟测试时显示 本地→中转→落地 的端到端总延迟，而非只测本地到代理的一段。">
           <Toggle checked={gs['unified-delay'] ?? false} onChange={(v) => updateGlobalSettings({ 'unified-delay': v })} />
+        </Row>
+        <Row label="ipv6" hint="全局 IPv6 开关。关闭后不处理 IPv6 流量，适合避免 IPv6 直连绕过代理。">
+          <Toggle checked={gs.ipv6 ?? false} onChange={(v) => updateGlobalSettings({ ipv6: v })} />
         </Row>
         <Row label="udp" hint="全局 UDP 开关。关闭后可消除 QUIC 流量绕过代理导致的 IP 漂移（TCP/UDP 同时可见时 Google 等平台会触发风控）。">
           <Toggle checked={gs.udp ?? false} onChange={(v) => updateGlobalSettings({ udp: v })} />
@@ -338,6 +414,42 @@ function SettingsPanel() {
             className="w-20"
           />
         </Row>
+        <Row label="geoip url" hint="GeoIP 数据文件下载地址。Merlin / Mihomo 使用 dat 格式时会按此地址更新。">
+          <BlurInput
+            value={gs['geox-url']?.geoip ?? ''}
+            onChange={(v) => updateGlobalSettings({ 'geox-url': { ...gs['geox-url'], geoip: v } })}
+            className="w-full"
+          />
+        </Row>
+        <Row label="geosite url" hint="Geosite 数据文件下载地址。用于 geosite 规则匹配。">
+          <BlurInput
+            value={gs['geox-url']?.geosite ?? ''}
+            onChange={(v) => updateGlobalSettings({ 'geox-url': { ...gs['geox-url'], geosite: v } })}
+            className="w-full"
+          />
+        </Row>
+        <Row label="mmdb url" hint="国家库 mmdb 下载地址。关闭 geodata-mode 或特定特性仍可能依赖此文件。">
+          <BlurInput
+            value={gs['geox-url']?.mmdb ?? ''}
+            onChange={(v) => updateGlobalSettings({ 'geox-url': { ...gs['geox-url'], mmdb: v } })}
+            className="w-full"
+          />
+        </Row>
+      </Section>
+
+      <Section title="Profile（缓存）" defaultOpen={false}>
+        <Row label="store-selected" hint="是否缓存代理组上次选择结果。路由器固件场景通常建议关闭，避免与插件侧状态管理冲突。">
+          <Toggle
+            checked={gs.profile?.['store-selected'] ?? false}
+            onChange={(v) => updateGlobalSettings({ profile: { ...gs.profile, 'store-selected': v } })}
+          />
+        </Row>
+        <Row label="store-fake-ip" hint="是否缓存 fake-ip 映射。Merlin 路由器插件场景通常关闭，减少重启后的状态残留。">
+          <Toggle
+            checked={gs.profile?.['store-fake-ip'] ?? false}
+            onChange={(v) => updateGlobalSettings({ profile: { ...gs.profile, 'store-fake-ip': v } })}
+          />
+        </Row>
       </Section>
 
       <Section title="DNS 设置">
@@ -360,9 +472,21 @@ function SettingsPanel() {
         <Row label="ipv6" hint="是否在 DNS 响应中包含 AAAA 记录（IPv6 地址）。国内大多数场景建议关闭，避免 IPv6 直连绕过代理。">
           <Toggle checked={dns.ipv6} onChange={(v) => updDns('ipv6', v)} />
         </Row>
+        <Row label="listen" hint="Mihomo 内置 DNS 监听地址。Merlin Clash 路由器插件通常使用独立端口，例如 :23453。">
+          <BlurInput value={dns.listen ?? ':53'} onChange={(v) => updDns('listen', v)} className="w-full" />
+        </Row>
         <Row label="enhanced-mode" hint="fake-ip：返回虚假 IP，连接时再映射为真实地址，速度快；redir-host：返回真实 IP 再路由，兼容性更好但稍慢。">
           <select value={dns['enhanced-mode']} onChange={(e) => updDns('enhanced-mode', e.target.value)} className={sel}>
             {['fake-ip', 'redir-host'].map((m) => <option key={m}>{m}</option>)}
+          </select>
+        </Row>
+        <Row label="fake-ip-filter-mode" hint="Merlin 常用 whitelist：仅匹配列表中的域名绕过 fake-ip；blacklist 则表示列表命中时不做 fake-ip。">
+          <select
+            value={dns['fake-ip-filter-mode'] ?? 'blacklist'}
+            onChange={(e) => updDns('fake-ip-filter-mode', e.target.value)}
+            className={sel}
+          >
+            {['blacklist', 'whitelist'].map((mode) => <option key={mode}>{mode}</option>)}
           </select>
         </Row>
         <Row label="fake-ip-range" hint="fake-ip 模式分配虚假 IP 的地址段（RFC 5737 保留段）。不应与真实网络地址冲突。">

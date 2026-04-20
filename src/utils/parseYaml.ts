@@ -184,6 +184,7 @@ export function generateClashConfig(
 
   const config: ClashConfig = {
     'mixed-port': normalizedSettings['mixed-port'],
+    ...('redir-port' in normalizedSettings && normalizedSettings['redir-port'] !== undefined ? { 'redir-port': normalizedSettings['redir-port'] } : {}),
     'allow-lan': normalizedSettings['allow-lan'],
     'bind-address': normalizedSettings['bind-address'],
     mode: normalizedSettings.mode,
@@ -210,8 +211,10 @@ export function generateClashConfig(
     ...(normalizedSettings.profile ? { profile: normalizedSettings.profile } : {}),
     // TUN 虚拟网卡：仅当 enable=true 或用户明确配置时才输出，避免所有人被强制开启
     ...(normalizedSettings.tun?.enable ? { tun: normalizedSettings.tun } : {}),
+    ...(normalizedSettings.hosts && Object.keys(normalizedSettings.hosts).length > 0 ? { hosts: normalizedSettings.hosts } : {}),
     dns: normalizedSettings.dns,
     sniffer: normalizedSettings.sniffer,
+    ...('routing-mark' in normalizedSettings && normalizedSettings['routing-mark'] !== undefined ? { 'routing-mark': normalizedSettings['routing-mark'] } : {}),
     proxies,
     'proxy-groups': proxyGroups,
   }

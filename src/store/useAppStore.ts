@@ -748,6 +748,7 @@ export const useAppStore = create<AppState>()(
 
         // 5. Global settings — only override fields present in the config
         if (config['mixed-port'] !== undefined) state.globalSettings['mixed-port'] = config['mixed-port']
+        if (config['redir-port'] !== undefined) state.globalSettings['redir-port'] = config['redir-port']
         if (config['allow-lan'] !== undefined) state.globalSettings['allow-lan'] = config['allow-lan']
         if (config['bind-address']) state.globalSettings['bind-address'] = config['bind-address']
         if (config.mode) state.globalSettings.mode = config.mode
@@ -775,8 +776,10 @@ export const useAppStore = create<AppState>()(
         if (config.profile) state.globalSettings.profile = config.profile
         if (config['prefer-h3'] !== undefined) state.globalSettings['prefer-h3'] = config['prefer-h3']
         if (config.tun) state.globalSettings.tun = config.tun
+        if (config.hosts) state.globalSettings.hosts = config.hosts
         if (config.sniffer) state.globalSettings.sniffer = config.sniffer
         if (config.dns) Object.assign(state.globalSettings.dns, config.dns)
+        if (config['routing-mark'] !== undefined) state.globalSettings['routing-mark'] = config['routing-mark']
       })
     },
 
