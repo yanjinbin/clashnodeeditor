@@ -222,7 +222,7 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   'external-ui': './ui',
   'external-ui-name': 'zashboard',
   'external-ui-url': 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip',
-  'find-process-mode': 'off',
+  'find-process-mode': 'strict',
   'geodata-mode': true,
   // 开启后 Mihomo 启动时自动拉取最新 GeoData 文件
   'geo-auto-update': true,
@@ -238,6 +238,8 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   'tcp-concurrent': true,
   // 延迟测试显示端到端总延迟（本地→中转→落地），而非只测本地到代理的一跳
   'unified-delay': true,
+  udp: false,
+  'prefer-h3': false,
   // UDP 会话静默超时（秒），超时后释放 NAT 映射；300 适合游戏/视频场景
   'udp-timeout': 300,
   // TCP/UDP 保活探测间隔（秒），防止中间 NAT/路由器静默关闭长连接
@@ -248,13 +250,13 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     // mixed 同时处理 TCP 和 UDP，避免 UDP 流量漏出 TUN
     stack: 'mixed',
     // 劫持全部 DNS 查询（含 UDP/TCP 53），防止 DNS 泄露真实 IP
-    'dns-hijack': ['any:53'],
+    'dns-hijack': ['any:53', 'tcp://any:53'],
     // 向系统路由表注入规则，将流量引导进 TUN 网卡
     'auto-route': true,
     // 自动识别默认出口网卡并绑定，避免路由回环
     'auto-detect-interface': true,
     // IPv6 TUN 地址段；开启后 TUN 网卡同时监听 IPv6，避免 IPv6 流量绕过
-    'inet6-address': ['fc00::a/112'],
+    'inet6-address': [],
   },
   profile: {
     'store-selected': true,
@@ -271,7 +273,6 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     sniff: {
       TLS:  { ports: [443, 8443] },
       HTTP: { ports: [80, 8080] },
-      QUIC: { ports: [443, 8443] },
     },
     // 强制对这些域名嗅探，即使它们已有 DNS 映射
     'force-domain': ['+.v2ex.com'],
@@ -285,6 +286,16 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
       'msftconnecttest.com',
       'time.*.com',
       '+.ntp.org',
+      '+.weixin.qq.com',
+      '+.wx.qq.com',
+      '+.wechat.com',
+      '+.mmobject.com',
+      '+.mmfile.com',
+      '+.qpic.cn',
+      '+.qlogo.cn',
+      '+.qq.com',
+      '+.tencent.com',
+      '+.tencent.cn',
     ],
   },
   dns: {
@@ -346,9 +357,7 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     ],
     // 解析时优先查询 /etc/hosts，适合内网自定义域名场景
     'use-hosts': true,
-    // false：DNS 查询总走 nameserver，不受分流规则约束，避免循环依赖
-    // 注意：respect-rules:true 时若规则依赖 DNS、DNS 又依赖规则，会造成死锁
-    'respect-rules': false,
+    'respect-rules': true,
     // 仅用于引导阶段：解析 nameserver 中 DoH/DoT 服务器的域名（如 dns.google）
     // 必须填国内可直连的纯 IP DNS，否则 DoH 地址无法解析导致启动失败
     'default-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
@@ -358,19 +367,10 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     // 默认 DNS：处理未被 nameserver-policy 命中的所有域名查询
     nameserver: ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
     'nameserver-policy': {
-      // 国内 + 私有域名走国内 DNS，就近解析、延迟低
-      'geosite:cn,private':  ['223.5.5.5', '119.29.29.29'],
-      // Apple 服务走国内 DNS，避免解析到香港/美国节点影响 iCloud 同步速度
-      '+.apple.com':  ['223.5.5.5', '119.29.29.29'],
-      '+.icloud.com': ['223.5.5.5', '119.29.29.29'],
-      // 小米/米家设备走国内 DNS，确保 IoT 设备正常接入米家云
-      '+.mi.com':     ['223.5.5.5', '119.29.29.29'],
-      '+.xiaomi.com': ['223.5.5.5', '119.29.29.29'],
-      '+.mijia.com':  ['223.5.5.5', '119.29.29.29'],
-      // 非国内域名走境外加密 DoH，防止运营商 DNS 污染，确保解析到真实 IP
+      'geosite:cn,private': ['223.5.5.5', '119.29.29.29'],
       'geosite:geolocation-!cn': [
-        'https://cloudflare-dns.com/dns-query',
-        'https://dns.google/dns-query',
+        'https://1.1.1.1/dns-query#♻️ 自动选择',
+        'https://8.8.8.8/dns-query#♻️ 自动选择',
       ],
     },
   },
