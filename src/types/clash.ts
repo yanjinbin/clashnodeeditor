@@ -187,6 +187,8 @@ export interface ClashGlobalSettings {
   'udp-timeout'?: number
   /** TCP/UDP 保活探测间隔（秒），Mihomo 字段名为 keep-alive-interval */
   'keep-alive-interval'?: number
+  /** 全局 IPv6 开关，关闭后 Mihomo 不处理 IPv6 流量 */
+  ipv6?: boolean
   /** 全局禁用 UDP，链式代理 / Google / Gemini 场景推荐设 false */
   udp?: boolean
   'find-process-mode'?: string
@@ -238,6 +240,7 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   'tcp-concurrent': true,
   // 延迟测试显示端到端总延迟（本地→中转→落地），而非只测本地到代理的一跳
   'unified-delay': true,
+  ipv6: false,
   udp: false,
   'prefer-h3': false,
   // UDP 会话静默超时（秒），超时后释放 NAT 映射；300 适合游戏/视频场景
@@ -394,6 +397,7 @@ export interface ClashConfig {
   'keep-alive-interval'?: number
   /** backward compat: some configs still use the old field name */
   'tcp-keep-alive-interval'?: number
+  ipv6?: boolean
   udp?: boolean
   'find-process-mode'?: string
   'geodata-mode'?: boolean

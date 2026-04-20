@@ -204,6 +204,7 @@ export function generateClashConfig(
     'unified-delay': normalizedSettings['unified-delay'],
     ...(normalizedSettings['udp-timeout'] !== undefined ? { 'udp-timeout': normalizedSettings['udp-timeout'] } : {}),
     ...(normalizedSettings['keep-alive-interval'] !== undefined ? { 'keep-alive-interval': normalizedSettings['keep-alive-interval'] } : {}),
+    ...(normalizedSettings.ipv6 !== undefined ? { ipv6: normalizedSettings.ipv6 } : {}),
     ...(normalizedSettings.udp !== undefined ? { udp: normalizedSettings.udp } : {}),
     ...('prefer-h3' in normalizedSettings && normalizedSettings['prefer-h3'] !== undefined ? { 'prefer-h3': normalizedSettings['prefer-h3'] } : {}),
     ...(normalizedSettings.profile ? { profile: normalizedSettings.profile } : {}),

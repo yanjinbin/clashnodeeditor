@@ -764,6 +764,7 @@ export const useAppStore = create<AppState>()(
         // handle both new field name and legacy tcp-keep-alive-interval
         if (config['keep-alive-interval'] !== undefined) state.globalSettings['keep-alive-interval'] = config['keep-alive-interval']
         else if (config['tcp-keep-alive-interval'] !== undefined) state.globalSettings['keep-alive-interval'] = config['tcp-keep-alive-interval']
+        if (config.ipv6 !== undefined) state.globalSettings.ipv6 = config.ipv6
         if (config.udp !== undefined) state.globalSettings.udp = config.udp
         if (config['find-process-mode']) state.globalSettings['find-process-mode'] = config['find-process-mode']
         if (config['geodata-mode'] !== undefined) state.globalSettings['geodata-mode'] = config['geodata-mode']
