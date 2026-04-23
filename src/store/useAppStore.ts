@@ -229,7 +229,6 @@ function createDefaultRules(): Rule[] {
     { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ipapi.co',         target: '🗽 美国出口' },
     { id: generateId(), type: 'DOMAIN',        payload: 'www.ugtop.com',    target: '🗼 日本出口' },
     // ── 5) 视频/社交──────────────────────────────────────────────────────────────
-    { id: generateId(), type: 'RULE-SET',      payload: 'twitter-video',    target: '📺 油管' },
     { id: generateId(), type: 'RULE-SET',      payload: 'twitter',          target: '📡 社交媒体' },
     { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',    target: '📺 油管' },
     { id: generateId(), type: 'RULE-SET',      payload: 'youtube',          target: '📺 油管' },

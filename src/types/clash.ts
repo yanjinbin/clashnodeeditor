@@ -643,18 +643,6 @@ export const BLACKMATRIX7_RULE_PROVIDERS: RuleProvider[] = [
   bm7('docker',       'Docker/Docker.yaml',             '♻️ 自动选择', true),
   bm7('GoogleFCM',    'GoogleFCM/GoogleFCM.yaml',       'DIRECT',      false),
   bm7('cn',           'China/China.yaml',               'DIRECT',      false),
-  {
-    id: 'twitter-video',
-    name: 'twitter-video',
-    type: 'http',
-    behavior: 'classical',
-    url: 'https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@master/twitter-video.yaml',
-    path: './ruleset/twitter-video.yaml',
-    interval: 2592000,
-    target: '📺 油管',
-    enabled: true,
-    isPreset: true,
-  },
 ]
 
 export const BUILT_IN_PROXIES: string[] = []
