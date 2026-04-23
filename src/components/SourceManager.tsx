@@ -15,6 +15,17 @@ import EmojiPicker from './EmojiPicker'
 import { PRESET_USER_AGENTS, DEFAULT_USER_AGENT } from '../types/clash'
 import type { SourceConfig, SubscriptionInfo } from '../types/clash'
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const IP_VERSION_OPTS = [
+  { value: '',            label: '默认' },
+  { value: 'ipv4',        label: 'ipv4' },
+  { value: 'ipv6',        label: 'ipv6' },
+  { value: 'dual',        label: 'dual' },
+  { value: 'ipv4-prefer', label: 'ipv4-prefer' },
+  { value: 'ipv6-prefer', label: 'ipv6-prefer' },
+]
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number): string {
@@ -589,6 +600,7 @@ function SourceCard({
   const [showGroups, setShowGroups] = useState(true)
   const [prefix, setPrefix] = useState('')
   const [filter, setFilter] = useState('')
+  const [batchIpVersion, setBatchIpVersion] = useState('ipv4')
 
   const importedGroups = source.importedGroups ?? []
   const importedNames = new Set(proxyGroups.map((g) => g.name))
@@ -722,6 +734,26 @@ function SourceCard({
               一键加源名前缀
             </button>
           )}
+          {source.proxies.length > 0 && (
+            <div className="flex items-center gap-1 shrink-0">
+              <select
+                value={batchIpVersion}
+                onChange={(e) => setBatchIpVersion(e.target.value)}
+                className="text-xs px-1.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              >
+                {IP_VERSION_OPTS.filter((o) => o.value !== '').map((o) => (
+                  <option key={o.value} value={o.value}>{o.value}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => source.proxies.forEach((_, i) => updateProxy(source.id, i, { 'ip-version': batchIpVersion }))}
+                title="批量设置该订阅源所有节点的 ip-version"
+                className="text-xs px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 font-medium transition-all whitespace-nowrap"
+              >
+                批量设 ip-version
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2 ml-auto shrink-0">
             {source.proxies.length > 0 && (
               <button onClick={() => setShowProxies((v) => !v)}
@@ -756,7 +788,9 @@ function SourceCard({
               return (
                 <ProxyRow key={realIdx} name={proxy.name} type={String(proxy.type ?? '')}
                   server={String(proxy.server ?? '')}
-                  onChange={(n) => updateProxy(source.id, realIdx, { name: n })} />
+                  ipVersion={String(proxy['ip-version'] ?? '')}
+                  onChange={(n) => updateProxy(source.id, realIdx, { name: n })}
+                  onChangeIpVersion={(v) => updateProxy(source.id, realIdx, { 'ip-version': v || undefined })} />
               )
             })}
           </div>
@@ -824,11 +858,13 @@ function SourceCard({
 }
 
 // ── Proxy Row ─────────────────────────────────────────────────────────────────
-function ProxyRow({ name, type, server, onChange }: {
+function ProxyRow({ name, type, server, ipVersion, onChange, onChangeIpVersion }: {
   name: string
   type: string
   server?: string
+  ipVersion?: string
   onChange: (n: string) => void
+  onChangeIpVersion?: (v: string) => void
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(name)
@@ -884,6 +920,24 @@ function ProxyRow({ name, type, server, onChange }: {
           <span className="flex-1 min-w-0 text-xs text-gray-700 dark:text-gray-300 truncate">{name}</span>
           {ipState === 'done' && resolvedIp && !IP_RE.test(server ?? '') && (
             <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 shrink-0">{resolvedIp}</span>
+          )}
+          {/* ip-version badge / inline selector */}
+          {onChangeIpVersion && (
+            <select
+              value={ipVersion ?? ''}
+              onChange={(e) => onChangeIpVersion(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              title="ip-version"
+              className={`shrink-0 text-[10px] rounded px-1 py-0.5 border focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer transition-colors
+                ${ipVersion
+                  ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                  : 'opacity-0 group-hover:opacity-100 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+                }`}
+            >
+              {IP_VERSION_OPTS.map((o) => (
+                <option key={o.value} value={o.value}>{o.value || '默认'}</option>
+              ))}
+            </select>
           )}
           {server && (
             <button

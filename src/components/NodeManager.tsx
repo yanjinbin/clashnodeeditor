@@ -56,6 +56,15 @@ const TYPE_COLORS: Record<string, string> = {
 
 // ── Form state ────────────────────────────────────────────────────────────────
 
+const IP_VERSION_OPTS = [
+  { value: '',            label: '默认（dual）' },
+  { value: 'ipv4',        label: 'ipv4（仅 IPv4）' },
+  { value: 'ipv6',        label: 'ipv6（仅 IPv6）' },
+  { value: 'dual',        label: 'dual（双栈）' },
+  { value: 'ipv4-prefer', label: 'ipv4-prefer（优先 IPv4）' },
+  { value: 'ipv6-prefer', label: 'ipv6-prefer（优先 IPv6）' },
+]
+
 interface FormState {
   name: string
   type: ProxyType
@@ -69,6 +78,7 @@ interface FormState {
   network: string
   tls: boolean
   udp: boolean
+  ipVersion: string
   dialerProxy: string
   sni: string
   skipCertVerify: boolean
@@ -99,7 +109,7 @@ const EMPTY_FORM: FormState = {
   name: '', type: 'socks5', server: '', port: '',
   username: '', password: '', uuid: '', alterId: '0',
   cipher: 'aes-128-gcm', network: 'tcp',
-  tls: false, udp: false,
+  tls: false, udp: false, ipVersion: '',
   dialerProxy: '', sni: '', skipCertVerify: false,
   flow: '', obfs: '', obfsPassword: '', up: '', down: '',
   ssrProtocol: 'auth_sha1_v4', ssrProtocolParam: '', ssrObfs: 'plain', ssrObfsParam: '',
@@ -140,6 +150,7 @@ function proxyToForm(proxy: Proxy): FormState {
     network:        String(proxy.network ?? 'tcp'),
     tls:            Boolean(proxy.tls),
     udp:            Boolean(proxy.udp),
+    ipVersion:      String(proxy['ip-version'] ?? ''),
     dialerProxy:    String(proxy['dialer-proxy'] ?? ''),
     sni:            String(proxy.sni ?? proxy.servername ?? ''),
     skipCertVerify: Boolean(proxy['skip-cert-verify']),
@@ -171,6 +182,7 @@ function formToProxy(f: FormState): Proxy {
     server: f.server.trim(),
     port:   parseInt(f.port) || 0,
   }
+  if (f.ipVersion.trim()) proxy['ip-version'] = f.ipVersion.trim()
   if (f.dialerProxy.trim()) proxy['dialer-proxy'] = f.dialerProxy.trim()
 
   switch (f.type) {
@@ -854,6 +866,14 @@ function NodeFormModal({
             </div>
           )}
 
+          {/* IP version */}
+          <Select
+            label="IP 版本（ip-version）"
+            value={form.ipVersion}
+            onChange={(v) => set('ipVersion', v)}
+            options={IP_VERSION_OPTS}
+          />
+
           {/* ── Dialer Proxy (chain) ── */}
           <div className="border-t border-dashed border-indigo-200 dark:border-indigo-800 pt-4">
             <div className="flex items-center gap-2 mb-2">
@@ -1001,6 +1021,7 @@ export default function NodeManager() {
   const [exampleCopied, setExampleCopied] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
   const confirmResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [batchIpVersion, setBatchIpVersion] = useState('ipv4')
 
   const handleResetClick = () => {
     if (confirmReset) {
@@ -1079,6 +1100,30 @@ export default function NodeManager() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {manualProxies.length > 0 && (
+              <div className="flex items-center gap-1">
+                <select
+                  value={batchIpVersion}
+                  onChange={(e) => setBatchIpVersion(e.target.value)}
+                  className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {IP_VERSION_OPTS.filter((o) => o.value !== '').map((o) => (
+                    <option key={o.value} value={o.value}>{o.value}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => {
+                    manualProxies.forEach((_, i) => {
+                      updateManualProxy(i, { 'ip-version': batchIpVersion })
+                    })
+                  }}
+                  title="批量设置所有手动节点的 ip-version"
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-indigo-200 dark:border-indigo-800/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors whitespace-nowrap"
+                >
+                  批量设 ip-version
+                </button>
+              </div>
+            )}
             {manualProxies.length > 0 && (
               <button
                 onClick={handleResetClick}
