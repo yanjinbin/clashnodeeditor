@@ -107,8 +107,8 @@ function InfoTip({ text }: { text: string }) {
       <span className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 text-[10px] font-semibold text-gray-400 dark:text-gray-500 cursor-help">
         ?
       </span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 w-56 rounded-lg bg-gray-900 dark:bg-gray-700 text-white text-[11px] leading-relaxed px-2.5 py-2 opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 shadow-lg whitespace-normal">
-        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700" />
+      <span className="pointer-events-none absolute bottom-full left-0 mb-2 w-60 rounded-lg bg-gray-900 dark:bg-gray-700 text-white text-[11px] leading-relaxed px-2.5 py-2 opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 shadow-xl whitespace-normal">
+        <span className="absolute top-full left-2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700" />
         {text}
       </span>
     </span>
@@ -884,8 +884,8 @@ export default function ConfigPreview() {
             {flowArrays && (
               <span className="relative group/tip cursor-default select-none text-[10px] text-amber-600 dark:text-amber-400">
                 {t('preview.flowArraysWarn')}
-                <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 rounded-lg bg-gray-900 dark:bg-gray-700 text-white text-[11px] leading-relaxed px-2.5 py-2 opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 shadow-lg whitespace-normal text-center">
-                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700" />
+                <span className="pointer-events-none absolute bottom-full right-0 mb-2 w-52 rounded-lg bg-gray-900 dark:bg-gray-700 text-white text-[11px] leading-relaxed px-2.5 py-2 opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 shadow-xl whitespace-normal text-center">
+                  <span className="absolute top-full right-4 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700" />
                   {t('preview.flowArraysWarnTooltip')}
                 </span>
               </span>
