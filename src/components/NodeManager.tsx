@@ -1004,7 +1004,7 @@ function NodeRow({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function NodeManager() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const {
     sources,
     manualProxies,
@@ -1249,7 +1249,7 @@ export default function NodeManager() {
 
             {/* Novproxy 推广 */}
             <a
-              href="https://novproxy.com/zh/?code=666888"
+              href={i18n.language === 'zh' ? 'https://novproxy.com/zh/?code=666888' : 'https://novproxy.com/?code=666888'}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 rounded-lg border border-violet-200 dark:border-violet-800/50 bg-white dark:bg-gray-900 px-3 py-2.5 hover:border-violet-400 dark:hover:border-violet-600 transition-colors group"
