@@ -1355,7 +1355,9 @@ export default function NodeManager() {
                     {t('node.whyHKDesc')}
                   </div>
                   <div className="relative bg-gray-900 dark:bg-gray-950 rounded-lg border border-gray-700 p-3 pr-10 overflow-x-auto">
-                  <pre className="text-[10px] text-green-300 font-mono leading-relaxed whitespace-pre select-all">{t('node.exampleYaml')}</pre>
+                  <pre className="text-[10px] text-green-300 font-mono leading-relaxed whitespace-pre select-all">
+                    {t('node.exampleYaml')}
+                  </pre>
                     <button
                       onClick={() => {
                         const code = t('node.exampleYaml')
