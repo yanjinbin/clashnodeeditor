@@ -427,13 +427,13 @@ function GroupCard({
   const commitName = () => {
     const trimmed = nameDraft.trim()
     if (!trimmed) {
-      setNameError('名称不能为空')
+      setNameError(t('group.errNameEmpty'))
       setNameDraft(group.name)
       setNameError('')
       return
     }
     if (existingNames.includes(trimmed)) {
-      setNameError(`"${trimmed}" 已被其他代理组使用`)
+      setNameError(t('group.errNameDuplicate', { name: trimmed }))
       return
     }
     setNameError('')

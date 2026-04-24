@@ -1,9 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import i18n from '../i18n/index'
+import {
+  getInitialLanguage,
+  getLanguageFromUrl,
+  persistLanguage,
+  syncUrlLanguage,
+  type Language,
+} from '../i18n/language'
 
 type Theme = 'light' | 'dark'
-type Language = 'zh' | 'en'
 
 interface UIState {
   theme: Theme
@@ -47,18 +53,10 @@ function getInitialTheme(): Theme {
   return 'light'
 }
 
-function getInitialLanguage(): Language {
-  const legacy = localStorage.getItem('ui-language')
-  if (legacy === 'zh' || legacy === 'en') return legacy
-  const language = getStoredUIState().language
-  if (language === 'zh' || language === 'en') return language
-  return 'zh'
-}
-
 const initialTheme = getInitialTheme()
 const initialLanguage = getInitialLanguage()
 applyTheme(initialTheme)
-localStorage.setItem('ui-language', initialLanguage)
+persistLanguage(initialLanguage)
 
 export const useUIStore = create<UIState>()(
   persist(
@@ -72,7 +70,8 @@ export const useUIStore = create<UIState>()(
       },
 
       setLanguage: (language) => {
-        localStorage.setItem('ui-language', language)
+        persistLanguage(language)
+        syncUrlLanguage(language)
         i18n.changeLanguage(language)
         set({ language })
       },
@@ -87,7 +86,8 @@ export const useUIStore = create<UIState>()(
       toggleLanguage: () =>
         set((state) => {
           const next: Language = state.language === 'zh' ? 'en' : 'zh'
-          localStorage.setItem('ui-language', next)
+          persistLanguage(next)
+          syncUrlLanguage(next)
           i18n.changeLanguage(next)
           return { language: next }
         }),
@@ -97,9 +97,12 @@ export const useUIStore = create<UIState>()(
       partialize: (state) => ({ theme: state.theme, language: state.language }),
       onRehydrateStorage: () => (state) => {
         if (!state) return
+        const urlLanguage = getLanguageFromUrl()
+        const language = urlLanguage ?? state.language
         applyTheme(state.theme)
-        localStorage.setItem('ui-language', state.language)
-        i18n.changeLanguage(state.language)
+        persistLanguage(language)
+        i18n.changeLanguage(language)
+        state.language = language
       },
     }
   )

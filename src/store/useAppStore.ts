@@ -3,6 +3,7 @@ import { immer } from 'zustand/middleware/immer'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { SourceConfig, ProxyGroup, RuleProvider, Rule, Proxy, ClashConfig, ClashGlobalSettings, DnsConfig, DnsFallbackFilter } from '../types/clash'
 import { PRESET_RULE_PROVIDERS, BLACKMATRIX7_RULE_PROVIDERS, DEFAULT_GLOBAL_SETTINGS } from '../types/clash'
+import { getInitialLanguage, type Language } from '../i18n/language'
 
 interface AppState {
   sources: SourceConfig[]
@@ -71,6 +72,7 @@ interface AppState {
   resetManualProxies: () => void
   resetProxyGroups: () => void
   resetRules: () => void
+  syncPresetLanguage: (language: Language) => void
 }
 
 // ── Expiring localStorage storage (TTL = 12 h) ───────────────────────────────
@@ -110,12 +112,62 @@ function generateId() {
   return Math.random().toString(36).slice(2, 10)
 }
 
-function createDefaultProxyGroups(): ProxyGroup[] {
+const PRESET_GROUP_LABELS = {
+  us:       { zh: '🗽 美国出口',    en: '🗽 US Exit' },
+  jp:       { zh: '🗼 日本出口',    en: '🗼 Japan Exit' },
+  auto:     { zh: '♻️ 自动选择',    en: '♻️ Auto Select' },
+  fallback: { zh: '🛡️ 故障转移',    en: '🛡️ Fallback' },
+  youtube:  { zh: '📺 油管',        en: '📺 YouTube' },
+  social:   { zh: '📡 社交媒体',    en: '📡 Social Media' },
+  claude:   { zh: '🪬 Claude专用',  en: '🪬 Claude Dedicated' },
+  select:   { zh: '🌐 节点选择',    en: '🌐 Node Select' },
+} as const
+
+const IMPORTED_CONFIG_NAME: Record<Language, string> = {
+  zh: '导入的配置',
+  en: 'Imported Config',
+}
+
+type PresetGroupKey = keyof typeof PRESET_GROUP_LABELS
+
+function presetGroupName(key: PresetGroupKey, language: Language) {
+  return PRESET_GROUP_LABELS[key][language]
+}
+
+function presetNameMap(language: Language) {
+  const map = new Map<string, string>()
+  for (const labels of Object.values(PRESET_GROUP_LABELS)) {
+    map.set(labels.zh, labels[language])
+    map.set(labels.en, labels[language])
+  }
+  return map
+}
+
+function syncPresetReferences(
+  proxyGroups: ProxyGroup[],
+  rules: Rule[],
+  ruleProviders: RuleProvider[],
+  language: Language
+) {
+  const map = presetNameMap(language)
+  for (const group of proxyGroups) {
+    group.name = map.get(group.name) ?? group.name
+    group.proxies = group.proxies.map((name) => map.get(name) ?? name)
+  }
+  for (const rule of rules) {
+    rule.target = map.get(rule.target) ?? rule.target
+  }
+  for (const provider of ruleProviders) {
+    provider.target = map.get(provider.target) ?? provider.target
+  }
+}
+
+function createDefaultProxyGroups(language: Language = getInitialLanguage()): ProxyGroup[] {
   return [
     // ── 出口─────────────────────────────────────────────────────────────────────
     {
       id: generateId(),
-      name: '🗽 美国出口',
+      name: presetGroupName('us', language),
       type: 'select',
       proxies: [],
       url: 'https://cp.cloudflare.com/generate_204',
@@ -123,7 +175,7 @@ function createDefaultProxyGroups(): ProxyGroup[] {
     },
     {
       id: generateId(),
-      name: '🗼 日本出口',
+      name: presetGroupName('jp', language),
       type: 'select',
       proxies: [],
       url: 'https://cp.cloudflare.com/generate_204',
@@ -132,7 +184,7 @@ function createDefaultProxyGroups(): ProxyGroup[] {
     // ── 总自动选择──────────────────────────────────────────────────────────────
     {
       id: generateId(),
-      name: '♻️ 自动选择',
+      name: presetGroupName('auto', language),
       type: 'url-test',
       proxies: [],
       timeout: 3000,
@@ -145,9 +197,9 @@ function createDefaultProxyGroups(): ProxyGroup[] {
     // ── 故障转移（MATCH 兜底）───────────────────────────────────────────────────
     {
       id: generateId(),
-      name: '🛡️ 故障转移',
+      name: presetGroupName('fallback', language),
       type: 'fallback',
-      proxies: ['♻️ 自动选择'],
+      proxies: [presetGroupName('auto', language)],
       timeout: 3000,
       url: 'https://cp.cloudflare.com/generate_204',
       interval: 120,
@@ -156,9 +208,9 @@ function createDefaultProxyGroups(): ProxyGroup[] {
     // ── 专项流量────────────────────────────────────────────────────────────────
     {
       id: generateId(),
-      name: '📺 油管',
+      name: presetGroupName('youtube', language),
       type: 'url-test',
-      proxies: ['♻️ 自动选择'],
+      proxies: [presetGroupName('auto', language)],
       timeout: 2000,
       tolerance: 100,
       url: 'https://cp.cloudflare.com/generate_204',
@@ -167,9 +219,9 @@ function createDefaultProxyGroups(): ProxyGroup[] {
     },
     {
       id: generateId(),
-      name: '📡 社交媒体',
+      name: presetGroupName('social', language),
       type: 'url-test',
-      proxies: ['♻️ 自动选择'],
+      proxies: [presetGroupName('auto', language)],
       timeout: 3000,
       tolerance: 100,
       url: 'https://cp.cloudflare.com/generate_204',
@@ -178,25 +230,30 @@ function createDefaultProxyGroups(): ProxyGroup[] {
     },
     {
       id: generateId(),
-      name: '🪬 Claude专用',
+      name: presetGroupName('claude', language),
       type: 'select',
-      proxies: ['🗼 日本出口'],
+      proxies: [presetGroupName('jp', language)],
       url: 'https://cp.cloudflare.com/generate_204',
       interval: 120,
     },
     // ── 手动节点选择──────────────────────────────────────────────────────────────
     {
       id: generateId(),
-      name: '🌐 节点选择',
+      name: presetGroupName('select', language),
       type: 'select',
-      proxies: ['♻️ 自动选择', '🛡️ 故障转移', '🗽 美国出口', '🗼 日本出口'],
+      proxies: [
+        presetGroupName('auto', language),
+        presetGroupName('fallback', language),
+        presetGroupName('us', language),
+        presetGroupName('jp', language),
+      ],
       url: 'https://cp.cloudflare.com/generate_204',
       interval: 120,
     },
   ]
 }
 
-function createDefaultRules(): Rule[] {
+function createDefaultRules(language: Language = getInitialLanguage()): Rule[] {
   return [
     // ── 1) 本地/局域网（最高优先级）──────────────────────────────────────────────
     { id: generateId(), type: 'IP-CIDR',       payload: '0.0.0.0/32',       target: 'REJECT-DROP', noResolve: true },
@@ -209,38 +266,38 @@ function createDefaultRules(): Rule[] {
     { id: generateId(), type: 'RULE-SET',      payload: 'private',           target: 'DIRECT' },
     { id: generateId(), type: 'GEOIP',         payload: 'LAN',               target: 'DIRECT', noResolve: true },
     // ── 2) UDP 精细控制──────────────────────────────────────────────────────────
-    { id: generateId(), type: 'AND', payload: '((RULE-SET,youtube),(DST-PORT,443),(NETWORK,UDP))',       target: '📺 油管' },
-    { id: generateId(), type: 'AND', payload: '((RULE-SET,youtube-music),(DST-PORT,443),(NETWORK,UDP))', target: '📺 油管' },
+    { id: generateId(), type: 'AND', payload: '((RULE-SET,youtube),(DST-PORT,443),(NETWORK,UDP))',       target: presetGroupName('youtube', language) },
+    { id: generateId(), type: 'AND', payload: '((RULE-SET,youtube-music),(DST-PORT,443),(NETWORK,UDP))', target: presetGroupName('youtube', language) },
     { id: generateId(), type: 'AND', payload: '((RULE-SET,gemini),(NETWORK,UDP))',                       target: 'REJECT' },
     { id: generateId(), type: 'AND', payload: '((RULE-SET,google),(NETWORK,UDP))',                       target: 'REJECT' },
     { id: generateId(), type: 'AND', payload: '((RULE-SET,tencent),(NETWORK,UDP))',                      target: 'DIRECT' },
     { id: generateId(), type: 'AND', payload: '((GEOIP,CN),(NETWORK,UDP))',                              target: 'DIRECT' },
     { id: generateId(), type: 'AND', payload: '((NETWORK,UDP))',                                         target: 'REJECT' },
     // ── 3) AI 服务───────────────────────────────────────────────────────────────
-    { id: generateId(), type: 'RULE-SET',      payload: 'gemini',           target: '🗽 美国出口' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'openai',           target: '🗽 美国出口' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'claude',           target: '🪬 Claude专用' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'copilot',          target: '🗽 美国出口' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'google',           target: '🗽 美国出口' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'github',           target: '🪬 Claude专用' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'gemini',           target: presetGroupName('us', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'openai',           target: presetGroupName('us', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'claude',           target: presetGroupName('claude', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'copilot',          target: presetGroupName('us', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'google',           target: presetGroupName('us', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'github',           target: presetGroupName('claude', language) },
     // ── 4) IP 检测工具───────────────────────────────────────────────────────────
-    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ipleak.net',       target: '🗽 美国出口' },
-    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'dnsleaktest.com',  target: '🗽 美国出口' },
-    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ipapi.co',         target: '🗽 美国出口' },
-    { id: generateId(), type: 'DOMAIN',        payload: 'www.ugtop.com',    target: '🗼 日本出口' },
+    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ipleak.net',       target: presetGroupName('us', language) },
+    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'dnsleaktest.com',  target: presetGroupName('us', language) },
+    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ipapi.co',         target: presetGroupName('us', language) },
+    { id: generateId(), type: 'DOMAIN',        payload: 'www.ugtop.com',    target: presetGroupName('jp', language) },
     // ── 5) 视频/社交──────────────────────────────────────────────────────────────
-    { id: generateId(), type: 'RULE-SET',      payload: 'twitter',          target: '📡 社交媒体' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',    target: '📺 油管' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'youtube',          target: '📺 油管' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'microsoft',        target: '📺 油管' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'telegram',         target: '📺 油管' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'tiktok',           target: '📺 油管' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'linkedin',         target: '📡 社交媒体' },
-    { id: generateId(), type: 'RULE-SET',      payload: 'docker',           target: '♻️ 自动选择' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'twitter',          target: presetGroupName('social', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',    target: presetGroupName('youtube', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'youtube',          target: presetGroupName('youtube', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'microsoft',        target: presetGroupName('youtube', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'telegram',         target: presetGroupName('youtube', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'tiktok',           target: presetGroupName('youtube', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'linkedin',         target: presetGroupName('social', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'docker',           target: presetGroupName('auto', language) },
     // ── 6) 国内直连──────────────────────────────────────────────────────────────
     { id: generateId(), type: 'GEOIP',         payload: 'CN',               target: 'DIRECT', noResolve: true },
     // ── 7) 默认兜底──────────────────────────────────────────────────────────────
-    { id: generateId(), type: 'MATCH',         payload: '',                 target: '🛡️ 故障转移' },
+    { id: generateId(), type: 'MATCH',         payload: '',                 target: presetGroupName('fallback', language) },
   ]
 }
 
@@ -669,7 +726,7 @@ export const useAppStore = create<AppState>()(
         if (Array.isArray(config.proxies) && config.proxies.length > 0) {
           state.sources.push({
             id: generateId(),
-            name: '导入的配置',
+            name: IMPORTED_CONFIG_NAME[getInitialLanguage()],
             url: '',
             status: 'success',
             proxies: config.proxies,
@@ -792,6 +849,10 @@ export const useAppStore = create<AppState>()(
 
     resetRules: () => set((state) => {
       state.rules = createDefaultRules()
+    }),
+
+    syncPresetLanguage: (language) => set((state) => {
+      syncPresetReferences(state.proxyGroups, state.rules, state.ruleProviders, language)
     }),
   })),
   {

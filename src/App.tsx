@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from './store/useAppStore'
 import { useUIStore } from './store/useUIStore'
@@ -16,9 +17,13 @@ const AD_COL = 'w-36' // 144px
 
 export default function App() {
   const { t } = useTranslation()
-  const { activeTab, setActiveTab } = useAppStore()
+  const { activeTab, setActiveTab, syncPresetLanguage } = useAppStore()
   const { needsUpdate, countdown, reloadNow } = useVersionCheck()
   const { theme, toggleTheme, language, toggleLanguage } = useUIStore()
+
+  useEffect(() => {
+    syncPresetLanguage(language)
+  }, [language, syncPresetLanguage])
 
   const TABS = [
     { id: 'sources' as const, label: t('app.tabs.sources'), icon: Globe },
