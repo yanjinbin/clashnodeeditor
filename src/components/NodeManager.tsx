@@ -1355,45 +1355,10 @@ export default function NodeManager() {
                     {t('node.whyHKDesc')}
                   </div>
                   <div className="relative bg-gray-900 dark:bg-gray-950 rounded-lg border border-gray-700 p-3 pr-10 overflow-x-auto">
-                  <pre className="text-[10px] text-green-300 font-mono leading-relaxed whitespace-pre select-all">{`proxies:
-  # 1. Fastest relay node for your country/region
-  #    Usually imported from your subscription source
-  - name: "🚀 Fastest Relay"
-    type: vmess
-    server: relay.example.com
-    port: 443
-    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    alterId: 0
-    cipher: auto
-    tls: true
-    # Do not add dialer-proxy here
-
-  # 2. Add dialer-proxy to the US residential SOCKS5 node
-  #    Meaning: connect to us-res.example.com through the fastest relay first
-  #    Path: local → fastest relay → residential SOCKS5 → target
-  #    Exit IP = US residential IP
-  - name: "🇺🇸 美国住宅SOCKS5"
-    type: socks5
-    server: us-res.example.com   # replace with your real address
-    port: 1080
-    username: your_user          # replace with your real username
-    password: your_pass
-    dialer-proxy: "🚀 Fastest Relay"  # first hop: fastest relay, then residential exit
-
-proxy-groups:
-  - name: "🇺🇸 美国原生出口"
-    type: select
-    proxies:
-      - "🇺🇸 美国住宅SOCKS5"   # select SOCKS5, exit IP = US
-      - DIRECT
-
-rules:
-  - GEOSITE,openai,🇺🇸 美国原生出口
-  - GEOSITE,google,🇺🇸 美国原生出口
-  - MATCH,DIRECT`}</pre>
+                  <pre className="text-[10px] text-green-300 font-mono leading-relaxed whitespace-pre select-all">{t('node.exampleYaml')}</pre>
                     <button
                       onClick={() => {
-                        const code = `proxies:\n  - name: "🚀 Fastest Relay"\n    type: vmess\n    server: relay.example.com\n    port: 443\n    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\n    alterId: 0\n    cipher: auto\n    tls: true\n\n  - name: "🇺🇸 美国住宅SOCKS5"\n    type: socks5\n    server: us-res.example.com\n    port: 1080\n    username: your_user\n    password: your_pass\n    dialer-proxy: "🚀 Fastest Relay"\n\nproxy-groups:\n  - name: "🇺🇸 美国原生出口"\n    type: select\n    proxies:\n      - "🇺🇸 美国住宅SOCKS5"\n      - DIRECT\n\nrules:\n  - GEOSITE,openai,🇺🇸 美国原生出口\n  - GEOSITE,google,🇺🇸 美国原生出口\n  - MATCH,DIRECT`
+                        const code = t('node.exampleYaml')
                         navigator.clipboard.writeText(code)
                         setExampleCopied(true)
                         setTimeout(() => setExampleCopied(false), 2000)

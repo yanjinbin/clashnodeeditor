@@ -135,6 +135,42 @@ export const zh = {
     aiPromptLabel: '🤖 问 AI 配置模板',
     aiPromptText: '如何在 Mihomo 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过我所在国家/地区最快的中转节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。',
     showExample: '查看完整配置示例（最快中转节点 → 美国住宅 SOCKS5）',
+    exampleYaml: `proxies:
+  # 1. 你所在国家/地区最快的中转节点
+  #    通常直接从你的机场订阅源中导入
+  - name: "🚀 最快中转"
+    type: vmess
+    server: relay.example.com
+    port: 443
+    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    alterId: 0
+    cipher: auto
+    tls: true
+    # 这里不要加 dialer-proxy
+
+  # 2. 为美国住宅 SOCKS5 节点添加 dialer-proxy
+  #    含义：先通过“最快中转”建立连接，再访问 us-res.example.com
+  #    路径：本地 → 最快中转 → 住宅 SOCKS5 → 目标网站
+  #    最终出口 IP = 美国原生住宅 IP
+  - name: "🇺🇸 美国住宅SOCKS5"
+    type: socks5
+    server: us-res.example.com   # 替换为你的真实地址
+    port: 1080
+    username: your_user          # 替换为你的真实用户名
+    password: your_pass
+    dialer-proxy: "🚀 最快中转"  # 第一跳：最快中转，随后从住宅 IP 出口
+
+proxy-groups:
+  - name: "🇺🇸 美国原生出口"
+    type: select
+    proxies:
+      - "🇺🇸 美国住宅SOCKS5"   # 选择此节点，出口即为美国
+      - DIRECT
+
+rules:
+  - GEOSITE,openai,🇺🇸 美国原生出口
+  - GEOSITE,google,🇺🇸 美国原生出口
+  - MATCH,DIRECT`,
     whyHK: '💡 为什么建议使用你所在国家/地区最快的中转节点？',
     whyHKDesc: '优先选择你所在国家/地区延迟最低、线路最稳定的中转节点，作为第一跳通常更不影响整体速度；相比固定指定某个国家或地区，按实际网络环境选择最快中转点，两跳总延迟更低，住宅 SOCKS5 拨号握手更快，实际体验更流畅。若机场提供专线/IPLC 节点，可优先选择距离近且稳定的线路。',
     refDoc: '参考文档：高阶 — Socks 家宽原生住宅（自愿购买）',

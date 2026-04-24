@@ -135,6 +135,42 @@ export const en = {
     aiPromptLabel: '🤖 AI Config Template Prompt',
     aiPromptText: 'How do I implement chain proxy in Mihomo YAML config using proxies + dialer-proxy? I want local traffic to go through the fastest relay node for my country/region first, then access a US residential SOCKS5, so the final exit IP is a US native IP. Please provide a complete example with proxies, proxy-groups, and rules.',
     showExample: 'View full example (fastest relay node → US residential SOCKS5)',
+    exampleYaml: `proxies:
+  # 1. Fastest relay node for your country/region
+  #    Usually imported from your subscription source
+  - name: "🚀 Fastest Relay"
+    type: vmess
+    server: relay.example.com
+    port: 443
+    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    alterId: 0
+    cipher: auto
+    tls: true
+    # Do not add dialer-proxy here
+
+  # 2. Add dialer-proxy to the US residential SOCKS5 node
+  #    Meaning: connect to us-res.example.com through the fastest relay first
+  #    Path: local → fastest relay → residential SOCKS5 → target
+  #    Exit IP = US residential IP
+  - name: "🇺🇸 US Residential SOCKS5"
+    type: socks5
+    server: us-res.example.com   # replace with your real address
+    port: 1080
+    username: your_user          # replace with your real username
+    password: your_pass
+    dialer-proxy: "🚀 Fastest Relay"  # first hop: fastest relay, then residential exit
+
+proxy-groups:
+  - name: "🇺🇸 US Native Exit"
+    type: select
+    proxies:
+      - "🇺🇸 US Residential SOCKS5"   # select SOCKS5, exit IP = US
+      - DIRECT
+
+rules:
+  - GEOSITE,openai,🇺🇸 US Native Exit
+  - GEOSITE,google,🇺🇸 US Native Exit
+  - MATCH,DIRECT`,
     whyHK: '💡 Why use the fastest relay node for your country/region?',
     whyHKDesc: 'Choose the lowest-latency and most stable relay node for your country/region as the first hop. This usually has the least impact on overall speed. Instead of hard-coding a specific country or region, choosing the fastest relay for your actual network lowers total two-hop latency, speeds up the residential SOCKS5 handshake, and makes the real-world experience smoother. If your provider offers dedicated/IPLC lines, prefer nearby and stable routes.',
     refDoc: 'Reference: Advanced — SOCKS Residential Native IP (optional purchase)',
