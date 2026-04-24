@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   DndContext,
   DragOverlay,
@@ -38,15 +39,8 @@ import { BUILT_IN_PROXIES } from '../types/clash'
 import EmojiPicker from './EmojiPicker'
 import { resolveToIp, fetchIpInfoBatch, type IpData } from '../utils/ipUtils'
 
-const GROUP_TYPES: { value: ProxyGroupType; label: string; desc: string }[] = [
-  { value: 'select', label: 'select', desc: '手动选择' },
-  { value: 'url-test', label: 'url-test', desc: '自动测速' },
-  { value: 'fallback', label: 'fallback', desc: '自动回退' },
-  { value: 'load-balance', label: 'load-balance', desc: '负载均衡' },
-  { value: 'relay', label: 'relay', desc: '链式代理' },
-]
-
 export default function ProxyGroupEditor() {
+  const { t } = useTranslation()
   const { sources, manualProxies, proxyGroups, addProxyGroup, removeProxyGroup, updateProxyGroup, addProxyToGroup, removeProxyFromGroup, reorderProxiesInGroup, reorderProxyGroups, resetProxyGroups } =
     useAppStore()
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
@@ -64,11 +58,11 @@ export default function ProxyGroupEditor() {
 
   // Grouped sections for the proxy picker — no built-in presets
   const proxySections = [
-    { label: '代理组', items: proxyGroups.map((g) => g.name) },
-    ...(manualProxies.length > 0 ? [{ label: '手动节点', items: manualProxies.map((p) => p.name) }] : []),
+    { key: 'proxyGroups', label: t('app.tabs.groups'), items: proxyGroups.map((g) => g.name) },
+    ...(manualProxies.length > 0 ? [{ key: 'manual', label: t('app.tabs.nodes'), items: manualProxies.map((p) => p.name) }] : []),
     ...sources
       .filter((s) => s.proxies.length > 0)
-      .map((s) => ({ label: s.name, items: s.proxies.map((p) => p.name) })),
+      .map((s) => ({ key: s.id, label: s.name, items: s.proxies.map((p) => p.name) })),
   ].filter((s) => s.items.length > 0)
 
   const toggleExpand = (id: string) => {
@@ -97,13 +91,13 @@ export default function ProxyGroupEditor() {
   }
 
   const PRESETS: { icon: string; name: string; type: ProxyGroupType; interval?: number; tolerance?: number }[] = [
-    { icon: '♻️', name: '自动选择', type: 'url-test', interval: 300, tolerance: 50 },
-    { icon: '🌐', name: '节点选择', type: 'select' },
-    { icon: '🛡️', name: '故障转移', type: 'fallback', interval: 300 },
-    { icon: '📺', name: '油管', type: 'url-test', interval: 300, tolerance: 50 },
-    { icon: '🐦', name: '社交媒体', type: 'fallback', interval: 300 },
-    { icon: '🇺🇸', name: '美国住宅 IP 出口', type: 'select' },
-    { icon: '🇯🇵', name: '日本住宅 IP 出口', type: 'select' },
+    { icon: '♻️', name: t('group.preset_autoSelect'), type: 'url-test', interval: 300, tolerance: 50 },
+    { icon: '🌐', name: t('group.preset_nodeSelect'), type: 'select' },
+    { icon: '🛡️', name: t('group.preset_fallback'), type: 'fallback', interval: 300 },
+    { icon: '📺', name: t('group.preset_youtube'), type: 'url-test', interval: 300, tolerance: 50 },
+    { icon: '🐦', name: t('group.preset_social'), type: 'fallback', interval: 300 },
+    { icon: '🇺🇸', name: t('group.preset_usResident'), type: 'select' },
+    { icon: '🇯🇵', name: t('group.preset_jpResident'), type: 'select' },
   ]
 
   useEffect(() => {
@@ -174,7 +168,7 @@ export default function ProxyGroupEditor() {
     <div className="h-full overflow-y-auto">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
         <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-          代理组配置
+          {t('group.heading')}
         </h2>
         <div className="flex items-center gap-2">
           {proxyGroups.length > 0 && (
@@ -187,7 +181,7 @@ export default function ProxyGroupEditor() {
               }`}
             >
               <Trash2 size={11} />
-              {confirmReset ? '确认重置？' : '重置'}
+              {confirmReset ? t('group.confirmReset') : t('group.reset')}
             </button>
           )}
           {/* 预设模板 */}
@@ -197,7 +191,7 @@ export default function ProxyGroupEditor() {
               className="flex items-center gap-1.5 px-3.5 py-2 border border-indigo-200 dark:border-indigo-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-xl transition-all"
             >
               <ChevronDown size={13} className={`transition-transform ${showPresets ? 'rotate-180' : ''}`} />
-              预设模板
+              {t('group.preset')}
             </button>
             {showPresets && (
               <div className="absolute right-0 top-full mt-1.5 w-60 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
@@ -226,7 +220,7 @@ export default function ProxyGroupEditor() {
             className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shadow-sm shadow-indigo-200 dark:shadow-none transition-all"
           >
             <Plus size={14} />
-            新建分组
+            {t('group.newGroup')}
           </button>
         </div>
       </div>
@@ -237,7 +231,7 @@ export default function ProxyGroupEditor() {
             <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
               <Users size={28} className="opacity-60" />
             </div>
-            <p className="text-sm font-medium text-gray-400 dark:text-gray-500">点击"新建分组"开始配置</p>
+            <p className="text-sm font-medium text-gray-400 dark:text-gray-500">{t('group.empty')}</p>
           </div>
         )}
         {/* ── Outer DnD: group card reordering ── */}
@@ -293,6 +287,7 @@ export default function ProxyGroupEditor() {
 }
 
 interface ProxySection {
+  key?: string
   label: string
   items: string[]
 }
@@ -353,6 +348,7 @@ function GroupCard({
   onDragEnd,
   dragHandleProps,
 }: GroupCardProps) {
+  const { t } = useTranslation()
   const { sources } = useAppStore()
   const [proxySearch, setProxySearch] = useState('')
   const [showProxyPicker, setShowProxyPicker] = useState(false)
@@ -527,7 +523,7 @@ function GroupCard({
   const allFilteredItems = filteredSections.flatMap((s) => s.items)
   const allFilteredSelected = allFilteredItems.length > 0 && allFilteredItems.every((n) => pickerSelected.has(n))
   // Source-only sections (no proxy group names) for autoAllNodes display
-  const sourceOnlySections = proxySections.filter((s) => s.label !== '代理组')
+  const sourceOnlySections = proxySections.filter((s) => s.key !== 'proxyGroups')
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -551,12 +547,12 @@ function GroupCard({
         </span>
         <span className="flex-1 text-sm font-semibold text-gray-900 dark:text-gray-100">{group.name}</span>
         {group.hidden && (
-          <span className="text-xs px-2 py-0.5 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 shrink-0 font-medium border border-amber-200 dark:border-amber-800/50">隐藏</span>
+          <span className="text-xs px-2 py-0.5 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 shrink-0 font-medium border border-amber-200 dark:border-amber-800/50">{t('group.hidden')}</span>
         )}
         {group.autoAllNodes ? (
-          <span className="text-xs px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 shrink-0 font-medium border border-emerald-200 dark:border-emerald-800/50">自动全部节点</span>
+          <span className="text-xs px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 shrink-0 font-medium border border-emerald-200 dark:border-emerald-800/50">{t('group.autoAllNodes')}</span>
         ) : (
-          <span className="text-xs text-gray-400 font-mono">{group.proxies.length} 节点</span>
+          <span className="text-xs text-gray-400 font-mono">{t('group.nodeCount', { count: group.proxies.length })}</span>
         )}
         <button onClick={onEdit} className="p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all">
           <Settings size={14} />
@@ -571,7 +567,7 @@ function GroupCard({
         <div className="border-t border-gray-100 dark:border-gray-700/60 px-4 py-4 bg-gray-50/80 dark:bg-gray-900/40 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">分组名称</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('group.labelName')}</label>
               <div className="flex items-center gap-1.5">
                 <input
                   ref={nameInputRef}
@@ -601,14 +597,20 @@ function GroupCard({
               )}
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">类型</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('group.labelType')}</label>
               <select
                 value={group.type}
                 onChange={(e) => onUpdate({ type: e.target.value as ProxyGroupType })}
                 className="w-full text-sm px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 cursor-pointer"
               >
-                {GROUP_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label} — {t.desc}</option>
+                {([
+                  { value: 'select' as ProxyGroupType, label: 'select', desc: t('group.selectDesc') },
+                  { value: 'url-test' as ProxyGroupType, label: 'url-test', desc: t('group.urlTestDesc') },
+                  { value: 'fallback' as ProxyGroupType, label: 'fallback', desc: t('group.fallbackDesc') },
+                  { value: 'load-balance' as ProxyGroupType, label: 'load-balance', desc: t('group.loadBalanceDesc') },
+                  { value: 'relay' as ProxyGroupType, label: 'relay', desc: t('group.relayDesc') },
+                ]).map((gt) => (
+                  <option key={gt.value} value={gt.value}>{gt.label} — {gt.desc}</option>
                 ))}
               </select>
             </div>
@@ -616,7 +618,7 @@ function GroupCard({
           {group.type !== 'select' && group.type !== 'relay' && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">测速 URL</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('group.labelUrl')}</label>
                 <input
                   type="text"
                   value={group.url ?? ''}
@@ -625,7 +627,7 @@ function GroupCard({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">间隔（秒）</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('group.labelInterval')}</label>
                 <input
                   type="number"
                   value={group.interval ?? 300}
@@ -648,7 +650,7 @@ function GroupCard({
                   <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${(group.lazy ?? true) ? 'translate-x-3' : 'translate-x-0'}`} />
                 </button>
                 <span className="text-xs text-gray-500 dark:text-gray-400">lazy</span>
-                <span className="text-[10px] text-gray-400">跳过未活跃节点的测速</span>
+                <span className="text-[10px] text-gray-400">{t('group.lazyHint')}</span>
               </label>
             )}
             <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -661,7 +663,7 @@ function GroupCard({
                 <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${(group.hidden ?? false) ? 'translate-x-3' : 'translate-x-0'}`} />
               </button>
               <span className="text-xs text-gray-500 dark:text-gray-400">hidden</span>
-              <span className="text-[10px] text-gray-400">在 Dashboard 中隐藏此组</span>
+              <span className="text-[10px] text-gray-400">{t('group.hiddenHint')}</span>
             </label>
           </div>
         </div>
@@ -674,8 +676,8 @@ function GroupCard({
           {group.autoAllNodes && (
             <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50/60 dark:bg-emerald-900/10 border-b border-gray-100 dark:border-gray-700/50">
               <CheckSquare size={12} className="text-emerald-500" />
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">自动包含全部导入节点</span>
-              <span className="text-xs text-gray-400 ml-auto font-mono">共 {sourceOnlySections.flatMap((s) => s.items).length} 个</span>
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{t('group.autoInclude')}</span>
+              <span className="text-xs text-gray-400 ml-auto font-mono">{t('group.autoCount', { count: sourceOnlySections.flatMap((s) => s.items).length })}</span>
             </div>
           )}
           {/* Batch remove toolbar */}
@@ -685,17 +687,17 @@ function GroupCard({
                 {allRemoveSelected
                   ? <CheckSquare size={12} className="text-red-500" />
                   : <Square size={12} />}
-                全选
+                {t('group.selectAll')}
               </button>
               <span className="text-xs text-gray-400 font-mono">
-                {removeSelected.size > 0 ? `已选 ${removeSelected.size}` : `共 ${group.proxies.length} 节点`}
+                {removeSelected.size > 0 ? t('group.selectedCount', { count: removeSelected.size }) : t('group.totalCount', { count: group.proxies.length })}
               </span>
               <button
                 onClick={handleBatchRemove}
                 disabled={removeSelected.size === 0}
                 className="ml-auto text-xs px-3 py-1 rounded-lg bg-red-500 hover:bg-red-400 active:bg-red-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white font-medium transition-all"
               >
-                移除{removeSelected.size > 0 ? ` (${removeSelected.size})` : ''}
+                {removeSelected.size > 0 ? t('group.batchRemoveCount', { count: removeSelected.size }) : t('group.batchRemove')}
               </button>
             </div>
           )}
@@ -710,10 +712,10 @@ function GroupCard({
             <SortableContext items={group.proxies} strategy={verticalListSortingStrategy}>
               <div className="max-h-56 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
                 {group.proxies.length === 0 && !group.autoAllNodes && (
-                  <p className="text-center py-4 text-xs text-gray-400">暂无节点，点击下方批量添加</p>
+                  <p className="text-center py-4 text-xs text-gray-400">{t('group.emptyGroup')}</p>
                 )}
                 {group.autoAllNodes && sourceOnlySections.length === 0 && (
-                  <p className="text-center py-4 text-xs text-gray-400">暂无导入节点，请先在订阅源页面导入</p>
+                  <p className="text-center py-4 text-xs text-gray-400">{t('group.noImportedNodes')}</p>
                 )}
                 {group.autoAllNodes && sourceOnlySections.map((section) => (
                   <div key={section.label}>
@@ -758,7 +760,7 @@ function GroupCard({
                 <div className="flex gap-1.5">
                   <input
                     type="text"
-                    placeholder="搜索节点 / 代理组..."
+                    placeholder={t('group.searchProxy')}
                     value={proxySearch}
                     onChange={(e) => setProxySearch(e.target.value)}
                     autoFocus
@@ -788,10 +790,10 @@ function GroupCard({
                     onChange={(e) => setFilterType(e.target.value as typeof filterType)}
                     className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer"
                   >
-                    <option value="all">全部类型</option>
-                    <option value="residential">住宅 IP</option>
-                    <option value="hosting">数据中心</option>
-                    <option value="proxy">代理/VPN</option>
+                    <option value="all">{t('group.filterTypeAll')}</option>
+                    <option value="residential">{t('group.filterTypeResidential')}</option>
+                    <option value="hosting">{t('group.filterTypeHosting')}</option>
+                    <option value="proxy">{t('group.filterTypeProxy')}</option>
                   </select>
                   {(filterCountry || filterType !== 'all') && (
                     <button
@@ -810,8 +812,8 @@ function GroupCard({
                     className="ml-auto flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg border border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 disabled:opacity-50 transition-all shrink-0"
                   >
                     {ipFetchState === 'loading'
-                      ? <><Loader size={10} className="animate-spin" />查询中…</>
-                      : <><Globe size={10} />{ipFetchState === 'done' ? '重新查询 IP' : '批量查询 IP'}</>}
+                      ? <><Loader size={10} className="animate-spin" />{t('group.querying')}</>
+                      : <><Globe size={10} />{ipFetchState === 'done' ? t('group.requeryIp') : t('group.queryIp')}</>}
                   </button>
                 </div>
 
@@ -834,17 +836,17 @@ function GroupCard({
                     {allFilteredSelected
                       ? <CheckSquare size={12} className="text-indigo-500" />
                       : <Square size={12} />}
-                    全选筛选结果
+                    {t('group.selectAllFiltered')}
                   </button>
                   <span className="text-xs text-gray-400 font-mono">
-                    {pickerSelected.size > 0 ? `已选 ${pickerSelected.size}` : ''}
+                    {pickerSelected.size > 0 ? t('group.selectedCount', { count: pickerSelected.size }) : ''}
                   </span>
                   <button
                     onClick={handleBatchAdd}
                     disabled={pickerSelected.size === 0}
                     className="ml-auto text-xs px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white font-medium transition-all"
                   >
-                    批量添加{pickerSelected.size > 0 ? ` (${pickerSelected.size})` : ''}
+                    {pickerSelected.size > 0 ? t('group.batchAddCount', { count: pickerSelected.size }) : t('group.batchAdd')}
                   </button>
                 </div>
 
@@ -852,7 +854,7 @@ function GroupCard({
                 <div className="max-h-52 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700/80">
                   {filteredSections.length === 0 && (
                     <p className="text-center py-4 text-xs text-gray-400">
-                      {proxySections.length === 0 ? '请先在订阅源页面导入节点' : '无匹配节点'}
+                      {proxySections.length === 0 ? t('group.noSourceNodes') : t('group.noMatchNodes')}
                     </p>
                   )}
                   {filteredSections.map((section) => {
@@ -901,7 +903,7 @@ function GroupCard({
                                     <span className="px-1 py-0.5 rounded-md text-[10px] bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 font-medium">VPN</span>
                                   )}
                                   {!ipd.hosting && !ipd.proxy && (
-                                    <span className="px-1 py-0.5 rounded-md text-[10px] bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">住宅</span>
+                                    <span className="px-1 py-0.5 rounded-md text-[10px] bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">{t('group.residential')}</span>
                                   )}
                                 </span>
                               )}
@@ -919,7 +921,7 @@ function GroupCard({
                 className="w-full flex items-center justify-center gap-2 py-2 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/15 rounded-xl transition-all border-2 border-dashed border-indigo-200 dark:border-indigo-800 hover:border-indigo-400 dark:hover:border-indigo-600 font-medium"
               >
                 <Plus size={13} />
-                批量添加节点 / 代理组
+                {t('group.addProxies')}
               </button>
             )}
           </div>}

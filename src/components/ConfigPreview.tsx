@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Copy, Download, Check, FileText, ChevronRight, CheckCircle, XCircle, Upload, X, ShieldCheck, RotateCcw, Pencil } from 'lucide-react'
 import yaml from 'js-yaml'
 import { useAppStore } from '../store/useAppStore'
@@ -128,6 +129,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 
 // ── Settings Panel ─────────────────────────────────────────────────────────────
 function SettingsPanel() {
+  const { t } = useTranslation()
   const { globalSettings, updateGlobalSettings, updateDnsSettings, updateDnsFallbackFilter } = useAppStore()
   const gs = globalSettings
   const dns = gs.dns
@@ -155,7 +157,7 @@ function SettingsPanel() {
       {/* Documentation banner */}
       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
         <span className="shrink-0">📖</span>
-        <span>完整参数说明：</span>
+        <span>{t('preview.settings.docBanner')}</span>
         <a
           href="https://wiki.metacubex.one/config/general/"
           target="_blank"
@@ -166,19 +168,19 @@ function SettingsPanel() {
         </a>
       </div>
 
-      <Section title="Merlin Clash 路由器" defaultOpen={false}>
+      <Section title={t('preview.settings.merlinSection')} defaultOpen={false}>
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] leading-relaxed text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300">
-          一键套用 Merlin Clash 路由器插件常见全局参数，包括 `redir-port`、`routing-mark`、`dns.listen`、`dashboard` 面板地址和兼容的 fake-ip 策略；应用后仍可继续逐项微调。
+          {t('preview.settings.merlinNote')}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={applyMerlinPreset}
             className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
           >
-            应用 Merlin 模板
+            {t('preview.settings.merlinApply')}
           </button>
           <span className="text-[11px] text-gray-500 dark:text-gray-400">
-            按用户提供的 Merlin Clash 插件参数预填
+            {t('preview.settings.merlinApplyNote')}
           </span>
         </div>
         <Row label="redir-port" hint="Merlin Clash 路由器插件常用的 redir 监听端口。透明代理模式下通常需要显式导出。">
@@ -207,7 +209,7 @@ function SettingsPanel() {
         </Row>
       </Section>
 
-      <Section title="基本设置">
+      <Section title={t('preview.settings.basicSection')}>
         <Row label="mixed-port" hint="HTTP/SOCKS5 混合代理监听端口，应用设置系统代理时填此端口。">
           <BlurInput
             type="number"
@@ -285,11 +287,11 @@ function SettingsPanel() {
         </Row>
         {!(gs.udp ?? false) && (
           <div className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2 leading-relaxed">
-            <span className="font-semibold">防 IP 漂移提示：</span>
-            {' '}UDP 已关闭，但 Chrome 仍会用 QUIC（UDP）绕过代理直连，导致<strong>机场节点</strong>和<strong>原生 IP 节点</strong>的真实地址同时泄露，造成 IP 漂移。
-            建议在 Chrome 地址栏打开{' '}
+            <span className="font-semibold">{t('preview.udpOffWarnPrefix')}</span>
+            <span dangerouslySetInnerHTML={{ __html: t('preview.udpOffWarn') }} />
+            {' '}{t('preview.udpOffWarnChromeHint')}{' '}
             <code className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 rounded">chrome://flags/#enable-quic</code>
-            {' '}，将 <em>Experimental QUIC protocol</em> 设为 <strong>Disabled</strong>。
+            <span dangerouslySetInnerHTML={{ __html: t('preview.udpOffWarnChromeEnd') }} />
           </div>
         )}
         <Row label="udp-timeout" hint="UDP 会话静默超时（秒）。超过此时间无流量则释放 NAT 映射。300 秒适合游戏和视频场景。">
@@ -323,7 +325,7 @@ function SettingsPanel() {
         </Row>
       </Section>
 
-      <Section title="Sniffer（嗅探）" defaultOpen={false}>
+      <Section title={t('preview.settings.snifferSection')} defaultOpen={false}>
         <Row label="enable" hint="对 HTTP/TLS 流量嗅探域名，将裸 IP 请求反向映射回域名，确保基于域名的分流规则命中。链式代理下有极小性能开销。">
           <Toggle
             checked={gs.sniffer?.enable ?? false}
@@ -437,7 +439,7 @@ function SettingsPanel() {
         </Row>
       </Section>
 
-      <Section title="Profile（缓存）" defaultOpen={false}>
+      <Section title={t('preview.settings.profileSection')} defaultOpen={false}>
         <Row label="store-selected" hint="是否缓存代理组上次选择结果。路由器固件场景通常建议关闭，避免与插件侧状态管理冲突。">
           <Toggle
             checked={gs.profile?.['store-selected'] ?? false}
@@ -452,18 +454,18 @@ function SettingsPanel() {
         </Row>
       </Section>
 
-      <Section title="DNS 设置">
+      <Section title={t('preview.settings.dnsSection')}>
         {/* DNS flow diagram callout */}
         <div className="flex items-center gap-2 mb-2 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-xs text-amber-700 dark:text-amber-300">
           <span className="shrink-0">🔍</span>
-          <span>DNS 解析流程图（强烈建议阅读）：</span>
+          <span>{t('preview.settings.dnsFlowDiagram')}</span>
           <a
             href="https://wiki.metacubex.one/config/dns/diagram/"
             target="_blank"
             rel="noopener noreferrer"
             className="underline font-medium hover:text-amber-900 dark:hover:text-amber-100"
           >
-            查看流程图 →
+            {t('preview.settings.dnsFlowLink')}
           </a>
         </div>
         <Row label="enable" hint="开启 Mihomo 内置 DNS 模块。关闭则依赖系统 DNS，fake-ip 和 nameserver-policy 均失效。">
@@ -578,6 +580,7 @@ function SettingsPanel() {
 
 // ── ImportModal ───────────────────────────────────────────────────────────────
 function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (config: ClashConfig) => void }) {
+  const { t } = useTranslation()
   const [tab, setTab] = useState<'file' | 'paste'>('file')
   const [pasteText, setPasteText] = useState('')
   const [dragOver, setDragOver] = useState(false)
@@ -589,7 +592,7 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
   function parseConfig(text: string) {
     try {
       const config = yaml.load(text) as ClashConfig
-      if (!config || typeof config !== 'object') throw new Error('不是有效的 YAML 对象')
+      if (!config || typeof config !== 'object') throw new Error(t('preview.importModal.parseInvalidYaml'))
       setParsed(config)
       setError(null)
       setPreview({
@@ -626,7 +629,7 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">导入配置</h2>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('preview.importModal.title')}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
             <X size={16} />
           </button>
@@ -634,17 +637,17 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-700">
-          {(['file', 'paste'] as const).map((t) => (
+          {(['file', 'paste'] as const).map((tabName) => (
             <button
-              key={t}
-              onClick={() => { setTab(t); setParsed(null); setPreview(null); setError(null) }}
+              key={tabName}
+              onClick={() => { setTab(tabName); setParsed(null); setPreview(null); setError(null) }}
               className={`px-5 py-2.5 text-xs font-medium transition-colors ${
-                tab === t
+                tab === tabName
                   ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
-              {t === 'file' ? '上传文件' : '粘贴文本'}
+              {tabName === 'file' ? t('preview.importModal.tabFile') : t('preview.importModal.tabPaste')}
             </button>
           ))}
         </div>
@@ -665,8 +668,8 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
             >
               <Upload size={24} className="text-gray-400" />
               <div className="text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-300">拖拽 YAML 文件到此处，或点击选择</p>
-                <p className="text-xs text-gray-400 mt-1">.yaml / .yml</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t('preview.importModal.dropzone')}</p>
+                <p className="text-xs text-gray-400 mt-1">{t('preview.importModal.dropzoneHint')}</p>
               </div>
               <input
                 ref={fileRef}
@@ -680,7 +683,7 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
             <textarea
               value={pasteText}
               onChange={(e) => { setPasteText(e.target.value); if (e.target.value.trim()) { parseConfig(e.target.value) } else { setParsed(null); setPreview(null); setError(null) } }}
-              placeholder="将 Clash/Mihomo YAML 配置粘贴到这里..."
+              placeholder={t('preview.importModal.pastePlaceholder')}
               className="w-full h-52 text-xs font-mono px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
             />
           )}
@@ -688,20 +691,20 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
           {/* Parse preview */}
           {preview && (
             <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 space-y-1">
-              <p className="text-xs font-medium text-green-700 dark:text-green-400">解析成功，将导入：</p>
+              <p className="text-xs font-medium text-green-700 dark:text-green-400">{t('preview.importModal.parseSuccess')}</p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-green-600 dark:text-green-500">
-                <span>节点 <strong>{preview.proxies}</strong> 个</span>
-                <span>代理组 <strong>{preview.groups}</strong> 个</span>
-                <span>规则 <strong>{preview.rules}</strong> 条</span>
-                <span>规则集 <strong>{preview.providers}</strong> 个</span>
+                <span dangerouslySetInnerHTML={{ __html: t('preview.importModal.parseNodes', { count: preview.proxies }) }} />
+                <span dangerouslySetInnerHTML={{ __html: t('preview.importModal.parseGroups', { count: preview.groups }) }} />
+                <span dangerouslySetInnerHTML={{ __html: t('preview.importModal.parseRules', { count: preview.rules }) }} />
+                <span dangerouslySetInnerHTML={{ __html: t('preview.importModal.parseProviders', { count: preview.providers }) }} />
               </div>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">⚠️ 导入将覆盖当前的代理组、规则和规则集，节点将追加为新订阅源</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t('preview.importModal.parseOverwriteWarn')}</p>
             </div>
           )}
 
           {error && (
             <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
-              <p className="text-xs text-red-600 dark:text-red-400">解析失败：{error}</p>
+              <p className="text-xs text-red-600 dark:text-red-400">{t('preview.importModal.parseFailed', { error })}</p>
             </div>
           )}
         </div>
@@ -712,14 +715,14 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
             onClick={onClose}
             className="px-4 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            取消
+            {t('preview.importModal.cancel')}
           </button>
           <button
             disabled={!parsed}
             onClick={() => { if (parsed) { onImport(parsed); onClose() } }}
             className="px-4 py-1.5 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors"
           >
-            确认导入
+            {t('preview.importModal.confirm')}
           </button>
         </div>
       </div>
@@ -729,6 +732,7 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
 
 // ── ConfigPreview ─────────────────────────────────────────────────────────────
 export default function ConfigPreview() {
+  const { t } = useTranslation()
   const { sources, manualProxies, proxyGroups, ruleProviders, rules, globalSettings, importFullConfig } = useAppStore()
   const [copied, setCopied] = useState(false)
   const [filename, setFilename] = useState('config.yaml')
@@ -806,7 +810,7 @@ export default function ConfigPreview() {
       {/* Left: settings panel */}
       <div className="w-72 shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700">
         <div className="shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">全局配置</h3>
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('preview.globalConfig')}</h3>
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
           <SettingsPanel />
@@ -817,7 +821,7 @@ export default function ConfigPreview() {
               className="flex items-center gap-1.5 w-full text-left py-1 mb-2"
             >
               <ShieldCheck size={12} className="text-indigo-400" />
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">配置校验</span>
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('preview.validationHeading')}</span>
             </button>
             <ValidationPanel />
           </div>
@@ -844,7 +848,7 @@ export default function ConfigPreview() {
             <button
               onClick={() => setEditingFilename(true)}
               className="text-xs font-mono text-gray-600 dark:text-gray-300 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
-              title="点击编辑文件名"
+              title={t('preview.filenameTitle')}
             >
               {filename}
             </button>
@@ -858,7 +862,7 @@ export default function ConfigPreview() {
                 ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                 : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400'
             }`}
-            title="切换自动换行"
+            title={t('preview.softWrapTitle')}
           >
             soft wrap
           </button>
@@ -872,16 +876,16 @@ export default function ConfigPreview() {
                   ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
                   : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400'
               }`}
-              title={flowArrays ? '当前：行内压缩模式，点击切换为展开模式' : '当前：展开模式，点击切换为行内压缩模式'}
+              title={flowArrays ? t('preview.flowArraysTitle_on') : t('preview.flowArraysTitle_off')}
             >
-              {flowArrays ? '行内压缩' : '展开模式'}
+              {flowArrays ? t('preview.flowArraysOn') : t('preview.flowArraysOff')}
             </button>
             {flowArrays && (
               <span className="relative group/tip cursor-default select-none text-[10px] text-amber-600 dark:text-amber-400">
-                ⚠️ 不推荐
+                {t('preview.flowArraysWarn')}
                 <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 rounded-lg bg-gray-900 dark:bg-gray-700 text-white text-[11px] leading-relaxed px-2.5 py-2 opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 shadow-lg whitespace-normal text-center">
                   <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700" />
-                  行内压缩使用 YAML flow 语法，部分 Mihomo 版本可能无法正确解析，建议使用展开模式
+                  {t('preview.flowArraysWarnTooltip')}
                 </span>
               </span>
             )}
@@ -891,17 +895,17 @@ export default function ConfigPreview() {
             {manualYaml !== null && (
               <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
                 <Pencil size={11} />
-                已手动编辑
+                {t('preview.manualEdited')}
               </span>
             )}
             {manualYaml !== null && (
               <button
                 onClick={handleReset}
-                title="丢弃手动编辑，恢复自动生成内容"
+                title={t('preview.resetTitle')}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-amber-400 dark:border-amber-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 dark:text-amber-400 transition-colors"
               >
                 <RotateCcw size={13} />
-                重置
+                {t('preview.resetManual')}
               </button>
             )}
             <button
@@ -909,21 +913,21 @@ export default function ConfigPreview() {
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
             >
               <Upload size={13} />
-              导入配置
+              {t('preview.importConfig')}
             </button>
             <button
               onClick={handleCopy}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
             >
               {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-              {copied ? '已复制' : '复制'}
+              {copied ? t('preview.copied') : t('preview.copy')}
             </button>
             <button
               onClick={handleDownload}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
             >
               <Download size={13} />
-              导出
+              {t('preview.export')}
             </button>
           </div>
         </div>
@@ -941,20 +945,20 @@ export default function ConfigPreview() {
 
         {/* Stats bar */}
         <div className="shrink-0 border-t border-gray-800 px-4 py-1.5 flex items-center gap-4 text-xs text-gray-500 bg-gray-950">
-          <span>节点 <strong className="text-gray-400">{allProxies.length}</strong></span>
-          <span>代理组 <strong className="text-gray-400">{proxyGroups.length}</strong></span>
-          <span>规则集 <strong className="text-gray-400">{enabledProviders.length}/{ruleProviders.length}</strong></span>
-          <span>规则 <strong className="text-gray-400">{rules.length}</strong></span>
+          <span>{t('preview.statNodes')} <strong className="text-gray-400">{allProxies.length}</strong></span>
+          <span>{t('preview.statGroups')} <strong className="text-gray-400">{proxyGroups.length}</strong></span>
+          <span>{t('preview.statProviders')} <strong className="text-gray-400">{enabledProviders.length}/{ruleProviders.length}</strong></span>
+          <span>{t('preview.statRules')} <strong className="text-gray-400">{rules.length}</strong></span>
           <span className="ml-auto flex items-center gap-1">
             {yamlValidation.valid ? (
               <>
                 <CheckCircle size={12} className="text-green-500" />
-                <span className="text-green-500">YAML 合法</span>
+                <span className="text-green-500">{t('preview.yamlValid')}</span>
               </>
             ) : (
               <>
                 <XCircle size={12} className="text-red-400" />
-                <span className="text-red-400" title={yamlValidation.error}>YAML 错误：{yamlValidation.error}</span>
+                <span className="text-red-400" title={yamlValidation.error}>{t('preview.yamlError', { error: yamlValidation.error })}</span>
               </>
             )}
           </span>

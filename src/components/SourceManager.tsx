@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { resolveToIp, fetchIpInfoBatch, IP_RE } from '../utils/ipUtils'
 import type { IpData } from '../utils/ipUtils'
 import 'leaflet/dist/leaflet.css'
@@ -62,11 +63,12 @@ const TYPE_TEXT: Record<string, string> = {
 }
 
 function ProtocolChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
+  const { t } = useTranslation()
   const counts = useMemo(() => {
     const map = new Map<string, number>()
     for (const p of proxies) {
-      const t = (String(p.type ?? '')).toLowerCase()
-      map.set(t, (map.get(t) ?? 0) + 1)
+      const tp = (String(p.type ?? '')).toLowerCase()
+      map.set(tp, (map.get(tp) ?? 0) + 1)
     }
     return [...map.entries()].sort((a, b) => b[1] - a[1])
   }, [proxies])
@@ -75,11 +77,11 @@ function ProtocolChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
   const total = proxies.length
   const top = counts.slice(0, 5)
   const otherCount = counts.slice(5).reduce((s, [, n]) => s + n, 0)
-  const rows = otherCount > 0 ? [...top, ['其他', otherCount] as [string, number]] : top
+  const rows = otherCount > 0 ? [...top, [t('source.geoOther'), otherCount] as [string, number]] : top
 
   return (
     <div className="border-t border-gray-100 dark:border-gray-700/50 px-4 py-2.5 space-y-1.5">
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">协议分布</p>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">{t('source.protocolDistribution')}</p>
       {rows.map(([type, count]) => {
         const pct = (count / total) * 100
         const barColor = TYPE_COLOR[type] ?? 'bg-gray-400'
@@ -113,6 +115,7 @@ type GeoScanState = 'idle' | 'loading' | 'done' | 'error'
 type MapMarker = { id: string, lat: number, lon: number, count: number, city: string, cc: string }
 
 function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
+  const { t } = useTranslation()
   const [state, setState] = useState<GeoScanState>('idle')
   const [progress, setProgress] = useState({ done: 0, total: 0 })
   const [geoMap, setGeoMap] = useState<Map<string, { country: string; cc: string; count: number }>>(new Map())
@@ -126,7 +129,6 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
     setError('')
 
     try {
-      // Step 1: resolve all node servers to IPs (concurrently, 20 at a time)
       const CONCURRENCY = 20
       const ipResults: { name: string; ip: string }[] = []
       for (let i = 0; i < proxies.length; i += CONCURRENCY) {
@@ -145,7 +147,6 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
         setProgress({ done: Math.min(i + CONCURRENCY, proxies.length), total: proxies.length })
       }
 
-      // Step 2: deduplicate IPs, batch-fetch geo info
       const uniqueIps = [...new Set(ipResults.map((r) => r.ip))]
       const geoArr: IpData[] = []
       for (let i = 0; i < uniqueIps.length; i += 100) {
@@ -155,7 +156,6 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
       const ipToGeo = new Map<string, IpData>()
       uniqueIps.forEach((ip, i) => ipToGeo.set(ip, geoArr[i]))
 
-      // Step 3: aggregate by country and coordinates
       const countMap = new Map<string, { country: string; cc: string; count: number }>()
       const locMap = new Map<string, MapMarker>()
 
@@ -164,7 +164,7 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
         if (!geo || geo.status !== 'success') continue
         const cc = geo.countryCode ?? 'XX'
         const country = geo.country ?? cc
-        
+
         const prev = countMap.get(cc)
         countMap.set(cc, { country, cc, count: (prev?.count ?? 0) + 1 })
 
@@ -201,13 +201,13 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
     <div className="border-t border-gray-100 dark:border-gray-700/50 px-4 py-2.5">
       <div className="flex items-center gap-2 mb-2">
         <MapPin size={11} className="text-gray-400 shrink-0" />
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest flex-1">地区分布</p>
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest flex-1">{t('source.geoDistribution')}</p>
         {state === 'idle' || state === 'error' ? (
           <button
             onClick={handleScan}
             className="text-[10px] px-2 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 font-medium transition-all"
           >
-            {state === 'error' ? '重试' : '查询'}
+            {state === 'error' ? t('source.retry') : t('source.query')}
           </button>
         ) : state === 'loading' ? (
           <span className="text-[10px] text-gray-400 flex items-center gap-1">
@@ -218,7 +218,7 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
           <button
             onClick={handleScan}
             className="text-[10px] px-2 py-1 rounded-lg text-gray-400 hover:text-indigo-500 transition-colors"
-            title="重新查询"
+            title={t('source.requery')}
           >
             <RefreshCw size={10} />
           </button>
@@ -230,12 +230,11 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
       )}
 
       {state === 'done' && rows.length === 0 && (
-        <p className="text-[10px] text-gray-400">未能解析任何节点 IP</p>
+        <p className="text-[10px] text-gray-400">{t('source.noIpResolved')}</p>
       )}
 
       {state === 'done' && rows.length > 0 && (
         <div className="space-y-4 pt-2">
-          {/* Interactive Map */}
           {markers.length > 0 && (
             <div className="h-56 w-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-inner relative z-0">
               <MapContainer center={[20, 0]} zoom={1} style={{ height: '100%', width: '100%', background: '#e5e7eb' }} scrollWheelZoom={true}>
@@ -252,7 +251,7 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
                   >
                     <Tooltip sticky>
                       <div className="text-xs font-mono">
-                        {countryFlag(m.cc)} {m.city}: <strong>{m.count}</strong> 个节点
+                        {countryFlag(m.cc)} {m.city}: <strong>{m.count}</strong> {t('source.geoNodeCount', { count: m.count }).replace(String(m.count), '').trim() || '个节点'}
                       </div>
                     </Tooltip>
                   </CircleMarker>
@@ -261,7 +260,6 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
             </div>
           )}
 
-          {/* List distribution */}
           <div className="space-y-1.5">
           {rows.map((r) => {
             const pct = (r.count / total) * 100
@@ -288,6 +286,7 @@ function GeoChart({ proxies }: { proxies: SourceConfig['proxies'] }) {
 
 // ── Subscription Info ─────────────────────────────────────────────────────────
 function SubscriptionInfoBar({ info }: { info: SubscriptionInfo }) {
+  const { t } = useTranslation()
   const used = info.upload + info.download
   const pct = info.total > 0 ? Math.min((used / info.total) * 100, 100) : 0
   const isExpiringSoon = info.expire && info.expire - Date.now() / 1000 < 7 * 86400
@@ -295,7 +294,6 @@ function SubscriptionInfoBar({ info }: { info: SubscriptionInfo }) {
 
   return (
     <div className="border-t border-gray-100 dark:border-gray-700/50 px-4 py-2.5 space-y-1">
-      {/* Usage bar */}
       <div className="flex items-center gap-2">
         <Database size={11} className="text-gray-400 shrink-0" />
         <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -310,18 +308,17 @@ function SubscriptionInfoBar({ info }: { info: SubscriptionInfo }) {
           {formatBytes(used)} / {formatBytes(info.total)}
         </span>
       </div>
-      {/* Activity: upload + download */}
       <div className="flex items-center gap-3 text-[10px] text-gray-400">
         <span className="flex items-center gap-1">
           <Activity size={10} />
-          上传 {formatBytes(info.upload)} · 下载 {formatBytes(info.download)}
+          {t('source.upload_used', { upload: formatBytes(info.upload), download: formatBytes(info.download) })}
         </span>
         {info.expire !== undefined && (
           <span className={`flex items-center gap-1 ml-auto font-medium ${
             isExpired ? 'text-red-500' : isExpiringSoon ? 'text-amber-500' : 'text-gray-400'
           }`}>
             <Clock size={10} />
-            {isExpired ? '已到期' : `到期 ${formatExpire(info.expire)}`}
+            {isExpired ? t('source.expired') : t('source.expireDate', { date: formatExpire(info.expire) })}
           </span>
         )}
       </div>
@@ -331,6 +328,7 @@ function SubscriptionInfoBar({ info }: { info: SubscriptionInfo }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function SourceManager() {
+  const { t } = useTranslation()
   const { sources, proxyGroups, addSource, updateSource, removeSource, resetSources } = useAppStore()
   const [newUrl, setNewUrl] = useState('')
   const [newName, setNewName] = useState('')
@@ -353,7 +351,6 @@ export default function SourceManager() {
     }
   }
 
-  // Global dup summary for the top banner
   const { dupProxyCount: totalDupProxy, dupGroupCount: totalDupGroup } = useMemo(() => {
     const nameMap = new Map<string, number>()
     for (const src of sources) {
@@ -401,7 +398,6 @@ export default function SourceManager() {
     setRefreshingAll(true)
     setRefreshProgress({ done: 0, total: activeSources.length })
 
-    // 并发刷新，每完成一个更新进度
     await Promise.allSettled(
       activeSources.map(async (src) => {
         await loadSource(src.id, src.url, src.userAgent)
@@ -440,7 +436,7 @@ export default function SourceManager() {
         {/* Header row */}
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-            机场订阅源
+            {t('source.heading')}
           </h2>
           <div className="flex items-center gap-2">
           {sources.length > 0 && (
@@ -453,7 +449,7 @@ export default function SourceManager() {
               }`}
             >
               <Trash2 size={11} />
-              {confirmReset ? '确认重置？' : '重置'}
+              {confirmReset ? t('source.confirmReset') : t('source.reset')}
             </button>
           )}
           {hasRefreshableSources && (
@@ -464,8 +460,8 @@ export default function SourceManager() {
             >
               {refreshingAll
                 ? <><Loader size={12} className="animate-spin" />
-                    {refreshProgress ? `${refreshProgress.done}/${refreshProgress.total}` : '刷新中…'}</>
-                : <><RotateCcw size={12} />刷新全部</>
+                    {refreshProgress ? `${refreshProgress.done}/${refreshProgress.total}` : t('source.refreshing')}</>
+                : <><RotateCcw size={12} />{t('source.refreshAll')}</>
               }
             </button>
           )}
@@ -475,18 +471,18 @@ export default function SourceManager() {
         <div className="flex items-start gap-2 mb-3 px-3 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/15 border border-emerald-200 dark:border-emerald-800/60">
           <ShieldCheck size={13} className="text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
           <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed">
-            订阅请求通过部署在你自己 Vercel 账号下的 Edge Function（<code className="font-mono bg-emerald-100 dark:bg-emerald-900/40 px-1 rounded">api/proxy.ts</code>）转发，不经过任何第三方服务，透明可审计。
+            {t('source.proxyNotice').replace('<code>', '').replace('</code>', '')}
           </p>
         </div>
         <div className="space-y-2.5">
           <div className="flex items-center gap-2">
-            <input ref={nameInputRef} type="text" placeholder="订阅名称（可选）" value={newName}
+            <input ref={nameInputRef} type="text" placeholder={t('source.namePlaceholder')} value={newName}
               onChange={(e) => setNewName(e.target.value)}
               className="flex-1 text-sm px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 focus:bg-white dark:focus:bg-gray-800" />
             <EmojiPicker inputRef={nameInputRef} value={newName} onChange={setNewName} onSelect={(e) => setNewName((n) => n + e)} />
           </div>
           <div className="flex gap-2">
-            <input type="text" placeholder="订阅 URL" value={newUrl}
+            <input type="text" placeholder={t('source.urlPlaceholder')} value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddSource()}
               className="flex-1 text-sm px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 focus:bg-white dark:focus:bg-gray-800" />
@@ -496,10 +492,10 @@ export default function SourceManager() {
             </button>
           </div>
           <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 rounded-xl px-3 py-2 leading-relaxed">
-            温馨提示：不是所有机场都支持订阅链接直接导入，部分机场可能仅提供特定客户端格式或需要手动下载配置文件。
+            {t('source.airportHint')}
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 shrink-0 w-20">User-Agent</span>
+            <span className="text-xs text-gray-500 shrink-0 w-20">{t('source.userAgent')}</span>
             <div className="relative flex-1">
               <select value={newUa} onChange={(e) => setNewUa(e.target.value)}
                 className="w-full text-xs pl-3 pr-7 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 appearance-none cursor-pointer">
@@ -509,19 +505,19 @@ export default function SourceManager() {
             </div>
           </div>
           {newUa === '__custom__' ? (
-            <input type="text" placeholder="如：clash-verge/v2.3.0" value={customUa}
+            <input type="text" placeholder={t('source.customUaPlaceholder')} value={customUa}
               onChange={(e) => setCustomUa(e.target.value)}
               className="w-full text-xs px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono" />
           ) : (
             <p className="text-xs text-gray-400">
-              机场通过 UA 识别客户端并返回对应节点格式。
+              {t('source.uaHint')}
               <a href="https://github.com/clash-verge-rev/clash-verge-rev/releases"
-                target="_blank" rel="noopener noreferrer" className="ml-1 text-indigo-500 hover:text-indigo-400 hover:underline">查看最新版本 →</a>
+                target="_blank" rel="noopener noreferrer" className="ml-1 text-indigo-500 hover:text-indigo-400 hover:underline">{t('source.uaCheckLatest')}</a>
             </p>
           )}
           <label className="flex items-center gap-2.5 px-3 py-2.5 text-sm border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all text-gray-400 dark:text-gray-500">
             <Upload size={14} />
-            <span>上传本地 YAML 文件</span>
+            <span>{t('source.uploadYaml')}</span>
             <input type="file" accept=".yaml,.yml" className="hidden" onChange={handleFileUpload} />
           </label>
         </div>
@@ -533,10 +529,10 @@ export default function SourceManager() {
           <div className="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/15 px-3.5 py-3 flex items-start gap-2.5">
             <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
             <p className="text-xs text-amber-700 dark:text-amber-400">
-              {totalDupProxy > 0 && <span>检测到 <strong>{totalDupProxy}</strong> 个重复节点名</span>}
+              {totalDupProxy > 0 && <span dangerouslySetInnerHTML={{ __html: t('source.dupProxy', { count: totalDupProxy }) }} />}
               {totalDupProxy > 0 && totalDupGroup > 0 && <span className="mx-1">·</span>}
-              {totalDupGroup > 0 && <span><strong>{totalDupGroup}</strong> 个重复代理组名</span>}
-              ，建议为各订阅源批量加前缀做区分
+              {totalDupGroup > 0 && <span dangerouslySetInnerHTML={{ __html: t('source.dupGroup', { count: totalDupGroup }) }} />}
+              {t('source.dupBanner')}
             </p>
           </div>
         )}
@@ -546,7 +542,7 @@ export default function SourceManager() {
             <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
               <Globe size={28} className="opacity-60" />
             </div>
-            <p className="text-sm font-medium text-gray-400 dark:text-gray-500">添加机场订阅源开始使用</p>
+            <p className="text-sm font-medium text-gray-400 dark:text-gray-500">{t('source.empty')}</p>
           </div>
         )}
 
@@ -571,6 +567,7 @@ function SourceCard({
   onReload: () => void
   onRemove: () => void
 }) {
+  const { t } = useTranslation()
   const { sources, updateProxy, applyPrefixToSource, importSourceGroup, proxyGroups } = useAppStore()
 
   const dupProxyCount = useMemo(() => {
@@ -630,7 +627,6 @@ function SourceCard({
           <p className="text-xs text-gray-400 dark:text-gray-500 truncate font-mono">{source.url}</p>
           {source.userAgent && <p className="text-xs text-indigo-400 truncate font-mono">UA: {source.userAgent}</p>}
 
-          {/* ── Inline subscription traffic info ── */}
           {source.subscriptionInfo && (() => {
             const info = source.subscriptionInfo!
             const used = info.upload + info.download
@@ -639,7 +635,6 @@ function SourceCard({
             const isExpired = info.expire && info.expire < Date.now() / 1000
             return (
               <div className="mt-1.5 space-y-1">
-                {/* Text row */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium tabular-nums">
                     {formatBytes(used)}
@@ -647,18 +642,17 @@ function SourceCard({
                     {formatBytes(info.total)}
                     <span className="text-gray-300 dark:text-gray-600 mx-1.5">·</span>
                     <span className={pct >= 90 ? 'text-red-500 font-semibold' : pct >= 70 ? 'text-amber-500 font-semibold' : 'text-indigo-500'}>
-                      {pct.toFixed(1)}% 已用
+                      {t('source.usedPercent', { pct: pct.toFixed(1) })}
                     </span>
                   </span>
                   {info.expire !== undefined && (
                     <span className={`text-[11px] font-medium ${
                       isExpired ? 'text-red-500' : isExpiringSoon ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500'
                     }`}>
-                      {isExpired ? '⚠️ 已到期' : `到期 ${formatExpire(info.expire)}`}
+                      {isExpired ? t('source.warningExpired') : t('source.expireDate', { date: formatExpire(info.expire) })}
                     </span>
                   )}
                 </div>
-                {/* Progress bar */}
                 <div className="h-1 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ${
@@ -674,17 +668,17 @@ function SourceCard({
         <div className="flex items-center gap-1 shrink-0">
           {source.status === 'success' && (
             <span className="text-xs bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-medium border border-emerald-200 dark:border-emerald-800/50">
-              {source.proxies.length} 节点
+              {t('source.nodeCount', { count: source.proxies.length })}
             </span>
           )}
           {importedGroups.length > 0 && (
             <span className="text-xs bg-indigo-50 dark:bg-indigo-900/25 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded-full font-medium border border-indigo-200 dark:border-indigo-800/50">
-              {importedGroups.length} 代理组
+              {t('source.groupCount', { count: importedGroups.length })}
             </span>
           )}
           {dupProxyCount > 0 && (
             <span className="text-xs bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium border border-amber-200 dark:border-amber-800/50">
-              {dupProxyCount} 重复
+              {t('source.dupCount', { count: dupProxyCount })}
             </span>
           )}
           <button onClick={onReload} disabled={source.status === 'loading'}
@@ -704,12 +698,10 @@ function SourceCard({
         </div>
       )}
 
-      {/* Protocol chart */}
       {source.status === 'success' && source.proxies.length > 0 && (
         <ProtocolChart proxies={source.proxies} />
       )}
 
-      {/* Geo distribution chart (on-demand) */}
       {source.status === 'success' && source.proxies.length > 0 && (
         <GeoChart proxies={source.proxies} />
       )}
@@ -720,18 +712,18 @@ function SourceCard({
           <Tag size={11} className="text-gray-400 shrink-0" />
           <input type="text" value={prefix} onChange={(e) => setPrefix(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleApplyPrefix()}
-            placeholder="批量前缀…"
+            placeholder={t('source.batchPrefix')}
             className="flex-1 min-w-0 text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400" />
           <button onClick={handleApplyPrefix} disabled={!prefix.trim()}
             className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white font-medium transition-all shrink-0">
-            应用
+            {t('source.applyPrefix')}
           </button>
           {(dupProxyCount > 0 || dupGroupCount > 0) && (
             <button onClick={handleQuickPrefix}
               className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all shrink-0"
               title={`前缀 "${source.name.replace(/\s+/g, '-')}|"`}>
               <AlertTriangle size={11} />
-              一键加源名前缀
+              {t('source.quickPrefix')}
             </button>
           )}
           {source.proxies.length > 0 && (
@@ -747,10 +739,10 @@ function SourceCard({
               </select>
               <button
                 onClick={() => source.proxies.forEach((_, i) => updateProxy(source.id, i, { 'ip-version': batchIpVersion }))}
-                title="批量设置该订阅源所有节点的 ip-version"
+                title={t('source.batchSetIpVersion')}
                 className="text-xs px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 font-medium transition-all whitespace-nowrap"
               >
-                批量设 ip-version
+                {t('source.batchSetIpVersion')}
               </button>
             </div>
           )}
@@ -759,14 +751,14 @@ function SourceCard({
               <button onClick={() => setShowProxies((v) => !v)}
                 className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 px-1.5 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all">
                 {showProxies ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                节点
+                {t('source.nodes')}
               </button>
             )}
             {importedGroups.length > 0 && (
               <button onClick={() => setShowGroups((v) => !v)}
                 className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 px-1.5 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all">
                 {showGroups ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                代理组
+                {t('source.proxyGroups')}
               </button>
             )}
           </div>
@@ -778,11 +770,11 @@ function SourceCard({
         <div className="border-t border-gray-100 dark:border-gray-700/50">
           <div className="px-4 pt-2.5 pb-1.5">
             <input type="text" value={filter} onChange={(e) => setFilter(e.target.value)}
-              placeholder="过滤节点名…"
+              placeholder={t('source.filterPlaceholder')}
               className="w-full text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400 focus:bg-white dark:focus:bg-gray-800" />
           </div>
           <div className="max-h-52 overflow-y-auto px-3 pb-2">
-            {filtered.length === 0 && <p className="text-xs text-gray-400 text-center py-3">无匹配节点</p>}
+            {filtered.length === 0 && <p className="text-xs text-gray-400 text-center py-3">{t('source.noMatch')}</p>}
             {filtered.map((proxy) => {
               const realIdx = source.proxies.indexOf(proxy)
               return (
@@ -801,13 +793,13 @@ function SourceCard({
       {showGroups && importedGroups.length > 0 && (
         <div className="border-t border-gray-100 dark:border-gray-700/50">
           <div className="px-4 py-2.5 flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">来源代理组</span>
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">{t('source.sourceGroups')}</span>
             {dupGroupCount > 0 && (
               <button onClick={handleQuickPrefix}
                 className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 transition-all"
                 title={`代理组名加前缀 "${source.name.replace(/\s+/g, '-')}|"`}>
                 <AlertTriangle size={11} />
-                一键加前缀
+                {t('source.addSource')}
               </button>
             )}
             <button
@@ -817,7 +809,7 @@ function SourceCard({
                 }
               }}
               className="ml-auto text-xs px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-all">
-              全部导入
+              {t('source.importAll')}
             </button>
           </div>
           <div className="max-h-52 overflow-y-auto px-3 pb-2.5 space-y-0.5">
@@ -833,18 +825,18 @@ function SourceCard({
                     : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                   }`}>{g.type}</span>
                   <span className="flex-1 min-w-0 text-xs text-gray-700 dark:text-gray-300 truncate">{g.name}</span>
-                  <span className="text-xs text-gray-400 shrink-0">{g.proxies.length} 节点</span>
+                  <span className="text-xs text-gray-400 shrink-0">{t('source.nodeCount', { count: g.proxies.length })}</span>
                   {isDup && (
                     <span className="shrink-0" title={dupGroupNames.get(g.name)?.join(', ')}>
                       <AlertTriangle size={11} className="text-amber-500" />
                     </span>
                   )}
                   {alreadyIn ? (
-                    <span className="text-xs text-emerald-500 shrink-0 flex items-center gap-0.5 font-medium"><Check size={11} />已导入</span>
+                    <span className="text-xs text-emerald-500 shrink-0 flex items-center gap-0.5 font-medium"><Check size={11} />{t('source.imported')}</span>
                   ) : (
                     <button onClick={() => importSourceGroup(source.id, g.name)}
                       className="text-xs px-2 py-0.5 rounded-lg border border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 font-medium transition-all shrink-0">
-                      导入
+                      {t('source.import')}
                     </button>
                   )}
                 </div>
@@ -866,14 +858,15 @@ function ProxyRow({ name, type, server, ipVersion, onChange, onChangeIpVersion }
   onChange: (n: string) => void
   onChangeIpVersion?: (v: string) => void
 }) {
+  const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(name)
   const [ipState, setIpState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [resolvedIp, setResolvedIp] = useState<string>('')
 
   const commit = () => {
-    const t = draft.trim()
-    if (t && t !== name) onChange(t); else setDraft(name)
+    const tp = draft.trim()
+    if (tp && tp !== name) onChange(tp); else setDraft(name)
     setEditing(false)
   }
 
@@ -921,13 +914,12 @@ function ProxyRow({ name, type, server, ipVersion, onChange, onChangeIpVersion }
           {ipState === 'done' && resolvedIp && !IP_RE.test(server ?? '') && (
             <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 shrink-0">{resolvedIp}</span>
           )}
-          {/* ip-version badge / inline selector */}
           {onChangeIpVersion && (
             <select
               value={ipVersion ?? ''}
               onChange={(e) => onChangeIpVersion(e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              title="ip-version"
+              title={t('source.ipVersionTitle')}
               className={`shrink-0 text-[10px] rounded px-1 py-0.5 border focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer transition-colors
                 ${ipVersion
                   ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
@@ -935,7 +927,7 @@ function ProxyRow({ name, type, server, ipVersion, onChange, onChangeIpVersion }
                 }`}
             >
               {IP_VERSION_OPTS.map((o) => (
-                <option key={o.value} value={o.value}>{o.value || '默认'}</option>
+                <option key={o.value} value={o.value}>{o.value || t('source.defaultIpVersion')}</option>
               ))}
             </select>
           )}
@@ -943,7 +935,7 @@ function ProxyRow({ name, type, server, ipVersion, onChange, onChangeIpVersion }
             <button
               onClick={handleCheckIp}
               disabled={ipState === 'loading'}
-              title={ipState === 'done' ? `IP: ${resolvedIp} — 点击重新查询` : `查询 IP 质量（${server}）`}
+              title={ipState === 'done' ? t('source.ipQualityTitle_done', { ip: resolvedIp }) : t('source.ipQualityTitle_idle', { server })}
               className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all shrink-0 ${
                 ipState === 'error' ? 'text-red-400' :
                 ipState === 'done'  ? 'text-emerald-500 opacity-100' :

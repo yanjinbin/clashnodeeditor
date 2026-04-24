@@ -1,4 +1,6 @@
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from './store/useAppStore'
+import { useUIStore } from './store/useUIStore'
 import SourceManager from './components/SourceManager'
 import NodeManager from './components/NodeManager'
 import ProxyGroupEditor from './components/ProxyGroupEditor'
@@ -7,22 +9,24 @@ import ConfigPreview from './components/ConfigPreview'
 import AirportInviteBanner from './components/AirportInviteBanner'
 import NovproxyBanner from './components/NovproxyBanner'
 import { useVersionCheck } from './hooks/useVersionCheck'
-import { Globe, Server, Users, Shield, FileText, RefreshCw } from 'lucide-react'
-
-const TABS = [
-  { id: 'sources' as const, label: '订阅源', icon: Globe },
-  { id: 'nodes'   as const, label: '手动节点', icon: Server },
-  { id: 'groups'  as const, label: '代理组', icon: Users },
-  { id: 'rules'   as const, label: '规则', icon: Shield },
-  { id: 'preview' as const, label: '预览导出', icon: FileText },
-]
+import { Globe, Server, Users, Shield, FileText, RefreshCw, Sun, Moon } from 'lucide-react'
 
 // 左右 banner 列宽 — xl:144px，与 max-w-5xl(1024px) 合计 1312px ≤ 1280px 时自动隐藏
 const AD_COL = 'w-36' // 144px
 
 export default function App() {
+  const { t } = useTranslation()
   const { activeTab, setActiveTab } = useAppStore()
   const { needsUpdate, countdown, reloadNow } = useVersionCheck()
+  const { theme, toggleTheme, language, toggleLanguage } = useUIStore()
+
+  const TABS = [
+    { id: 'sources' as const, label: t('app.tabs.sources'), icon: Globe },
+    { id: 'nodes'   as const, label: t('app.tabs.nodes'),   icon: Server },
+    { id: 'groups'  as const, label: t('app.tabs.groups'),  icon: Users },
+    { id: 'rules'   as const, label: t('app.tabs.rules'),   icon: Shield },
+    { id: 'preview' as const, label: t('app.tabs.preview'), icon: FileText },
+  ]
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
@@ -31,12 +35,12 @@ export default function App() {
       {needsUpdate && (
         <div className="shrink-0 flex items-center justify-center gap-3 px-4 py-2 bg-indigo-600 text-white text-xs font-medium z-50">
           <RefreshCw size={13} className="animate-spin" />
-          <span>检测到新版本，将在 <strong>{countdown}</strong> 秒后自动刷新页面…</span>
+          <span>{t('app.update.detected', { countdown })} <strong>{countdown}</strong></span>
           <button
             onClick={reloadNow}
             className="ml-2 px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 transition-colors font-semibold"
           >
-            立即刷新
+            {t('app.update.reloadNow')}
           </button>
         </div>
       )}
@@ -54,13 +58,35 @@ export default function App() {
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-200 dark:shadow-indigo-900/40 shrink-0">
                   <span className="text-base leading-none select-none">✈️</span>
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h1 className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">
-                    多源机场节点配置编辑器 — Mihomo 订阅合并 & 代理组管理工具
+                    {t('app.title')}
                   </h1>
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono leading-tight">
                     {new Date(__BUILD_TIME__).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}
                   </p>
+                </div>
+
+                {/* Theme + Language toggles */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {/* Theme toggle */}
+                  <button
+                    onClick={toggleTheme}
+                    title={theme === 'dark' ? t('app.theme.light') : t('app.theme.dark')}
+                    className="p-2 rounded-lg text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+                  </button>
+
+                  {/* Language toggle */}
+                  <button
+                    onClick={toggleLanguage}
+                    className="px-2 py-1 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none"
+                  >
+                    <span className={language === 'zh' ? 'font-bold text-indigo-600 dark:text-indigo-400' : ''}>中</span>
+                    <span className="mx-0.5 text-gray-300 dark:text-gray-600">/</span>
+                    <span className={language === 'en' ? 'font-bold text-indigo-600 dark:text-indigo-400' : ''}>EN</span>
+                  </button>
                 </div>
               </div>
 
@@ -107,7 +133,7 @@ export default function App() {
           <AirportInviteBanner
             href="https://shanhai.cfd/#/register?code=GrELQII8"
             imageSrc="/airport/shanhai-invite-banner.svg"
-            title="山海✈️ 机场邀请链接"
+            title={t('app.airport.shanhai')}
           />
         </aside>
 
@@ -128,7 +154,7 @@ export default function App() {
           <AirportInviteBanner
             href="https://my.yushe.org/#/register?code=KITVDFtX"
             imageSrc="/airport/yushe-invite-banner.svg"
-            title="渔舍✈️ 机场邀请链接"
+            title={t('app.airport.yushe')}
           />
         </aside>
 

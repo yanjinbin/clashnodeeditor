@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Pencil, Trash2, Link2, ExternalLink, Wifi, WifiOff, Loader2, ChevronRight, ChevronDown, Copy, Check, AlertTriangle, X, HelpCircle } from 'lucide-react'
 import { Claude, Gemini, OpenAI } from '@lobehub/icons'
 import { useAppStore } from '../store/useAppStore'
@@ -57,12 +58,12 @@ const TYPE_COLORS: Record<string, string> = {
 // ── Form state ────────────────────────────────────────────────────────────────
 
 const IP_VERSION_OPTS = [
-  { value: '',            label: '默认（dual）' },
-  { value: 'ipv4',        label: 'ipv4（仅 IPv4）' },
-  { value: 'ipv6',        label: 'ipv6（仅 IPv6）' },
-  { value: 'dual',        label: 'dual（双栈）' },
-  { value: 'ipv4-prefer', label: 'ipv4-prefer（优先 IPv4）' },
-  { value: 'ipv6-prefer', label: 'ipv6-prefer（优先 IPv6）' },
+  { value: '',            label: 'Default (dual)' },
+  { value: 'ipv4',        label: 'ipv4 (IPv4 only)' },
+  { value: 'ipv6',        label: 'ipv6 (IPv6 only)' },
+  { value: 'dual',        label: 'dual (dual-stack)' },
+  { value: 'ipv4-prefer', label: 'ipv4-prefer (prefer IPv4)' },
+  { value: 'ipv6-prefer', label: 'ipv6-prefer (prefer IPv6)' },
 ]
 
 interface FormState {
@@ -354,6 +355,7 @@ function SearchableSelect({
   onChange: (v: string) => void
   groups: { label: string; items: { value: string; label: string }[] }[]
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
@@ -387,7 +389,7 @@ function SearchableSelect({
           className="w-full flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <span className={`flex-1 truncate ${value ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
-            {value ? selectedLabel : '— 无（直接连接）'}
+            {value ? selectedLabel : t('node.modal.labelDialerNone')}
           </span>
           {value && (
             <span
@@ -410,7 +412,7 @@ function SearchableSelect({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}
-                placeholder="搜索代理 / 代理组…"
+                placeholder={t('node.modal.searchDialer')}
                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -420,7 +422,7 @@ function SearchableSelect({
                 onClick={() => { onChange(''); setOpen(false) }}
                 className={`w-full text-left px-3 py-2 text-xs transition-colors ${value === '' ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
               >
-                — 无（直接连接）
+                {t('node.modal.labelDialerNone')}
               </button>
               {filtered.map((group) => (
                 <div key={group.label}>
@@ -440,7 +442,7 @@ function SearchableSelect({
                 </div>
               ))}
               {filtered.length === 0 && q && (
-                <p className="px-3 py-4 text-xs text-gray-400 dark:text-gray-500 text-center">无匹配结果</p>
+                <p className="px-3 py-4 text-xs text-gray-400 dark:text-gray-500 text-center">{t('node.modal.noDialerMatch')}</p>
               )}
             </div>
           </div>
@@ -460,19 +462,21 @@ interface IpCheckState {
 }
 
 function IpQualityBadge({ data }: { data: IpData }) {
+  const { t } = useTranslation()
   const isNative = !data.proxy && !data.hosting
   return (
     <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md ${isNative ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'}`}>
       {isNative ? <Wifi size={11} /> : <WifiOff size={11} />}
       <span className="font-medium">{data.countryCode} · {data.isp}</span>
-      {data.proxy && <span className="opacity-70">(代理IP)</span>}
-      {data.hosting && <span className="opacity-70">(数据中心)</span>}
-      {isNative && <span className="opacity-70">(住宅/原生)</span>}
+      {data.proxy && <span className="opacity-70">{t('node.ip.proxyIp')}</span>}
+      {data.hosting && <span className="opacity-70">{t('node.ip.datacenter')}</span>}
+      {isNative && <span className="opacity-70">{t('node.ip.residential')}</span>}
     </div>
   )
 }
 
 function IpDetectionPanel({ proxy, allGroupNames }: { proxy: Proxy; allGroupNames: string[] }) {
+  const { t } = useTranslation()
   const [check, setCheck] = useState<IpCheckState>({ status: 'idle' })
   const [copied, setCopied] = useState(false)
 
@@ -513,13 +517,13 @@ function IpDetectionPanel({ proxy, allGroupNames }: { proxy: Proxy; allGroupName
       {/* Chain topology */}
       {dialerProxy && (
         <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">链式代理拓扑</p>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('node.ip.chainTopology')}</p>
           <div className="flex items-center gap-1.5 flex-wrap text-sm">
-            <span className="px-2 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-mono">本地</span>
+            <span className="px-2 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-mono">{t('node.ip.local')}</span>
             <ChevronRight size={14} className="text-gray-400 shrink-0" />
             <span className={`px-2 py-0.5 rounded-md border text-xs font-medium ${allGroupNames.includes(dialerProxy) ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-700' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700'}`}>
               {dialerProxy}
-              <span className="ml-1 font-normal opacity-60">{allGroupNames.includes(dialerProxy) ? '(代理组)' : '(节点)'}</span>
+              <span className="ml-1 font-normal opacity-60">{allGroupNames.includes(dialerProxy) ? t('node.ip.proxyGroup') : t('node.ip.node')}</span>
             </span>
             <ChevronRight size={14} className="text-gray-400 shrink-0" />
             <span className="px-2 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700 text-xs font-medium">
@@ -531,17 +535,17 @@ function IpDetectionPanel({ proxy, allGroupNames }: { proxy: Proxy; allGroupName
               {server}:{proxy.port}
             </span>
             <ChevronRight size={14} className="text-gray-400 shrink-0" />
-            <span className="px-2 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs">互联网</span>
+            <span className="px-2 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs">{t('node.ip.internet')}</span>
           </div>
           <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2">
-            出口 IP = <strong>{server}</strong> 的静态 IP（由 {dialerProxy} 前置访问该代理服务器）
+            {t('node.ip.exitIpNote', { server, dialerProxy })}
           </p>
         </div>
       )}
 
       {/* Server IP quality check */}
       <div>
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">服务器 IP 质量检测</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('node.ip.serverQuality')}</p>
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleCheck}
@@ -549,7 +553,7 @@ function IpDetectionPanel({ proxy, allGroupNames }: { proxy: Proxy; allGroupName
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {check.status === 'loading' ? <Loader2 size={12} className="animate-spin" /> : <Wifi size={12} />}
-            检测 {server || '(未填服务器)'}
+            {server ? t('node.ip.detect', { server }) : t('node.ip.detectEmpty')}
           </button>
 
           {check.status === 'done' && check.data && (
@@ -567,19 +571,19 @@ function IpDetectionPanel({ proxy, allGroupNames }: { proxy: Proxy; allGroupName
 
         {check.status === 'done' && check.data && !check.data.proxy && !check.data.hosting && (
           <p className="text-xs text-green-600 dark:text-green-400 mt-1.5">
-            该 IP 检测为住宅/原生 IP，适合 IP 敏感服务（流媒体、金融等）。
+            {t('node.ip.residentialNote')}
           </p>
         )}
         {check.status === 'done' && check.data && (check.data.proxy || check.data.hosting) && (
           <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
-            该 IP 标记为{check.data.proxy ? '代理' : '数据中心'}，可能无法通过流媒体 IP 检测。
+            {t('node.ip.nonResidentialNote', { type: check.data.proxy ? t('node.ip.proxy') : t('node.ip.hosting') })}
           </p>
         )}
       </div>
 
       {/* Verify in Mihomo */}
       <div>
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">在 Mihomo 中验证出口 IP</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('node.ip.verifyTitle')}</p>
         <div className="flex items-center gap-2">
           <a
             href="https://whatismyipaddress.com/"
@@ -590,20 +594,20 @@ function IpDetectionPanel({ proxy, allGroupNames }: { proxy: Proxy; allGroupName
             <ExternalLink size={11} />
             whatismyipaddress.com
           </a>
-          <span className="text-xs text-gray-400">— 在 Mihomo 启用此节点后打开验证</span>
+          <span className="text-xs text-gray-400">{t('node.ip.verifyNote')}</span>
         </div>
       </div>
 
       {/* YAML snippet */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">YAML 配置片段</p>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('node.ip.yamlTitle')}</p>
           <button
             onClick={handleCopy}
             className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             {copied ? <Check size={11} /> : <Copy size={11} />}
-            {copied ? '已复制' : '复制'}
+            {copied ? t('node.ip.copied') : t('node.ip.copy')}
           </button>
         </div>
         <pre className="text-xs font-mono bg-gray-900 text-gray-100 rounded-lg p-3 overflow-x-auto leading-relaxed">
@@ -629,6 +633,7 @@ function NodeFormModal({
   onSave: (proxy: Proxy) => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState<FormState>(
     initial ?? { ...EMPTY_FORM, ...(TYPE_DEFAULTS[EMPTY_FORM.type] ?? {}) }
   )
@@ -644,19 +649,19 @@ function NodeFormModal({
       .filter((n) => !allGroupNames.includes(n) && n !== form.name && n !== 'DIRECT' && n !== 'REJECT')
       .map((n) => ({ value: n, label: n }))
     return [
-      ...(groupItems.length ? [{ label: '代理组', items: groupItems }] : []),
-      ...(proxyItems.length ? [{ label: '节点', items: proxyItems }] : []),
+      ...(groupItems.length ? [{ label: t('node.modal.dialerGroupLabel'), items: groupItems }] : []),
+      ...(proxyItems.length ? [{ label: t('node.modal.dialerNodeLabel'), items: proxyItems }] : []),
     ]
-  }, [allGroupNames, allProxyNames, form.name])
+  }, [allGroupNames, allProxyNames, form.name, t])
 
   const errors: string[] = []
-  if (!form.name.trim()) errors.push('节点名称不能为空')
-  if (form.type !== 'wireguard' && !form.server.trim()) errors.push('服务器地址不能为空')
-  if (!form.port || isNaN(parseInt(form.port))) errors.push('端口不合法')
-  if (['vmess', 'vless', 'tuic'].includes(form.type) && !form.uuid.trim()) errors.push('UUID 不能为空')
-  if (['ss', 'ssr', 'trojan', 'hysteria2', 'hysteria', 'tuic', 'anytls'].includes(form.type) && !form.password.trim()) errors.push('密码不能为空')
-  if (form.type === 'wireguard' && (!form.wgPrivateKey.trim() || !form.wgPublicKey.trim())) errors.push('WireGuard 需填写私钥和公钥')
-  if (form.type === 'ssh' && !form.username.trim()) errors.push('SSH 用户名不能为空')
+  if (!form.name.trim()) errors.push(t('node.modal.errName'))
+  if (form.type !== 'wireguard' && !form.server.trim()) errors.push(t('node.modal.errServer'))
+  if (!form.port || isNaN(parseInt(form.port))) errors.push(t('node.modal.errPort'))
+  if (['vmess', 'vless', 'tuic'].includes(form.type) && !form.uuid.trim()) errors.push(t('node.modal.errUuid'))
+  if (['ss', 'ssr', 'trojan', 'hysteria2', 'hysteria', 'tuic', 'anytls'].includes(form.type) && !form.password.trim()) errors.push(t('node.modal.errPassword'))
+  if (form.type === 'wireguard' && (!form.wgPrivateKey.trim() || !form.wgPublicKey.trim())) errors.push(t('node.modal.errWg'))
+  if (form.type === 'ssh' && !form.username.trim()) errors.push(t('node.modal.errSsh'))
 
   function handleSave() {
     if (errors.length > 0) return
@@ -688,7 +693,7 @@ function NodeFormModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            {isEdit ? '编辑节点' : '添加节点'}
+            {isEdit ? t('node.modal.editTitle') : t('node.modal.addTitle')}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
             ✕
@@ -700,51 +705,51 @@ function NodeFormModal({
 
           {/* Row 1: name + type */}
           <div className="grid grid-cols-2 gap-3">
-            <Input label="节点名称" value={form.name} onChange={(v) => set('name', v)} placeholder="🇺🇸｜美国原生IP" required />
+            <Input label={t('node.modal.labelName')} value={form.name} onChange={(v) => set('name', v)} placeholder="🇺🇸｜美国原生IP" required />
             <Select
-              label="协议类型"
+              label={t('node.modal.labelType')}
               value={form.type}
               onChange={(v) => {
-                const t = v as ProxyType
-                const defaults = TYPE_DEFAULTS[t] ?? {}
-                setForm((prev) => ({ ...prev, type: t, ...defaults }))
+                const tp = v as ProxyType
+                const defaults = TYPE_DEFAULTS[tp] ?? {}
+                setForm((prev) => ({ ...prev, type: tp, ...defaults }))
               }}
-              options={PROXY_TYPES.map((t) => ({ value: t, label: t }))}
+              options={PROXY_TYPES.map((tp) => ({ value: tp, label: tp }))}
             />
           </div>
 
           {/* Row 2: server + port */}
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
-              <Input label="服务器地址" value={form.server} onChange={(v) => set('server', v)} placeholder="example.com 或 1.2.3.4" required mono />
+              <Input label={t('node.modal.labelServer')} value={form.server} onChange={(v) => set('server', v)} placeholder="example.com or 1.2.3.4" required mono />
             </div>
-            <Input label="端口" value={form.port} onChange={(v) => set('port', v)} placeholder="443" type="number" required />
+            <Input label={t('node.modal.labelPort')} value={form.port} onChange={(v) => set('port', v)} placeholder="443" type="number" required />
           </div>
 
           {/* Auth fields */}
           {showAuth && (
             <div className="grid grid-cols-2 gap-3">
-              <Input label="用户名" value={form.username} onChange={(v) => set('username', v)} placeholder="（可选）" />
-              <Input label="密码" value={form.password} onChange={(v) => set('password', v)} placeholder="（可选）" type="password" />
+              <Input label={t('node.modal.labelUsername')} value={form.username} onChange={(v) => set('username', v)} placeholder={t('node.modal.optUsernameOptional')} />
+              <Input label={t('node.modal.labelPassword')} value={form.password} onChange={(v) => set('password', v)} placeholder={t('node.modal.optPasswordOptional')} type="password" />
             </div>
           )}
 
           {/* Password (non-auth types) */}
           {showPassword && (
-            <Input label="密码" value={form.password} onChange={(v) => set('password', v)} placeholder="proxy password" type="password" required />
+            <Input label={t('node.modal.labelPassword')} value={form.password} onChange={(v) => set('password', v)} placeholder="proxy password" type="password" required />
           )}
 
           {/* UUID */}
           {showUuid && (
-            <Input label="UUID" value={form.uuid} onChange={(v) => set('uuid', v)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required mono />
+            <Input label={t('node.modal.labelUuid')} value={form.uuid} onChange={(v) => set('uuid', v)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required mono />
           )}
 
           {/* VMess: alterId */}
           {form.type === 'vmess' && (
             <div className="grid grid-cols-2 gap-3">
-              <Input label="alterID" value={form.alterId} onChange={(v) => set('alterId', v)} placeholder="0" type="number" />
+              <Input label={t('node.modal.labelAlterId')} value={form.alterId} onChange={(v) => set('alterId', v)} placeholder="0" type="number" />
               <Select
-                label="加密方式"
+                label={t('node.modal.labelCipher')}
                 value={form.cipher}
                 onChange={(v) => set('cipher', v)}
                 options={[{ value: 'auto', label: 'auto' }, { value: 'none', label: 'none' }, { value: 'aes-128-gcm', label: 'aes-128-gcm' }, { value: 'chacha20-poly1305', label: 'chacha20-poly1305' }]}
@@ -755,7 +760,7 @@ function NodeFormModal({
           {/* SS cipher */}
           {form.type === 'ss' && (
             <Select
-              label="加密方式"
+              label={t('node.modal.labelCipher')}
               value={form.cipher}
               onChange={(v) => set('cipher', v)}
               options={SS_CIPHERS.map((c) => ({ value: c, label: c }))}
@@ -766,28 +771,28 @@ function NodeFormModal({
           {showSsr && (
             <div className="space-y-3">
               <Select
-                label="加密方式"
+                label={t('node.modal.labelCipher')}
                 value={form.cipher}
                 onChange={(v) => set('cipher', v)}
                 options={SSR_CIPHERS.map((c) => ({ value: c, label: c }))}
               />
               <div className="grid grid-cols-2 gap-3">
                 <Select
-                  label="协议"
+                  label={t('node.modal.labelSsrProtocol')}
                   value={form.ssrProtocol}
                   onChange={(v) => set('ssrProtocol', v)}
                   options={SSR_PROTOCOLS.map((p) => ({ value: p, label: p }))}
                 />
-                <Input label="协议参数（可选）" value={form.ssrProtocolParam} onChange={(v) => set('ssrProtocolParam', v)} placeholder="" />
+                <Input label={t('node.modal.labelSsrProtocolParam')} value={form.ssrProtocolParam} onChange={(v) => set('ssrProtocolParam', v)} placeholder="" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Select
-                  label="混淆"
+                  label={t('node.modal.labelSsrObfs')}
                   value={form.ssrObfs}
                   onChange={(v) => set('ssrObfs', v)}
                   options={SSR_OBFS.map((o) => ({ value: o, label: o }))}
                 />
-                <Input label="混淆参数（可选）" value={form.ssrObfsParam} onChange={(v) => set('ssrObfsParam', v)} placeholder="" />
+                <Input label={t('node.modal.labelSsrObfsParam')} value={form.ssrObfsParam} onChange={(v) => set('ssrObfsParam', v)} placeholder="" />
               </div>
             </div>
           )}
@@ -795,7 +800,7 @@ function NodeFormModal({
           {/* Network */}
           {showNetwork && (
             <Select
-              label="传输协议"
+              label={t('node.modal.labelNetwork')}
               value={form.network}
               onChange={(v) => set('network', v)}
               options={NETWORK_OPTS.map((n) => ({ value: n, label: n }))}
@@ -804,39 +809,39 @@ function NodeFormModal({
 
           {/* VLESS flow */}
           {showFlow && (
-            <Input label="flow（可选）" value={form.flow} onChange={(v) => set('flow', v)} placeholder="xtls-rprx-vision" />
+            <Input label={t('node.modal.labelFlow')} value={form.flow} onChange={(v) => set('flow', v)} placeholder="xtls-rprx-vision" />
           )}
 
           {/* Hysteria obfs + speed */}
           {showObfs && (
             <div className="grid grid-cols-2 gap-3">
-              <Input label="obfs（可选）" value={form.obfs} onChange={(v) => set('obfs', v)} placeholder="salamander" />
-              <Input label="obfs-password（可选）" value={form.obfsPassword} onChange={(v) => set('obfsPassword', v)} placeholder="" type="password" />
+              <Input label={t('node.modal.labelObfs')} value={form.obfs} onChange={(v) => set('obfs', v)} placeholder="salamander" />
+              <Input label={t('node.modal.labelObfsPassword')} value={form.obfsPassword} onChange={(v) => set('obfsPassword', v)} placeholder="" type="password" />
             </div>
           )}
           {showSpeedLimit && (
             <div className="grid grid-cols-2 gap-3">
-              <Input label="上行带宽（可选）" value={form.up} onChange={(v) => set('up', v)} placeholder="50 Mbps" />
-              <Input label="下行带宽（可选）" value={form.down} onChange={(v) => set('down', v)} placeholder="200 Mbps" />
+              <Input label={t('node.modal.labelUp')} value={form.up} onChange={(v) => set('up', v)} placeholder="50 Mbps" />
+              <Input label={t('node.modal.labelDown')} value={form.down} onChange={(v) => set('down', v)} placeholder="200 Mbps" />
             </div>
           )}
 
           {/* SNI */}
           {showSni && (
-            <Input label="SNI（可选）" value={form.sni} onChange={(v) => set('sni', v)} placeholder="example.com" />
+            <Input label={t('node.modal.labelSni')} value={form.sni} onChange={(v) => set('sni', v)} placeholder="example.com" />
           )}
 
           {/* SSH specific */}
           {showSsh && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <Input label="用户名" value={form.username} onChange={(v) => set('username', v)} placeholder="root" required />
-                <Input label="密码（可选）" value={form.password} onChange={(v) => set('password', v)} placeholder="—" type="password" />
+                <Input label={t('node.modal.labelSshUsername')} value={form.username} onChange={(v) => set('username', v)} placeholder="root" required />
+                <Input label={t('node.modal.labelSshPassword')} value={form.password} onChange={(v) => set('password', v)} placeholder="—" type="password" />
               </div>
-              <Input label="私钥（base64，可选）" value={form.sshPrivateKey} onChange={(v) => set('sshPrivateKey', v)} placeholder="base64 编码的私钥" mono />
+              <Input label={t('node.modal.labelSshPrivateKey')} value={form.sshPrivateKey} onChange={(v) => set('sshPrivateKey', v)} placeholder="base64 encoded private key" mono />
               <div className="grid grid-cols-2 gap-3">
-                <Input label="私钥密码（可选）" value={form.sshPrivateKeyPassphrase} onChange={(v) => set('sshPrivateKeyPassphrase', v)} placeholder="" type="password" />
-                <Input label="Host Key（可选）" value={form.sshHostKey} onChange={(v) => set('sshHostKey', v)} placeholder="ssh-rsa AAAA..." mono />
+                <Input label={t('node.modal.labelSshPrivateKeyPassphrase')} value={form.sshPrivateKeyPassphrase} onChange={(v) => set('sshPrivateKeyPassphrase', v)} placeholder="" type="password" />
+                <Input label={t('node.modal.labelSshHostKey')} value={form.sshHostKey} onChange={(v) => set('sshHostKey', v)} placeholder="ssh-rsa AAAA..." mono />
               </div>
             </div>
           )}
@@ -845,14 +850,14 @@ function NodeFormModal({
           {showWg && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <Input label="本机 IP (ip)" value={form.wgIp} onChange={(v) => set('wgIp', v)} placeholder="10.0.0.1/32" required mono />
-                <Input label="MTU（可选）" value={form.wgMtu} onChange={(v) => set('wgMtu', v)} placeholder="1280" type="number" />
+                <Input label={t('node.modal.labelWgIp')} value={form.wgIp} onChange={(v) => set('wgIp', v)} placeholder="10.0.0.1/32" required mono />
+                <Input label={t('node.modal.labelWgMtu')} value={form.wgMtu} onChange={(v) => set('wgMtu', v)} placeholder="1280" type="number" />
               </div>
-              <Input label="私钥 (private-key)" value={form.wgPrivateKey} onChange={(v) => set('wgPrivateKey', v)} placeholder="base64 私钥" required mono />
-              <Input label="对端公钥 (public-key)" value={form.wgPublicKey} onChange={(v) => set('wgPublicKey', v)} placeholder="base64 公钥" required mono />
+              <Input label={t('node.modal.labelWgPrivateKey')} value={form.wgPrivateKey} onChange={(v) => set('wgPrivateKey', v)} placeholder="base64 private key" required mono />
+              <Input label={t('node.modal.labelWgPublicKey')} value={form.wgPublicKey} onChange={(v) => set('wgPublicKey', v)} placeholder="base64 public key" required mono />
               <div className="grid grid-cols-2 gap-3">
-                <Input label="预共享密钥（可选）" value={form.wgPresharedKey} onChange={(v) => set('wgPresharedKey', v)} placeholder="base64 预共享密钥" mono />
-                <Input label="DNS（可选）" value={form.wgDns} onChange={(v) => set('wgDns', v)} placeholder="1.1.1.1, 8.8.8.8" />
+                <Input label={t('node.modal.labelWgPresharedKey')} value={form.wgPresharedKey} onChange={(v) => set('wgPresharedKey', v)} placeholder="base64 pre-shared key" mono />
+                <Input label={t('node.modal.labelWgDns')} value={form.wgDns} onChange={(v) => set('wgDns', v)} placeholder="1.1.1.1, 8.8.8.8" />
               </div>
             </div>
           )}
@@ -862,13 +867,13 @@ function NodeFormModal({
             <div className="flex flex-wrap gap-4 pt-1">
               {showTls && <Toggle label="TLS" checked={form.tls} onChange={(v) => set('tls', v)} />}
               {showUdp && <Toggle label="UDP" checked={form.udp} onChange={(v) => set('udp', v)} />}
-              {showSkipCert && <Toggle label="跳过证书验证" checked={form.skipCertVerify} onChange={(v) => set('skipCertVerify', v)} />}
+              {showSkipCert && <Toggle label={t('node.modal.labelSkipCert')} checked={form.skipCertVerify} onChange={(v) => set('skipCertVerify', v)} />}
             </div>
           )}
 
           {/* IP version */}
           <Select
-            label="IP 版本（ip-version）"
+            label={t('node.modal.labelIpVersion')}
             value={form.ipVersion}
             onChange={(v) => set('ipVersion', v)}
             options={IP_VERSION_OPTS}
@@ -878,29 +883,28 @@ function NodeFormModal({
           <div className="border-t border-dashed border-indigo-200 dark:border-indigo-800 pt-4">
             <div className="flex items-center gap-2 mb-2">
               <Link2 size={14} className="text-indigo-500" />
-              <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">链式代理（dialer-proxy）</span>
+              <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">{t('node.modal.labelDialerSection')}</span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-              选择前置代理后，Mihomo 会先通过该代理/代理组建立与本节点服务器的连接，实现链式出口。
-              <br />例：港澳台新韩节点 → 本节点（美国静态IP）→ 互联网，出口 IP = 美国原生 IP。
+              {t('node.modal.labelDialerDesc').split('\n').map((line, i) => <span key={i}>{line}{i === 0 ? <br /> : null}</span>)}
             </p>
             <SearchableSelect
-              label="前置代理 / 代理组"
+              label={t('node.modal.labelDialerProxy')}
               value={form.dialerProxy}
               onChange={(v) => set('dialerProxy', v)}
               groups={dialerGroups}
             />
             {form.dialerProxy && (
               <div className="mt-3 flex items-center gap-1.5 flex-wrap text-xs">
-                <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-mono">本地</span>
+                <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-mono">{t('node.modal.local')}</span>
                 <ChevronRight size={12} className="text-gray-400" />
                 <span className="px-2 py-0.5 rounded-md bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-medium">{form.dialerProxy}</span>
                 <ChevronRight size={12} className="text-gray-400" />
-                <span className="px-2 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-medium">{form.name || '本节点'}</span>
+                <span className="px-2 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-medium">{form.name || t('node.modal.thisNode')}</span>
                 <ChevronRight size={12} className="text-gray-400" />
                 <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 font-mono">{form.server || 'server'}:{form.port || 'port'}</span>
                 <ChevronRight size={12} className="text-gray-400" />
-                <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500">互联网</span>
+                <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500">{t('node.modal.internet')}</span>
               </div>
             )}
           </div>
@@ -915,14 +919,14 @@ function NodeFormModal({
           ) : <span />}
           <div className="flex gap-2">
             <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-              取消
+              {t('node.modal.cancel')}
             </button>
             <button
               onClick={handleSave}
               disabled={errors.length > 0}
               className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isEdit ? '保存修改' : '添加节点'}
+              {isEdit ? t('node.modal.save') : t('node.modal.add')}
             </button>
           </div>
         </div>
@@ -948,6 +952,7 @@ function NodeRow({
   onEdit: () => void
   onDelete: () => void
 }) {
+  const { t } = useTranslation()
   const [showDetection, setShowDetection] = useState(false)
   const dialerProxy = proxy['dialer-proxy'] as string | undefined
   const typeColor = TYPE_COLORS[proxy.type] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
@@ -973,7 +978,7 @@ function NodeRow({
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => setShowDetection((v) => !v)}
-            title="IP 检测 / 链路验证"
+            title={t('node.ip.verifyTitle')}
             className={`p-1.5 rounded-lg transition-colors ${showDetection ? 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30' : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30'}`}
           >
             <Wifi size={14} />
@@ -999,6 +1004,7 @@ function NodeRow({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function NodeManager() {
+  const { t } = useTranslation()
   const {
     sources,
     manualProxies,
@@ -1092,11 +1098,11 @@ export default function NodeManager() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">手动节点管理</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{t('node.heading')}</h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              {manualProxies.length} 个节点
-              {chainCount > 0 && <span className="ml-2 text-indigo-500">{chainCount} 个链式代理</span>}
-              <span className="ml-2">— 支持配置 dialer-proxy 实现静态原生 IP 链式出口</span>
+              {t('node.count', { count: manualProxies.length })}
+              {chainCount > 0 && <span className="ml-2 text-indigo-500">{t('node.chainCount', { count: chainCount })}</span>}
+              <span className="ml-2">{t('node.chainHint')}</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -1117,10 +1123,10 @@ export default function NodeManager() {
                       updateManualProxy(i, { 'ip-version': batchIpVersion })
                     })
                   }}
-                  title="批量设置所有手动节点的 ip-version"
+                  title={t('node.batchSetIpVersion')}
                   className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-indigo-200 dark:border-indigo-800/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors whitespace-nowrap"
                 >
-                  批量设 ip-version
+                  {t('node.batchSetIpVersion')}
                 </button>
               </div>
             )}
@@ -1134,12 +1140,12 @@ export default function NodeManager() {
                 }`}
               >
                 <Trash2 size={11} />
-                {confirmReset ? '确认重置？' : '重置'}
+                {confirmReset ? t('node.confirmReset') : t('node.reset')}
               </button>
             )}
             <button
               onClick={() => setShowHelp((v) => !v)}
-              title="使用指南 & 链式代理说明"
+              title={t('node.help')}
               className={`p-2 rounded-xl border transition-colors ${showHelp ? 'border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
             >
               <HelpCircle size={15} />
@@ -1149,7 +1155,7 @@ export default function NodeManager() {
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shadow-sm"
             >
               <Plus size={15} />
-              添加节点
+              {t('node.addNode')}
             </button>
           </div>
         </div>
@@ -1158,16 +1164,15 @@ export default function NodeManager() {
         {postSaveSuggest && (
           <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-4 flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">建议为此链式代理创建专属代理组</p>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">{t('node.chainSuggestTitle')}</p>
               <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
-                节点 <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded font-mono">{postSaveSuggest.proxyName}</code> 已设置链式出口。
-                创建专属代理组后，可在「规则」标签页将 RULE-SET / 规则直接指向该出口。
+                <span dangerouslySetInnerHTML={{ __html: t('node.chainSuggestDesc', { name: postSaveSuggest.proxyName }) }} />
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => {
-                  const groupName = `${postSaveSuggest.proxyName}(出口)`
+                  const groupName = `${postSaveSuggest.proxyName}${t('node.groupSuffix')}`
                   if (!proxyGroups.some((g) => g.name === groupName)) {
                     addProxyGroup({
                       name: groupName,
@@ -1182,7 +1187,7 @@ export default function NodeManager() {
                 }}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors whitespace-nowrap"
               >
-                一键创建代理组
+                {t('node.createGroupBtn')}
               </button>
               <button
                 onClick={() => setPostSaveSuggest(null)}
@@ -1199,7 +1204,7 @@ export default function NodeManager() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜索节点名称、服务器、协议…"
+            placeholder={t('node.searchPlaceholder')}
             className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         )}
@@ -1222,7 +1227,7 @@ export default function NodeManager() {
         )}
 
         {search && filtered.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-6">无匹配节点</p>
+          <p className="text-sm text-gray-400 text-center py-6">{t('node.noMatch')}</p>
         )}
 
         {/* Help / Intro panel */}
@@ -1231,7 +1236,7 @@ export default function NodeManager() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Link2 size={16} className="text-indigo-500 shrink-0 mt-0.5" />
-                <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">链式代理（dialer-proxy）使用指南</p>
+                <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">{t('node.guideTitle')}</p>
               </div>
               {manualProxies.length > 0 && (
                 <button onClick={() => setShowHelp(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-0.5 rounded shrink-0">
@@ -1240,13 +1245,7 @@ export default function NodeManager() {
               )}
             </div>
 
-            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-              通过 <code className="bg-white dark:bg-gray-800 px-1 rounded border border-gray-200 dark:border-gray-700 font-mono text-[11px]">dialer-proxy</code> 字段，
-              可让一个节点经由另一个代理/代理组建立连接，实现「链式出口」。
-              典型场景：<strong className="text-gray-800 dark:text-gray-200">港澳台新韩节点 → 美国原生住宅 SOCKS5</strong>，
-              最终出口 IP 为美国原生 IP，可解锁流媒体、金融等 IP 敏感服务。
-              支持 socks5 / http / ss / vmess / vless / trojan / hysteria2 等全协议。
-            </p>
+            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: t('node.guideDesc') }} />
 
             {/* Novproxy 推广 */}
             <a
@@ -1257,15 +1256,15 @@ export default function NodeManager() {
             >
               <img src="https://novproxy.com/static/img/logo.svg" alt="Novproxy" className="h-4 shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-violet-700 dark:group-hover:text-violet-300 leading-tight">最具性价比的住宅 IP</p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">解锁 Gemini · Claude · OpenAI</p>
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-violet-700 dark:group-hover:text-violet-300 leading-tight">{t('node.novproxyDesc')}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{t('node.novproxySubDesc')}</p>
               </div>
               <ExternalLink size={11} className="text-gray-400 group-hover:text-violet-500 shrink-0 ml-auto" />
             </a>
 
             {/* 风控说明 */}
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">🛡️ Gemini / Claude / OpenAI 风控策略说明</p>
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t('node.riskTitle')}</p>
 
               {/* Claude */}
               <div className="rounded-lg bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 px-3 py-2.5 space-y-1">
@@ -1273,7 +1272,7 @@ export default function NodeManager() {
                   <Claude size={14} type="color" />
                   <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">Claude</p>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">更看重出口 IP 纯净度与地区稳定性，数据中心 IP、VPS 及共享机场出口更容易触发验证或限制。</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">{t('node.claudeDesc')}</p>
               </div>
 
               {/* Gemini */}
@@ -1282,28 +1281,14 @@ export default function NodeManager() {
                   <Gemini size={14} type="color" />
                   <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">Gemini / Gemini Advanced</p>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
-                  对账号环境与 IP 一致性高度敏感。Google 会综合比对
-                  <strong className="text-gray-700 dark:text-gray-300"> 账号注册地、付款地、登录 IP </strong>
-                  三者一致性，任意一项不匹配均可能触发限制。
-                </p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed" dangerouslySetInnerHTML={{ __html: t('node.geminiDesc') }} />
                 <div className="rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-2.5 py-2 space-y-1">
-                  <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">⚠️ Gemini Advanced 风控尤为严格</p>
-                  <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">
-                    绑定 Google 账号付费订阅，属于高价值账号，Google 对异常登录的容忍度极低。
-                    使用数据中心 IP 或共享机场出口（同一 IP 上百人并发）极易被标记为高风险，
-                    轻则频繁弹出二次验证、功能受限，重则触发账号异常锁定或订阅失效。
-                    建议使用与账号归属地一致的固定住宅 IP，且避免频繁切换出口节点。
-                  </p>
+                  <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">{t('node.geminiAdvancedTitle')}</p>
+                  <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">{t('node.geminiAdvancedDesc')}</p>
                 </div>
                 <div className="rounded-md bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/40 px-2.5 py-2 space-y-1">
-                  <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400">🚨 Antigravity（反重力）风控极严</p>
-                  <p className="text-[10px] text-orange-600 dark:text-orange-500 leading-relaxed">
-                    Antigravity 是 Google 内部针对 AI 服务的专项反滥用系统，比普通 Gemini 检测维度更多、更激进。
-                    除 IP 归属地外，还会分析设备指纹、账号行为模式、API 请求频率及账单地址一致性。
-                    机场 IP 几乎必触发；即使是住宅 IP，若该段 IP 被大量用户使用也会被标记。
-                    <strong className="text-orange-700 dark:text-orange-400"> 独享住宅 IP + 固定出口</strong> 是目前通过率最高的方案。
-                  </p>
+                  <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400">{t('node.antigravityTitle')}</p>
+                  <p className="text-[10px] text-orange-600 dark:text-orange-500 leading-relaxed" dangerouslySetInnerHTML={{ __html: t('node.antigravityDesc') }} />
                 </div>
               </div>
 
@@ -1313,22 +1298,19 @@ export default function NodeManager() {
                   <OpenAI size={14} />
                   <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">OpenAI / ChatGPT</p>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
-                  综合评估出口 IP 的 ASN 信誉、地理位置及历史行为。数据中心 IP（AS 号为云服务商）和高并发共享机场出口
-                  是触发"Access denied"或账号封禁的最主要原因。
-                  Plus / API 账户因绑定信用卡，同样会做账单地区与登录 IP 的一致性校验——
-                  建议使用与注册地相同的住宅 IP，避免切换节点后反复绕过 Cloudflare 检测。
-                </p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">{t('node.openaiDesc')}</p>
               </div>
 
               {/* 原生 IP 好处卡片 */}
               <div className="rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 px-3 py-2.5 space-y-1.5">
-                <p className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">🏠 原生住宅 IP 的好处</p>
+                <p className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">{t('node.residentialTitle')}</p>
                 <ul className="space-y-1 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
-                  <li className="flex gap-1.5"><span className="text-indigo-400 shrink-0">•</span>来自真实家庭宽带，IP 信誉高、无机房标记，通过率远高于数据中心 IP</li>
-                  <li className="flex gap-1.5"><span className="text-indigo-400 shrink-0">•</span>固定出口保持账号环境一致，减少验证码、异地提醒与二次校验</li>
-                  <li className="flex gap-1.5"><span className="text-indigo-400 shrink-0">•</span>配合 <code className="bg-white dark:bg-gray-800 px-1 rounded border border-gray-200 dark:border-gray-700 font-mono text-[10px]">dialer-proxy</code> 链式出口，保留机场速度，最终出口切到住宅 IP</li>
-                  <li className="flex gap-1.5"><span className="text-indigo-400 shrink-0">•</span>解锁 Gemini · Claude · OpenAI，同时适用于流媒体、金融、电商等 IP 敏感服务</li>
+                  {(t('node.residentialBenefits', { returnObjects: true }) as string[]).map((item) => (
+                    <li key={item} className="flex gap-1.5">
+                      <span className="text-indigo-400 shrink-0">•</span>
+                      <span dangerouslySetInnerHTML={{ __html: item }} />
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -1336,20 +1318,20 @@ export default function NodeManager() {
             {/* AI 提问模板 */}
             <div>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
-                <span className="text-base leading-none">🤖</span> 问 AI 配置模板
+                <span className="text-base leading-none">🤖</span> {t('node.aiPromptLabel').replace(/^🤖\s*/, '')}
               </p>
               <div className="relative bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 pr-10">
                 <p className="text-xs text-gray-700 dark:text-gray-300 font-mono leading-relaxed select-all">
-                  如何在 Mihomo 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过港澳台新节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。
+                  {t('node.aiPromptText')}
                 </p>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText('如何在 Mihomo 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过港澳台新节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。')
+                    navigator.clipboard.writeText(t('node.aiPromptText'))
                     setAiPromptCopied(true)
                     setTimeout(() => setAiPromptCopied(false), 2000)
                   }}
                   className="absolute top-2.5 right-2.5 p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
-                  title="复制提问模板"
+                  title={t('node.ip.copy')}
                 >
                   {aiPromptCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
                 </button>
@@ -1363,16 +1345,14 @@ export default function NodeManager() {
                 className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
               >
                 <ChevronRight size={13} className={`transition-transform ${showChainExample ? 'rotate-90' : ''}`} />
-                查看完整配置示例（港澳台新节点 → 美国住宅 SOCKS5）
+                {t('node.showExample')}
               </button>
               {showChainExample && (
                 <div className="space-y-2 mt-2">
                   {/* 为什么建议港澳台 */}
                   <div className="rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
-                    <strong>💡 为什么建议用港澳台新节点做中间跳？</strong><br />
-                    港澳台节点延迟低（通常 &lt; 30ms）、线路质量稳定，作为第一跳几乎不影响整体速度；
-                    相比日欧美节点，两跳总延迟更低，住宅 SOCKS5 拨号握手更快，实际体验更流畅。
-                    此外港澳台机场节点通常走 IPLC/专线，出口稳定，适合对延迟敏感的 AI 服务使用。
+                    <strong>{t('node.whyHK')}</strong><br />
+                    {t('node.whyHKDesc')}
                   </div>
                   <div className="relative bg-gray-900 dark:bg-gray-950 rounded-lg border border-gray-700 p-3 pr-10 overflow-x-auto">
                   <pre className="text-[10px] text-green-300 font-mono leading-relaxed whitespace-pre select-all">{`proxies:
@@ -1418,7 +1398,7 @@ rules:
                         setTimeout(() => setExampleCopied(false), 2000)
                       }}
                       className="absolute top-2.5 right-2.5 p-1.5 rounded-lg text-gray-500 hover:text-green-400 hover:bg-gray-800 transition-colors"
-                      title="复制示例"
+                      title={t('node.ip.copy')}
                     >
                       {exampleCopied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
                     </button>
@@ -1436,7 +1416,7 @@ rules:
                 rel="noopener noreferrer"
                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
               >
-                参考文档：高阶 — Socks 家宽原生住宅（自愿购买）
+                {t('node.refDoc')}
               </a>
             </div>
           </div>

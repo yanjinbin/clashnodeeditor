@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle, XCircle, AlertTriangle, ShieldCheck } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 
@@ -10,6 +11,7 @@ interface ValidationIssue {
 
 function useValidationResults(): ValidationIssue[] {
   const { sources, proxyGroups, rules, ruleProviders } = useAppStore()
+  const { t, i18n } = useTranslation()
 
   return useMemo(() => {
     const issues: ValidationIssue[] = []
@@ -33,10 +35,12 @@ function useValidationResults(): ValidationIssue[] {
       }
     }
     if (orphanNodes.size > 0) {
+      const shown = [...orphanNodes].slice(0, 5)
+      const more = orphanNodes.size > 5 ? t('validation.orphanMore', { count: orphanNodes.size - 5 }) : ''
       issues.push({
         level: 'warning',
-        message: `${orphanNodes.size} 个孤儿节点引用`,
-        detail: `以下节点在代理组中被引用，但不存在于任何订阅源：${[...orphanNodes].slice(0, 5).join('、')}${orphanNodes.size > 5 ? ` 等 ${orphanNodes.size} 个` : ''}`,
+        message: t('validation.orphanNodes', { count: orphanNodes.size }),
+        detail: t('validation.orphanNodesDetail', { names: shown.join(i18n.language === 'zh' ? '、' : ', '), more }),
       })
     }
 
@@ -45,8 +49,8 @@ function useValidationResults(): ValidationIssue[] {
     if (emptyGroups.length > 0) {
       issues.push({
         level: 'warning',
-        message: `${emptyGroups.length} 个空代理组`,
-        detail: `以下代理组没有任何成员：${emptyGroups.map((g) => g.name).join('、')}`,
+        message: t('validation.emptyGroups', { count: emptyGroups.length }),
+        detail: t('validation.emptyGroupsDetail', { names: emptyGroups.map((g) => g.name).join(i18n.language === 'zh' ? '、' : ', ') }),
       })
     }
 
@@ -79,8 +83,8 @@ function useValidationResults(): ValidationIssue[] {
     if (cycleGroups.size > 0) {
       issues.push({
         level: 'error',
-        message: `${cycleGroups.size} 个循环引用代理组`,
-        detail: `以下代理组存在循环引用：${[...cycleGroups].join('、')}`,
+        message: t('validation.cycleGroups', { count: cycleGroups.size }),
+        detail: t('validation.cycleGroupsDetail', { names: [...cycleGroups].join(i18n.language === 'zh' ? '、' : ', ') }),
       })
     }
 
@@ -89,8 +93,8 @@ function useValidationResults(): ValidationIssue[] {
     if (!hasMatch) {
       issues.push({
         level: 'warning',
-        message: '缺少 MATCH 兜底规则',
-        detail: '没有 MATCH 规则会导致未匹配流量被丢弃，请在规则列表末尾添加一条 MATCH 规则。',
+        message: t('validation.noMatch'),
+        detail: t('validation.noMatchDetail'),
       })
     }
 
@@ -109,8 +113,8 @@ function useValidationResults(): ValidationIssue[] {
     if (invalidTargets.size > 0) {
       issues.push({
         level: 'error',
-        message: `${invalidTargets.size} 个失效目标代理组`,
-        detail: `以下代理组在规则/规则集中被引用，但已不存在：${[...invalidTargets].join('、')}`,
+        message: t('validation.invalidTargets', { count: invalidTargets.size }),
+        detail: t('validation.invalidTargetsDetail', { names: [...invalidTargets].join(i18n.language === 'zh' ? '、' : ', ') }),
       })
     }
 
@@ -119,16 +123,17 @@ function useValidationResults(): ValidationIssue[] {
     if (sources.length > 0 && successSources.length === 0) {
       issues.push({
         level: 'warning',
-        message: '没有已成功加载的订阅源',
-        detail: '所有订阅源均未成功加载节点，导出配置中 proxies 列表将为空。',
+        message: t('validation.noSources'),
+        detail: t('validation.noSourcesDetail'),
       })
     }
 
     return issues
-  }, [sources, proxyGroups, rules, ruleProviders])
+  }, [sources, proxyGroups, rules, ruleProviders, t, i18n.language])
 }
 
 export default function ValidationPanel() {
+  const { t } = useTranslation()
   const issues = useValidationResults()
   const errorCount = issues.filter((i) => i.level === 'error').length
   const warnCount = issues.filter((i) => i.level === 'warning').length
@@ -146,11 +151,11 @@ export default function ValidationPanel() {
             : 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-400'
       }`}>
         {allOk
-          ? <><CheckCircle size={13} /> 配置合规，无问题</>
+          ? <><CheckCircle size={13} /> {t('validation.allOk')}</>
           : <><ShieldCheck size={13} />
-              {errorCount > 0 && <span>{errorCount} 个错误</span>}
+              {errorCount > 0 && <span>{t('validation.errors', { count: errorCount })}</span>}
               {errorCount > 0 && warnCount > 0 && <span className="mx-1">·</span>}
-              {warnCount > 0 && <span>{warnCount} 个警告</span>}
+              {warnCount > 0 && <span>{t('validation.warnings', { count: warnCount })}</span>}
             </>
         }
       </div>

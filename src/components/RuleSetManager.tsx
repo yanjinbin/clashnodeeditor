@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   DndContext,
   DragOverlay,
@@ -58,19 +59,19 @@ export default function RuleSetManager() {
 }
 
 // ── Rule Order Notice ─────────────────────────────────────────────────────────
-const RULE_ORDER_STEPS = [
-  { label: '本地 / LAN', items: ['DOMAIN-SUFFIX local', 'IP-CIDR ×4', 'GEOIP LAN', 'RULE-SET private', 'RULE-SET lancidr'] },
-  { label: '拦截',       items: ['RULE-SET reject'] },
-  { label: 'AI 服务',   items: ['openai', 'claude', 'copilot', 'gemini', 'docker'] },
-  { label: '社交 / 媒体', items: ['youtube-music', 'youtube', 'google', 'telegram', 'twitter', 'tiktok', 'linkedin', 'GoogleFCM'] },
-  { label: '通用',       items: ['RULE-SET direct', 'RULE-SET gfw'] },
-  { label: 'IP 规则',   items: ['telegramcidr no-resolve', 'cncidr no-resolve'] },
-  { label: '国内兜底',  items: ['RULE-SET cn', 'GEOIP CN no-resolve'] },
-  { label: 'MATCH',     items: ['♻️ 自动选择'] },
-] as const
-
 function RuleOrderNotice() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
+  const ruleOrderSteps = [
+    { label: t('rule.orderLocal'), items: ['DOMAIN-SUFFIX local', 'IP-CIDR x4', 'GEOIP LAN', 'RULE-SET private', 'RULE-SET lancidr'] },
+    { label: t('rule.orderReject'), items: ['RULE-SET reject'] },
+    { label: t('rule.orderAi'), items: ['openai', 'claude', 'copilot', 'gemini', 'docker'] },
+    { label: t('rule.orderMedia'), items: ['youtube-music', 'youtube', 'google', 'telegram', 'twitter', 'tiktok', 'linkedin', 'GoogleFCM'] },
+    { label: t('rule.orderGeneral'), items: ['RULE-SET direct', 'RULE-SET gfw'] },
+    { label: t('rule.orderIp'), items: ['telegramcidr no-resolve', 'cncidr no-resolve'] },
+    { label: t('rule.orderChina'), items: ['RULE-SET cn', 'GEOIP CN no-resolve'] },
+    { label: 'MATCH', items: ['♻️ 自动选择'] },
+  ]
   return (
     <div className="px-5 py-3">
       <button
@@ -79,7 +80,7 @@ function RuleOrderNotice() {
       >
         <Shield size={13} className="text-indigo-400 shrink-0" />
         <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex-1">
-          默认规则匹配顺序
+          {t('rule.orderHeading')}
         </h2>
         <ChevronDown size={14} className={`text-gray-400 transition-transform ${open ? '' : '-rotate-90'}`} />
       </button>
@@ -89,7 +90,7 @@ function RuleOrderNotice() {
           {/* 核心机制说明 */}
           <div className="rounded-xl border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-800/60 px-3.5 py-3 space-y-2">
             <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-              <span className="text-indigo-500">⚡</span> 规则引擎工作原理
+              <span className="text-indigo-500">⚡</span> {t('rule.orderEngine').replace(/^⚡\s*/, '')}
             </p>
             <div className="flex items-stretch gap-2 text-[10px]">
               <div className="flex flex-col items-center gap-0.5 shrink-0 pt-0.5">
@@ -97,15 +98,15 @@ function RuleOrderNotice() {
                 <div className="w-px flex-1 bg-gradient-to-b from-indigo-300 to-transparent" />
               </div>
               <div className="space-y-2 text-gray-500 dark:text-gray-400 leading-relaxed pb-1">
-                <p>每条出站流量（网址/IP 访问请求）进入规则引擎后，<strong className="text-gray-700 dark:text-gray-300">从上到下逐条比对</strong>，命中第一条匹配规则后立即路由到对应代理组，<strong className="text-gray-700 dark:text-gray-300">停止后续匹配</strong>。</p>
-                <p>规则分两类：<strong className="text-gray-700 dark:text-gray-300">规则集（RULE-SET）</strong> 引用外部域名/IP 列表，适合批量匹配；<strong className="text-gray-700 dark:text-gray-300">自定义规则</strong> 支持 DOMAIN、DOMAIN-SUFFIX、IP-CIDR、GEOIP、GEOSITE、MATCH 等精确控制，优先级由位置决定。</p>
-                <p>最后一条 <code className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded">MATCH</code> 为兜底规则，所有未命中流量均走此出口，<strong className="text-gray-700 dark:text-gray-300">必须存在且置于末尾</strong>。</p>
+                <p dangerouslySetInnerHTML={{ __html: t('rule.orderEngineDesc1') }} />
+                <p dangerouslySetInnerHTML={{ __html: t('rule.orderEngineDesc2') }} />
+                <p dangerouslySetInnerHTML={{ __html: t('rule.orderEngineDesc3') }} />
               </div>
             </div>
           </div>
 
         <div className="rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-900/10 p-3 space-y-1.5">
-          {RULE_ORDER_STEPS.map((step, i) => (
+          {ruleOrderSteps.map((step, i) => (
             <div key={step.label} className="flex items-start gap-2">
               <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 w-4 text-right shrink-0 mt-0.5">{i + 1}</span>
               <div className="flex-1 min-w-0">
@@ -117,7 +118,7 @@ function RuleOrderNotice() {
             </div>
           ))}
           <p className="text-[9px] text-gray-400 dark:text-gray-600 pt-1 border-t border-indigo-100 dark:border-indigo-900/40">
-            规则按顺序匹配，命中即停止。在「自定义规则」区可拖拽调整 RULE-SET 与手动规则的相对位置。
+            {t('rule.orderNote')}
           </p>
         </div>
         </div>
@@ -135,6 +136,7 @@ const AI_SERVICES = [
 ] as const
 
 function AiQuickSetup() {
+  const { t } = useTranslation()
   const { ruleProviders, proxyGroups, updateRuleProvider } = useAppStore()
   const [open, setOpen] = useState(true)
 
@@ -169,7 +171,7 @@ function AiQuickSetup() {
       >
         <Zap size={13} className="text-amber-500 shrink-0" />
         <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex-1">
-          AI 规则快速配置
+          {t('rule.aiHeading')}
         </h2>
         <ChevronDown size={14} className={`text-gray-400 transition-transform ${open ? '' : '-rotate-90'}`} />
       </button>
@@ -177,7 +179,7 @@ function AiQuickSetup() {
       {open && (
         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200/70 dark:border-amber-800/60 rounded-xl p-4 space-y-3">
           <p className="text-xs text-amber-600 dark:text-amber-400">
-            为 AI 服务规则集选择目标代理组，一键启用：
+            {t('rule.aiDesc')}
           </p>
           <div className="grid grid-cols-2 gap-2">
             {AI_SERVICES.map((svc) => {
@@ -197,7 +199,7 @@ function AiQuickSetup() {
                     ))}
                   </select>
                   {provider?.enabled && (
-                    <span className="text-emerald-500 shrink-0" title="已启用"><Check size={12} /></span>
+                    <span className="text-emerald-500 shrink-0" title={t('rule.enabled')}><Check size={12} /></span>
                   )}
                 </div>
               )
@@ -208,7 +210,7 @@ function AiQuickSetup() {
             className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-xs font-semibold rounded-xl shadow-sm shadow-amber-200 dark:shadow-none transition-all"
           >
             <Zap size={13} />
-            一键应用 AI 规则
+            {t('rule.aiApply')}
           </button>
         </div>
       )}
@@ -218,6 +220,7 @@ function AiQuickSetup() {
 
 // ── Rule Providers ────────────────────────────────────────────────────────────
 function ProviderSection() {
+  const { t } = useTranslation()
   const {
     ruleProviders,
     proxyGroups,
@@ -252,9 +255,9 @@ function ProviderSection() {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2">
           <Link size={12} />
-          规则集
+          {t('rule.providerHeading')}
           <span className="text-[10px] font-medium text-gray-400 normal-case font-mono">
-            {enabledCount}/{ruleProviders.length} 已启用
+            {t('rule.providerEnabled', { enabled: enabledCount, total: ruleProviders.length })}
           </span>
         </h2>
         <button
@@ -262,7 +265,7 @@ function ProviderSection() {
           className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shadow-sm shadow-indigo-200 dark:shadow-none transition-all"
         >
           {showAddForm ? <X size={12} /> : <Plus size={13} />}
-          {showAddForm ? '取消' : '添加规则集'}
+          {showAddForm ? t('rule.providerCancel') : t('rule.providerAdd')}
         </button>
       </div>
 
@@ -320,6 +323,7 @@ function AddProviderForm({
   allTargets: string[]
   onAdd: (p: Omit<RuleProvider, 'id'>) => void
 }) {
+  const { t } = useTranslation()
   const [url, setUrl] = useState('')
   const [name, setName] = useState('')
   const [behavior, setBehavior] = useState<RuleProvider['behavior']>('domain')
@@ -364,13 +368,13 @@ function AddProviderForm({
 
   return (
     <div className="mb-3 p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/15 border border-indigo-200/70 dark:border-indigo-800/60 space-y-2.5">
-      <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">新建规则集</p>
+      <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">{t('rule.newProvider')}</p>
 
       {/* URL input */}
       <div>
         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-          URL
-          <span className="ml-1 text-gray-400 font-normal">（支持 GitHub 链接，自动转换为 CDN）</span>
+          {t('rule.providerUrlLabel')}
+          <span className="ml-1 text-gray-400 font-normal">{t('rule.providerUrlHint')}</span>
         </label>
         <input
           type="text"
@@ -382,14 +386,14 @@ function AddProviderForm({
         {preview && preview !== url.trim() && (
           <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
             <ExternalLink size={10} />
-            已转换为: {preview}
+            {t('rule.providerConverted', { url: preview })}
           </p>
         )}
       </div>
 
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">名称</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('rule.providerNameLabel')}</label>
           <input
             type="text"
             placeholder="auto"
@@ -399,7 +403,7 @@ function AddProviderForm({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">类型</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('rule.providerTypeLabel')}</label>
           <select
             value={behavior}
             onChange={(e) => {
@@ -413,7 +417,7 @@ function AddProviderForm({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">目标代理组</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('rule.providerTargetLabel')}</label>
           <select
             value={target}
             onChange={(e) => setTarget(e.target.value)}
@@ -440,7 +444,7 @@ function AddProviderForm({
           className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 text-white text-xs font-medium rounded-xl transition-all"
         >
           <Check size={12} />
-          确认添加
+          {t('rule.providerConfirm')}
         </button>
       </div>
     </div>
@@ -461,6 +465,7 @@ function SortableProviderRow({
   onRemove: () => void
   active: boolean
 }) {
+  const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: provider.id,
   })
@@ -520,7 +525,7 @@ function SortableProviderRow({
           role="switch"
           aria-checked={provider.enabled}
           onClick={() => onUpdate({ enabled: !provider.enabled })}
-          title={provider.enabled ? '点击禁用' : '点击启用'}
+          title={provider.enabled ? t('rule.toggleDisable') : t('rule.toggleEnable')}
           className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
             provider.enabled ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-600'
           }`}
@@ -565,7 +570,7 @@ function SortableProviderRow({
                     ? 'border-red-400 text-red-500 dark:text-red-400'
                     : `border-gray-200 dark:border-gray-700 ${targetColor[provider.target] ?? 'text-indigo-600 dark:text-indigo-400'}`
                 }`}
-                title={!targetInList ? `代理组 "${provider.target}" 不存在，Mihomo 加载时会报 proxy not found` : undefined}
+                title={!targetInList ? t('rule.targetNotFound', { target: provider.target }) : undefined}
               >
                 {selectOptions.map((t) => (
                   <option key={t} value={t} className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800">
@@ -574,7 +579,7 @@ function SortableProviderRow({
                 ))}
               </select>
               {!targetInList && (
-                <span className="text-red-500 text-xs" title={`代理组 "${provider.target}" 不存在`}>⚠</span>
+                <span className="text-red-500 text-xs" title={t('rule.targetNotFound', { target: provider.target })}>⚠</span>
               )}
             </div>
           )
@@ -588,7 +593,7 @@ function SortableProviderRow({
               ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
               : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300 hover:text-gray-500'
           }`}
-          title="切换 no-resolve"
+          title={t('rule.toggleNoResolve')}
         >
           no-res
         </button>
@@ -645,6 +650,7 @@ function SortableProviderRow({
 
 // ── Manual Rules ──────────────────────────────────────────────────────────────
 function ManualRulesSection() {
+  const { t } = useTranslation()
   const { rules, addRule, removeRule, reorderRules, proxyGroups, ruleProviders, resetRules } = useAppStore()
   const [newRule, setNewRule] = useState({
     type: 'DOMAIN',
@@ -700,7 +706,7 @@ function ManualRulesSection() {
         >
           <Shield size={13} className="text-gray-500" />
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide flex-1">
-            自定义规则
+            {t('rule.customHeading')}
             <span className="text-xs font-normal text-gray-400 normal-case ml-1">({rules.length})</span>
           </h2>
           <ChevronDown
@@ -718,7 +724,7 @@ function ManualRulesSection() {
             }`}
           >
             <Trash2 size={11} />
-            {confirmReset ? '确认重置？' : '重置'}
+            {confirmReset ? t('rule.customConfirmReset') : t('rule.customReset')}
           </button>
         )}
       </div>
@@ -781,7 +787,7 @@ function ManualRulesSection() {
                 className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
               >
                 <Plus size={12} />
-                添加
+                {t('rule.addRule')}
               </button>
             </div>
           </div>
@@ -834,6 +840,7 @@ function SortableRuleItem({
   allTargets: string[]
   onRemove: () => void
 }) {
+  const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: rule.id,
   })
@@ -873,7 +880,7 @@ function SortableRuleItem({
             ? 'text-red-500 dark:text-red-400'
             : (targetColor[rule.target] ?? 'text-purple-600 dark:text-purple-400')
         }`}
-        title={!targetValid ? `代理组 "${rule.target}" 不存在，Mihomo 加载时会报 proxy not found` : undefined}
+        title={!targetValid ? t('rule.targetNotFound', { target: rule.target }) : undefined}
       >
         → {rule.target}{!targetValid && ' ⚠'}
       </span>

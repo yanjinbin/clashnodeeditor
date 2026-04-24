@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { Smile } from 'lucide-react'
 
@@ -20,6 +21,7 @@ interface PickerPos {
 }
 
 export default function EmojiPicker({ onSelect, inputRef, value, onChange }: EmojiPickerProps) {
+  const { t, i18n } = useTranslation()
   const [open, setOpen] = useState(false)
   const [pickerPos, setPickerPos] = useState<PickerPos>({ top: 0, left: 0, openUp: false })
   const [emojiData, setEmojiData] = useState<object | null>(null)
@@ -105,7 +107,7 @@ export default function EmojiPicker({ onSelect, inputRef, value, onChange }: Emo
         ref={buttonRef}
         type="button"
         onClick={handleOpen}
-        title="插入 Emoji"
+        title={t('emoji.insertTitle')}
         className={`shrink-0 p-1.5 rounded-lg transition-colors ${
           open
             ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600'
@@ -130,7 +132,7 @@ export default function EmojiPicker({ onSelect, inputRef, value, onChange }: Emo
             <Suspense
               fallback={
                 <div className="w-[352px] h-[420px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center text-sm text-gray-400 shadow-xl">
-                  加载中…
+                  {t('emoji.loading')}
                 </div>
               }
             >
@@ -138,7 +140,7 @@ export default function EmojiPicker({ onSelect, inputRef, value, onChange }: Emo
                 <Picker
                   data={emojiData}
                   onEmojiSelect={handleSelect}
-                  locale="zh"
+                  locale={i18n.language === 'zh' ? 'zh' : 'en'}
                   theme="auto"
                   previewPosition="none"
                   skinTonePosition="search"
