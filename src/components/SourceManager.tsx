@@ -499,7 +499,14 @@ export default function SourceManager() {
             <div className="relative flex-1">
               <select value={newUa} onChange={(e) => setNewUa(e.target.value)}
                 className="w-full text-xs pl-3 pr-7 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 appearance-none cursor-pointer">
-                {PRESET_USER_AGENTS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                {PRESET_USER_AGENTS.map((p) => {
+                  const label = p.value === DEFAULT_USER_AGENT
+                    ? `Clash Verge Rev (${t('source.defaultUserAgent')})`
+                    : p.value === '__custom__'
+                      ? t('source.customUserAgent')
+                      : p.label
+                  return <option key={p.value} value={p.value}>{label}</option>
+                })}
               </select>
               <ChevronDown size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
             </div>

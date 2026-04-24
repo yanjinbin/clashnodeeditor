@@ -1349,41 +1349,42 @@ export default function NodeManager() {
               </button>
               {showChainExample && (
                 <div className="space-y-2 mt-2">
-                  {/* 为什么建议港澳台 */}
+                  {/* Fast relay guidance */}
                   <div className="rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
                     <strong>{t('node.whyHK')}</strong><br />
                     {t('node.whyHKDesc')}
                   </div>
                   <div className="relative bg-gray-900 dark:bg-gray-950 rounded-lg border border-gray-700 p-3 pr-10 overflow-x-auto">
                   <pre className="text-[10px] text-green-300 font-mono leading-relaxed whitespace-pre select-all">{`proxies:
-  # 1. 港澳台机场节点（已通过订阅源导入，无需改动）
-  - name: "🇭🇰 香港节点"
+  # 1. Fastest relay node for your country/region
+  #    Usually imported from your subscription source
+  - name: "🚀 Fastest Relay"
     type: vmess
-    server: hk.example.com
+    server: relay.example.com
     port: 443
     uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     alterId: 0
     cipher: auto
     tls: true
-    # ← 这里不加 dialer-proxy
+    # Do not add dialer-proxy here
 
-  # 2. 美国住宅SOCKS5 加上 dialer-proxy
-  #    含义：连接 us-res.example.com 这条路，先走香港节点
-  #    链路：本地 → 香港节点 → 住宅SOCKS5 → 目标
-  #    出口IP = 美国住宅IP ✓
+  # 2. Add dialer-proxy to the US residential SOCKS5 node
+  #    Meaning: connect to us-res.example.com through the fastest relay first
+  #    Path: local → fastest relay → residential SOCKS5 → target
+  #    Exit IP = US residential IP
   - name: "🇺🇸 美国住宅SOCKS5"
     type: socks5
-    server: us-res.example.com   # 替换为实际地址
+    server: us-res.example.com   # replace with your real address
     port: 1080
-    username: your_user          # 替换为实际账号
+    username: your_user          # replace with your real username
     password: your_pass
-    dialer-proxy: "🇭🇰 香港节点"  # ← 核心：先过香港，再到住宅出口
+    dialer-proxy: "🚀 Fastest Relay"  # first hop: fastest relay, then residential exit
 
 proxy-groups:
   - name: "🇺🇸 美国原生出口"
     type: select
     proxies:
-      - "🇺🇸 美国住宅SOCKS5"   # ← 选住宅SOCKS5，出口IP = 美国
+      - "🇺🇸 美国住宅SOCKS5"   # select SOCKS5, exit IP = US
       - DIRECT
 
 rules:
@@ -1392,7 +1393,7 @@ rules:
   - MATCH,DIRECT`}</pre>
                     <button
                       onClick={() => {
-                        const code = `proxies:\n  - name: "🇭🇰 香港节点"\n    type: vmess\n    server: hk.example.com\n    port: 443\n    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\n    alterId: 0\n    cipher: auto\n    tls: true\n\n  - name: "🇺🇸 美国住宅SOCKS5"\n    type: socks5\n    server: us-res.example.com\n    port: 1080\n    username: your_user\n    password: your_pass\n    dialer-proxy: "🇭🇰 香港节点"\n\nproxy-groups:\n  - name: "🇺🇸 美国原生出口"\n    type: select\n    proxies:\n      - "🇺🇸 美国住宅SOCKS5"\n      - DIRECT\n\nrules:\n  - GEOSITE,openai,🇺🇸 美国原生出口\n  - GEOSITE,google,🇺🇸 美国原生出口\n  - MATCH,DIRECT`
+                        const code = `proxies:\n  - name: "🚀 Fastest Relay"\n    type: vmess\n    server: relay.example.com\n    port: 443\n    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\n    alterId: 0\n    cipher: auto\n    tls: true\n\n  - name: "🇺🇸 美国住宅SOCKS5"\n    type: socks5\n    server: us-res.example.com\n    port: 1080\n    username: your_user\n    password: your_pass\n    dialer-proxy: "🚀 Fastest Relay"\n\nproxy-groups:\n  - name: "🇺🇸 美国原生出口"\n    type: select\n    proxies:\n      - "🇺🇸 美国住宅SOCKS5"\n      - DIRECT\n\nrules:\n  - GEOSITE,openai,🇺🇸 美国原生出口\n  - GEOSITE,google,🇺🇸 美国原生出口\n  - MATCH,DIRECT`
                         navigator.clipboard.writeText(code)
                         setExampleCopied(true)
                         setTimeout(() => setExampleCopied(false), 2000)

@@ -147,7 +147,8 @@ function syncPresetReferences(
   proxyGroups: ProxyGroup[],
   rules: Rule[],
   ruleProviders: RuleProvider[],
-  language: Language
+  language: Language,
+  globalSettings?: ClashGlobalSettings
 ) {
   const map = presetNameMap(language)
   for (const group of proxyGroups) {
@@ -159,6 +160,24 @@ function syncPresetReferences(
   }
   for (const provider of ruleProviders) {
     provider.target = map.get(provider.target) ?? provider.target
+  }
+  if (globalSettings?.dns) {
+    const translate = (value: string) => {
+      let next = value
+      for (const [from, to] of map) {
+        next = next.split(from).join(to)
+      }
+      return next
+    }
+    const policy = globalSettings.dns['nameserver-policy']
+    if (policy) {
+      for (const key of Object.keys(policy)) {
+        policy[key] = policy[key].map(translate)
+      }
+    }
+    if (globalSettings.dns.fallback) {
+      globalSettings.dns.fallback = globalSettings.dns.fallback.map(translate)
+    }
   }
 }
 
@@ -852,7 +871,7 @@ export const useAppStore = create<AppState>()(
     }),
 
     syncPresetLanguage: (language) => set((state) => {
-      syncPresetReferences(state.proxyGroups, state.rules, state.ruleProviders, language)
+      syncPresetReferences(state.proxyGroups, state.rules, state.ruleProviders, language, state.globalSettings)
     }),
   })),
   {

@@ -2,6 +2,7 @@ export const en = {
   // ── App ────────────────────────────────────────────────────────────────────
   app: {
     title: 'Multi-Source Node Config Editor — Mihomo Subscription Merge & Proxy Group Manager',
+    htmlTitle: 'Multi-Source Node Config Editor — Clash Subscription Merge & Proxy Group Manager',
     tabs: {
       sources: 'Sources',
       nodes: 'Manual Nodes',
@@ -35,6 +36,8 @@ export const en = {
     proxyNotice: 'Subscription requests are forwarded via an Edge Function (<code>api/proxy.ts</code>) deployed under your own Vercel account — no third-party service involved, fully auditable.',
     airportHint: 'Note: Not all providers support direct subscription import; some may only offer specific client formats or require manual config download.',
     userAgent: 'User-Agent',
+    defaultUserAgent: 'Default',
+    customUserAgent: 'Custom',
     customUaPlaceholder: 'e.g. clash-verge/v2.3.0',
     uaHint: 'Providers use UA to identify the client and return the appropriate node format.',
     uaCheckLatest: 'Check latest release →',
@@ -97,7 +100,7 @@ export const en = {
     createGroupBtn: 'Create Proxy Group',
     groupSuffix: '(exit)',
     guideTitle: 'Chain Proxy (dialer-proxy) Guide',
-    guideDesc: 'The <code>dialer-proxy</code> field lets one node connect via another proxy/group, creating a chained exit. Typical use: <strong>HK/TW/JP node → US residential SOCKS5</strong>, final exit IP is a US native IP, unlocking streaming, banking, etc. Supports all protocols: socks5 / http / ss / vmess / vless / trojan / hysteria2 etc.',
+    guideDesc: 'The <code>dialer-proxy</code> field lets one node connect via another proxy/group, creating a chained exit. Typical use: <strong>the fastest relay node for your country/region → US residential SOCKS5</strong>, final exit IP is a US native IP, unlocking streaming, banking, etc. Supports all protocols: socks5 / http / ss / vmess / vless / trojan / hysteria2 etc.',
     novproxyDesc: 'Most cost-effective residential IPs',
     novproxySubDesc: 'Unlock Gemini · Claude · OpenAI',
     riskTitle: '🛡️ Gemini / Claude / OpenAI Risk Control Notes',
@@ -116,10 +119,10 @@ export const en = {
       'Unlock Gemini · Claude · OpenAI, and works for streaming, banking, e-commerce, and other IP-sensitive services',
     ],
     aiPromptLabel: '🤖 AI Config Template Prompt',
-    aiPromptText: 'How do I implement chain proxy in Mihomo YAML config using proxies + dialer-proxy? I want local traffic to go through a HK/TW node first, then access a US residential SOCKS5, so the final exit IP is a US native IP. Please provide a complete example with proxies, proxy-groups, and rules.',
-    showExample: 'View full example (HK/TW node → US residential SOCKS5)',
-    whyHK: '💡 Why use HK/TW/JP nodes as the middle hop?',
-    whyHKDesc: 'HK/TW nodes have low latency (typically < 30ms) and stable line quality. As the first hop, they barely affect overall speed. Compared to EU/US nodes, total two-hop latency is lower, residential SOCKS5 handshake is faster, and real-world experience is smoother. HK/TW airport nodes typically use IPLC/dedicated lines, making them ideal for latency-sensitive AI services.',
+    aiPromptText: 'How do I implement chain proxy in Mihomo YAML config using proxies + dialer-proxy? I want local traffic to go through the fastest relay node for my country/region first, then access a US residential SOCKS5, so the final exit IP is a US native IP. Please provide a complete example with proxies, proxy-groups, and rules.',
+    showExample: 'View full example (fastest relay node → US residential SOCKS5)',
+    whyHK: '💡 Why use the fastest relay node for your country/region?',
+    whyHKDesc: 'Choose the lowest-latency and most stable relay node for your country/region as the first hop. This usually has the least impact on overall speed. Instead of hard-coding a specific country or region, choosing the fastest relay for your actual network lowers total two-hop latency, speeds up the residential SOCKS5 handshake, and makes the real-world experience smoother. If your provider offers dedicated/IPLC lines, prefer nearby and stable routes.',
     refDoc: 'Reference: Advanced — SOCKS Residential Native IP (optional purchase)',
 
     // Modal
@@ -160,7 +163,7 @@ export const en = {
       labelSshPrivateKeyPassphrase: 'Key passphrase (optional)',
       labelSshHostKey: 'Host key (optional)',
       labelDialerSection: 'Chain Proxy (dialer-proxy)',
-      labelDialerDesc: 'After selecting a pre-proxy, Mihomo will connect to this node\'s server via that proxy/group, creating a chained exit.\nExample: HK/TW node → this node (US static IP) → Internet, exit IP = US native IP.',
+      labelDialerDesc: 'After selecting a pre-proxy, Mihomo will connect to this node\'s server via that proxy/group, creating a chained exit.\nExample: fastest relay node for your country/region → this node (US static IP) → Internet, exit IP = US native IP.',
       labelDialerProxy: 'Pre-proxy / Group',
       labelDialerNone: '— None (direct connection)',
       local: 'Local',
@@ -283,6 +286,7 @@ export const en = {
     orderGeneral: 'General',
     orderIp: 'IP Rules',
     orderChina: 'China fallback',
+    orderMatchTarget: '♻️ Auto Select',
     aiHeading: 'AI Rule Quick Setup',
     aiDesc: 'Select a target proxy group for each AI service rule set and enable with one click:',
     aiApply: 'Apply AI Rules',

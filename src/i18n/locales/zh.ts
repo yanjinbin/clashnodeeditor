@@ -2,6 +2,7 @@ export const zh = {
   // ── App ────────────────────────────────────────────────────────────────────
   app: {
     title: '多源机场节点配置编辑器 — Mihomo 订阅合并 & 代理组管理工具',
+    htmlTitle: '多源机场节点配置编辑器 — Clash 订阅合并 & 代理组管理工具',
     tabs: {
       sources: '订阅源',
       nodes: '手动节点',
@@ -35,6 +36,8 @@ export const zh = {
     proxyNotice: '订阅请求通过部署在你自己 Vercel 账号下的 Edge Function（<code>api/proxy.ts</code>）转发，不经过任何第三方服务，透明可审计。',
     airportHint: '温馨提示：不是所有机场都支持订阅链接直接导入，部分机场可能仅提供特定客户端格式或需要手动下载配置文件。',
     userAgent: 'User-Agent',
+    defaultUserAgent: '默认',
+    customUserAgent: '自定义',
     customUaPlaceholder: '如：clash-verge/v2.3.0',
     uaHint: '机场通过 UA 识别客户端并返回对应节点格式。',
     uaCheckLatest: '查看最新版本 →',
@@ -97,7 +100,7 @@ export const zh = {
     createGroupBtn: '一键创建代理组',
     groupSuffix: '(出口)',
     guideTitle: '链式代理（dialer-proxy）使用指南',
-    guideDesc: '通过 <code>dialer-proxy</code> 字段，可让一个节点经由另一个代理/代理组建立连接，实现「链式出口」。典型场景：<strong>港澳台新韩节点 → 美国原生住宅 SOCKS5</strong>，最终出口 IP 为美国原生 IP，可解锁流媒体、金融等 IP 敏感服务。支持 socks5 / http / ss / vmess / vless / trojan / hysteria2 等全协议。',
+    guideDesc: '通过 <code>dialer-proxy</code> 字段，可让一个节点经由另一个代理/代理组建立连接，实现「链式出口」。典型场景：<strong>你所在国家/地区最快的中转节点 → 美国原生住宅 SOCKS5</strong>，最终出口 IP 为美国原生 IP，可解锁流媒体、金融等 IP 敏感服务。支持 socks5 / http / ss / vmess / vless / trojan / hysteria2 等全协议。',
     novproxyDesc: '最具性价比的住宅 IP',
     novproxySubDesc: '解锁 Gemini · Claude · OpenAI',
     riskTitle: '🛡️ Gemini / Claude / OpenAI 风控策略说明',
@@ -116,10 +119,10 @@ export const zh = {
       '解锁 Gemini · Claude · OpenAI，同时适用于流媒体、金融、电商等 IP 敏感服务',
     ],
     aiPromptLabel: '🤖 问 AI 配置模板',
-    aiPromptText: '如何在 Mihomo 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过港澳台新节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。',
-    showExample: '查看完整配置示例（港澳台新节点 → 美国住宅 SOCKS5）',
-    whyHK: '💡 为什么建议用港澳台新节点做中间跳？',
-    whyHKDesc: '港澳台节点延迟低（通常 < 30ms）、线路质量稳定，作为第一跳几乎不影响整体速度；相比日欧美节点，两跳总延迟更低，住宅 SOCKS5 拨号握手更快，实际体验更流畅。此外港澳台机场节点通常走 IPLC/专线，出口稳定，适合对延迟敏感的 AI 服务使用。',
+    aiPromptText: '如何在 Mihomo 的 YAML 配置文件中，通过 proxies + dialer-proxy 实现链式代理？我想让本地流量先经过我所在国家/地区最快的中转节点，再访问美国原生住宅 SOCKS5，最终出口 IP 为美国原生 IP。请给出完整 节点 proxies / 代理组 proxy-groups / 规则集 rules 配置示例。',
+    showExample: '查看完整配置示例（最快中转节点 → 美国住宅 SOCKS5）',
+    whyHK: '💡 为什么建议使用你所在国家/地区最快的中转节点？',
+    whyHKDesc: '优先选择你所在国家/地区延迟最低、线路最稳定的中转节点，作为第一跳通常更不影响整体速度；相比固定指定某个国家或地区，按实际网络环境选择最快中转点，两跳总延迟更低，住宅 SOCKS5 拨号握手更快，实际体验更流畅。若机场提供专线/IPLC 节点，可优先选择距离近且稳定的线路。',
     refDoc: '参考文档：高阶 — Socks 家宽原生住宅（自愿购买）',
 
     // Modal
@@ -160,7 +163,7 @@ export const zh = {
       labelSshPrivateKeyPassphrase: '私钥密码（可选）',
       labelSshHostKey: 'Host Key（可选）',
       labelDialerSection: '链式代理（dialer-proxy）',
-      labelDialerDesc: '选择前置代理后，Mihomo 会先通过该代理/代理组建立与本节点服务器的连接，实现链式出口。\n例：港澳台新韩节点 → 本节点（美国静态IP）→ 互联网，出口 IP = 美国原生 IP。',
+      labelDialerDesc: '选择前置代理后，Mihomo 会先通过该代理/代理组建立与本节点服务器的连接，实现链式出口。\n例：你所在国家/地区最快的中转节点 → 本节点（美国静态IP）→ 互联网，出口 IP = 美国原生 IP。',
       labelDialerProxy: '前置代理 / 代理组',
       labelDialerNone: '— 无（直接连接）',
       local: '本地',
@@ -283,6 +286,7 @@ export const zh = {
     orderGeneral: '通用',
     orderIp: 'IP 规则',
     orderChina: '国内兜底',
+    orderMatchTarget: '♻️ 自动选择',
     aiHeading: 'AI 规则快速配置',
     aiDesc: '为 AI 服务规则集选择目标代理组，一键启用：',
     aiApply: '一键应用 AI 规则',

@@ -70,7 +70,7 @@ function RuleOrderNotice() {
     { label: t('rule.orderGeneral'), items: ['RULE-SET direct', 'RULE-SET gfw'] },
     { label: t('rule.orderIp'), items: ['telegramcidr no-resolve', 'cncidr no-resolve'] },
     { label: t('rule.orderChina'), items: ['RULE-SET cn', 'GEOIP CN no-resolve'] },
-    { label: 'MATCH', items: ['♻️ 自动选择'] },
+    { label: 'MATCH', items: [t('rule.orderMatchTarget')] },
   ]
   return (
     <div className="px-5 py-3">

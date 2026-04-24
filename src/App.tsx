@@ -25,6 +25,11 @@ export default function App() {
     syncPresetLanguage(language)
   }, [language, syncPresetLanguage])
 
+  useEffect(() => {
+    document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en'
+    document.title = t('app.htmlTitle')
+  }, [language, t])
+
   const TABS = [
     { id: 'sources' as const, label: t('app.tabs.sources'), icon: Globe },
     { id: 'nodes'   as const, label: t('app.tabs.nodes'),   icon: Server },
