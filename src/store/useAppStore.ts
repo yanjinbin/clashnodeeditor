@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { SourceConfig, ProxyGroup, RuleProvider, Rule, Proxy, ClashConfig, ClashGlobalSettings, DnsConfig, DnsFallbackFilter } from '../types/clash'
-import { PRESET_RULE_PROVIDERS, BLACKMATRIX7_RULE_PROVIDERS, DEFAULT_GLOBAL_SETTINGS } from '../types/clash'
+import { PRESET_RULE_PROVIDERS, BLACKMATRIX7_RULE_PROVIDERS, CUSTOM_RULE_PROVIDERS, DEFAULT_GLOBAL_SETTINGS } from '../types/clash'
 import { getInitialLanguage, type Language } from '../i18n/language'
 
 interface AppState {
@@ -274,49 +274,57 @@ function createDefaultProxyGroups(language: Language = getInitialLanguage()): Pr
 
 function createDefaultRules(language: Language = getInitialLanguage()): Rule[] {
   return [
-    // ── 1) 本地/局域网（最高优先级）──────────────────────────────────────────────
-    { id: generateId(), type: 'IP-CIDR',       payload: '0.0.0.0/32',       target: 'REJECT-DROP', noResolve: true },
-    { id: generateId(), type: 'IP-CIDR',       payload: '127.0.0.0/8',      target: 'DIRECT', noResolve: true },
-    { id: generateId(), type: 'DOMAIN',        payload: 'localhost',         target: 'DIRECT' },
-    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'local',             target: 'DIRECT' },
-    { id: generateId(), type: 'IP-CIDR',       payload: '10.0.0.0/8',        target: 'DIRECT', noResolve: true },
-    { id: generateId(), type: 'IP-CIDR',       payload: '172.16.0.0/12',     target: 'DIRECT', noResolve: true },
-    { id: generateId(), type: 'IP-CIDR',       payload: '192.168.0.0/16',    target: 'DIRECT', noResolve: true },
-    { id: generateId(), type: 'RULE-SET',      payload: 'private',           target: 'DIRECT' },
-    { id: generateId(), type: 'GEOIP',         payload: 'LAN',               target: 'DIRECT', noResolve: true },
-    // ── 2) UDP 精细控制──────────────────────────────────────────────────────────
-    { id: generateId(), type: 'AND', payload: '((RULE-SET,youtube),(DST-PORT,443),(NETWORK,UDP))',       target: presetGroupName('youtube', language) },
-    { id: generateId(), type: 'AND', payload: '((RULE-SET,youtube-music),(DST-PORT,443),(NETWORK,UDP))', target: presetGroupName('youtube', language) },
-    { id: generateId(), type: 'AND', payload: '((RULE-SET,gemini),(NETWORK,UDP))',                       target: 'REJECT' },
-    { id: generateId(), type: 'AND', payload: '((RULE-SET,google),(NETWORK,UDP))',                       target: 'REJECT' },
-    { id: generateId(), type: 'AND', payload: '((RULE-SET,tencent),(NETWORK,UDP))',                      target: 'DIRECT' },
-    { id: generateId(), type: 'AND', payload: '((GEOIP,CN),(NETWORK,UDP))',                              target: 'DIRECT' },
-    { id: generateId(), type: 'AND', payload: '((NETWORK,UDP))',                                         target: 'REJECT' },
-    // ── 3) AI 服务───────────────────────────────────────────────────────────────
-    { id: generateId(), type: 'RULE-SET',      payload: 'gemini',           target: presetGroupName('us', language) },
+    // ── 0) IPv6 全拦截（最优先）──────────────────────────────────────────────────
+    { id: generateId(), type: 'IP-CIDR6',      payload: '::/0',              target: 'REJECT',   noResolve: true },
+    // ── 1) 广告拦截 & 豆包屏蔽──────────────────────────────────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'doubaoime-block',   target: 'REJECT' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'adblock',          target: 'REJECT' },
+    // ── 2) 直连白名单（livekit/bypass 在代理规则之前豁免）──────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'livekit',          target: 'DIRECT' },
+    { id: generateId(), type: 'RULE-SET',      payload: 'bypass',           target: 'DIRECT' },
+    // ── 3) 局域网 & 私有网段直连──────────────────────────────────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'private',          target: 'DIRECT' },
+    { id: generateId(), type: 'GEOIP',         payload: 'LAN',              target: 'DIRECT',   noResolve: true },
+    // ── 4) 国内直连──────────────────────────────────────────────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'tencent',          target: 'DIRECT' },
+    { id: generateId(), type: 'GEOIP',         payload: 'CN',               target: 'DIRECT',   noResolve: true },
+    // ── 5) 视频流媒体──────────────────────────────────────────────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',    target: presetGroupName('youtube', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'youtube',          target: presetGroupName('youtube', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'twitter-video',    target: presetGroupName('youtube', language) },
+    // ── 6) AI 服务──────────────────────────────────────────────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'claude+',          target: presetGroupName('claude', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'claude-pro',       target: presetGroupName('claude', language) },
     { id: generateId(), type: 'RULE-SET',      payload: 'openai',           target: presetGroupName('us', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'claude',           target: presetGroupName('claude', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'copilot',          target: presetGroupName('us', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'gemini-plus',      target: presetGroupName('us', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'gemini',           target: presetGroupName('us', language) },
     { id: generateId(), type: 'RULE-SET',      payload: 'google',           target: presetGroupName('us', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'github',           target: presetGroupName('claude', language) },
-    // ── 4) IP 检测工具───────────────────────────────────────────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'copilot',          target: presetGroupName('us', language) },
+    // ── 7) 社交媒体──────────────────────────────────────────────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'twitter',          target: presetGroupName('social', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'telegram',         target: presetGroupName('social', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'tiktok',           target: presetGroupName('social', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'linkedin',         target: presetGroupName('social', language) },
+    // ── 8) Apple──────────────────────────────────────────────────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'apple-merge',      target: presetGroupName('select', language) },
+    // ── 9) 开发工具──────────────────────────────────────────────────────────────
+    { id: generateId(), type: 'RULE-SET',      payload: 'github',           target: presetGroupName('auto', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'microsoft',        target: presetGroupName('auto', language) },
+    { id: generateId(), type: 'RULE-SET',      payload: 'docker',           target: presetGroupName('auto', language) },
+    // ── 10) IP 检测工具──────────────────────────────────────────────────────────
     { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ipleak.net',       target: presetGroupName('us', language) },
     { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'dnsleaktest.com',  target: presetGroupName('us', language) },
     { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ipapi.co',         target: presetGroupName('us', language) },
-    { id: generateId(), type: 'DOMAIN',        payload: 'www.ugtop.com',    target: presetGroupName('jp', language) },
-    // ── 5) 视频/社交──────────────────────────────────────────────────────────────
-    { id: generateId(), type: 'RULE-SET',      payload: 'twitter',          target: presetGroupName('social', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'youtube-music',    target: presetGroupName('youtube', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'youtube',          target: presetGroupName('youtube', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'microsoft',        target: presetGroupName('youtube', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'telegram',         target: presetGroupName('youtube', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'tiktok',           target: presetGroupName('youtube', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'linkedin',         target: presetGroupName('social', language) },
-    { id: generateId(), type: 'RULE-SET',      payload: 'docker',           target: presetGroupName('auto', language) },
-    // ── 6) 国内直连──────────────────────────────────────────────────────────────
-    { id: generateId(), type: 'GEOIP',         payload: 'CN',               target: 'DIRECT', noResolve: true },
-    // ── 7) 默认兜底──────────────────────────────────────────────────────────────
-    { id: generateId(), type: 'MATCH',         payload: '',                 target: presetGroupName('fallback', language) },
+    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'ugtop.com',        target: presetGroupName('jp', language) },
+    { id: generateId(), type: 'DOMAIN-SUFFIX', payload: 'antigravity-unleash.goog', target: presetGroupName('us', language) },
+    // ── 11) 进程规则（macOS 客户端有效）────────────────────────────────────────
+    { id: generateId(), type: 'PROCESS-NAME',  payload: 'WeChat',                      target: 'DIRECT' },
+    { id: generateId(), type: 'PROCESS-NAME',  payload: 'Claude Helper',               target: presetGroupName('claude', language) },
+    { id: generateId(), type: 'PROCESS-NAME',  payload: 'Claude Helper (Renderer)',    target: presetGroupName('claude', language) },
+    { id: generateId(), type: 'PROCESS-NAME',  payload: 'Claude',                      target: presetGroupName('claude', language) },
+    { id: generateId(), type: 'PROCESS-NAME',  payload: 'Antigravity Helper',          target: presetGroupName('us', language) },
+    // ── 12) 兜底──────────────────────────────────────────────────────────────────
+    { id: generateId(), type: 'MATCH',         payload: '',                 target: presetGroupName('select', language) },
   ]
 }
 
@@ -395,6 +403,7 @@ export const useAppStore = create<AppState>()(
     ruleProviders: [
       ...PRESET_RULE_PROVIDERS.map((p) => ({ ...p })),
       ...BLACKMATRIX7_RULE_PROVIDERS.map((p) => ({ ...p })),
+      ...CUSTOM_RULE_PROVIDERS.map((p) => ({ ...p })),
     ],
 
     // Unified ordered rule list — includes both manual rules and inline RULE-SET references.

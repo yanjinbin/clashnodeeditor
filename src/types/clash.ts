@@ -316,10 +316,8 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   dns: {
     enable: true,
     ipv6: false,
-    listen: '0.0.0.0:1053',
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
-    'fake-ip-filter-mode': 'blacklist',
     // 这些域名绕过 fake-ip，返回真实 IP（时间同步、NTP、IoT 设备、游戏主机等）
     'fake-ip-filter': [
       // 内网 / 本地
@@ -385,10 +383,6 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     nameserver: ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
     'nameserver-policy': {
       'geosite:cn,private': ['223.5.5.5', '119.29.29.29'],
-      'geosite:geolocation-!cn': [
-        'https://1.1.1.1/dns-query',
-        'https://8.8.8.8/dns-query',
-      ],
     },
   },
 }
@@ -602,7 +596,7 @@ function preset(
 export const PRESET_RULE_PROVIDERS: RuleProvider[] = [
   preset('reject',       'domain',    'REJECT',       false),
   preset('private',      'domain',    'DIRECT',       true),
-  preset('google',       'domain',    '🗽 美国出口', true),
+  preset('google',       'domain',    '🗽 美国出口', false),
   preset('direct',       'domain',    'DIRECT',       false),
   preset('gfw',          'domain',    '♻️ 自动选择', false),
   preset('telegramcidr', 'ipcidr',    '♻️ 自动选择', false, true),
@@ -622,7 +616,7 @@ function bm7(
     name: id,
     type: 'http',
     behavior: 'classical',
-    url: `https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/${filePath}`,
+    url: `https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/${filePath}`,
     path: `./ruleset/${id}.yaml`,
     interval,
     target,
@@ -636,18 +630,70 @@ export const BLACKMATRIX7_RULE_PROVIDERS: RuleProvider[] = [
   bm7('claude',       'Claude/Claude.yaml',             '🪬 Claude专用', true),
   bm7('gemini',       'Gemini/Gemini.yaml',             '🗽 美国出口', true),
   bm7('copilot',      'Copilot/Copilot.yaml',           '🗽 美国出口', true),
-  bm7('github',       'GitHub/GitHub.yaml',             '🪬 Claude专用', true),
+  bm7('google',       'Google/Google.yaml',             '🗽 美国出口', true),
+  bm7('github',       'GitHub/GitHub.yaml',             '♻️ 自动选择', true),
   bm7('youtube-music','YouTubeMusic/YouTubeMusic.yaml', '📺 油管', true),
   bm7('youtube',      'YouTube/YouTube.yaml',           '📺 油管', true),
-  bm7('telegram',     'Telegram/Telegram.yaml',         '📺 油管', true),
+  bm7('telegram',     'Telegram/Telegram.yaml',         '📡 社交媒体', true),
   bm7('twitter',      'Twitter/Twitter.yaml',           '📡 社交媒体', true),
-  bm7('tiktok',       'TikTok/TikTok.yaml',             '📺 油管', true),
+  bm7('tiktok',       'TikTok/TikTok.yaml',             '📡 社交媒体', true),
   bm7('linkedin',     'LinkedIn/LinkedIn.yaml',         '📡 社交媒体', true),
-  bm7('microsoft',    'Microsoft/Microsoft.yaml',       '📺 油管', true),
+  bm7('microsoft',    'Microsoft/Microsoft.yaml',       '♻️ 自动选择', true),
   bm7('tencent',      'Tencent/Tencent.yaml',           'DIRECT',      true),
   bm7('docker',       'Docker/Docker.yaml',             '♻️ 自动选择', true),
+  bm7('AppleMusic',   'AppleMusic/AppleMusic.yaml',     '🌐 节点选择', true),
+  bm7('AppleTV',      'AppleTV/AppleTV.yaml',           '🌐 节点选择', true),
+  bm7('AppleProxy',   'AppleProxy/AppleProxy.yaml',     '🌐 节点选择', true),
+  bm7('Apple',        'Apple/Apple.yaml',               '🌐 节点选择', true),
+  bm7('AppleID',      'AppleID/AppleID.yaml',           '🌐 节点选择', true),
+  bm7('AppStore',     'AppStore/AppStore.yaml',         '🌐 节点选择', true),
   bm7('GoogleFCM',    'GoogleFCM/GoogleFCM.yaml',       'DIRECT',      false),
   bm7('cn',           'China/China.yaml',               'DIRECT',      false),
+]
+
+function dotfiles(
+  id: string,
+  filename: string,
+  target: string,
+  enabled = true,
+  interval = 2592000
+): RuleProvider {
+  return {
+    id: `custom-${id}`,
+    name: id,
+    type: 'http',
+    behavior: 'classical',
+    url: `https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/${filename}.yaml`,
+    path: `./ruleset/${filename}.yaml`,
+    interval,
+    target,
+    enabled,
+    isPreset: true,
+  }
+}
+
+export const CUSTOM_RULE_PROVIDERS: RuleProvider[] = [
+  dotfiles('apple-merge',    'apple-merged',    '🌐 节点选择'),
+  dotfiles('twitter-video',  'twitter-video',   '📺 油管'),
+  dotfiles('livekit',        'livekit',         'DIRECT'),
+  dotfiles('claude+',        'claude+',         '🪬 Claude专用'),
+  dotfiles('claude-pro',     'claude-pro',      '🪬 Claude专用'),
+  dotfiles('gemini-plus',    'gemini-plus',     '🗽 美国出口'),
+  dotfiles('doubaoime-block','doubaoime-block',  'REJECT'),
+  dotfiles('bypass',         'bypass',          'DIRECT'),
+  dotfiles('auto-proxy',     'auto-proxy',      '🌐 节点选择'),
+  {
+    id: 'custom-adblock',
+    name: 'adblock',
+    type: 'http',
+    behavior: 'classical',
+    url: 'https://cdn.jsdelivr.net/gh/TG-Twilight/AWAvenue-Ads-Rule@latest/Filters/AWAvenue-Ads-Rule-Clash-Classical.yaml',
+    path: './ruleset/adblock.yaml',
+    interval: 86400,
+    target: 'REJECT',
+    enabled: true,
+    isPreset: true,
+  },
 ]
 
 export const BUILT_IN_PROXIES: string[] = []

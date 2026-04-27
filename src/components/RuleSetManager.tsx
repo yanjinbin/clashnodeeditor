@@ -41,6 +41,7 @@ const RULE_TYPES = [
   'IP-CIDR',
   'IP-CIDR6',
   'GEOIP',
+  'PROCESS-NAME',
   'RULE-SET',
   'MATCH',
 ]
