@@ -75,11 +75,11 @@ interface AppState {
   syncPresetLanguage: (language: Language) => void
 }
 
-// ── Expiring localStorage storage (TTL = 12 h) ───────────────────────────────
+// ── Expiring localStorage storage (TTL = 3 days) ─────────────────────────────
 
-const TTL_MS = 12 * 60 * 60 * 1000
+const TTL_MS = 3 * 24 * 60 * 60 * 1000
 
-/** StateStorage adapter — wraps localStorage with a 12-hour expiry envelope. */
+/** StateStorage adapter — wraps localStorage with a 3-day expiry envelope. */
 const expiringLocalStorage = {
   getItem: (name: string): string | null => {
     try {

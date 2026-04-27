@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const POLL_INTERVAL = 5 * 60 * 1000 // 5 min
+const POLL_INTERVAL = 30 * 60 * 1000 // 30 min
 const COUNTDOWN_SEC = 5
 
 export function useVersionCheck() {
