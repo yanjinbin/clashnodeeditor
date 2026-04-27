@@ -289,8 +289,14 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
       'Mijia Cloud',
       '+.push.apple.com',
       '+.apple.com',
+      '+.icloud.com',
+      '+.mzstatic.com',
+      'swscan.apple.com',
+      'mesu.apple.com',
+      'captive.apple.com',
       '+.mi.com',
       '+.xiaomi.com',
+      '+.mijia.com',
       '+.local',
       'msftconnecttest.com',
       'time.*.com',
@@ -310,7 +316,7 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   dns: {
     enable: true,
     ipv6: false,
-    listen: ':53',
+    listen: '0.0.0.0:1053',
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
     'fake-ip-filter-mode': 'blacklist',
@@ -368,7 +374,7 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     ],
     // 解析时优先查询 /etc/hosts，适合内网自定义域名场景
     'use-hosts': true,
-    'respect-rules': true,
+    'respect-rules': false,
     // 仅用于引导阶段：解析 nameserver 中 DoH/DoT 服务器的域名（如 dns.google）
     // 必须填国内可直连的纯 IP DNS，否则 DoH 地址无法解析导致启动失败
     'default-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
@@ -380,12 +386,11 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     'nameserver-policy': {
       'geosite:cn,private': ['223.5.5.5', '119.29.29.29'],
       'geosite:geolocation-!cn': [
-        'https://1.1.1.1/dns-query#♻️ 自动选择',
-        'https://8.8.8.8/dns-query#♻️ 自动选择',
+        'https://1.1.1.1/dns-query',
+        'https://8.8.8.8/dns-query',
       ],
     },
   },
-  'routing-mark': 6666,
 }
 
 export const MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS: ClashGlobalSettings = {
