@@ -34,8 +34,16 @@ export function getStoredLanguage(): Language | null {
   }
 }
 
+export function getBrowserLanguage(): Language | null {
+  for (const lang of navigator.languages ?? [navigator.language]) {
+    const normalized = normalizeLanguage(lang)
+    if (normalized) return normalized
+  }
+  return null
+}
+
 export function getInitialLanguage(): Language {
-  return getLanguageFromUrl() ?? getStoredLanguage() ?? 'zh'
+  return getLanguageFromUrl() ?? getStoredLanguage() ?? getBrowserLanguage() ?? 'zh'
 }
 
 export function persistLanguage(language: Language) {
