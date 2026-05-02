@@ -248,7 +248,7 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   // 延迟测试显示端到端总延迟（本地→中转→落地），而非只测本地到代理的一跳
   'unified-delay': true,
   ipv6: false,
-  udp: false,
+  udp: true,
   'prefer-h3': false,
   // UDP 会话静默超时（秒），超时后释放 NAT 映射；300 适合游戏/视频场景
   'udp-timeout': 300,
@@ -320,6 +320,8 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     ipv6: false,
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
+    // whitelist：仅列表中的域名绕过 fake-ip 返回真实 IP，其余全部 fake-ip
+    'fake-ip-filter-mode': 'whitelist',
     // 这些域名绕过 fake-ip，返回真实 IP（时间同步、NTP、IoT 设备、游戏主机等）
     'fake-ip-filter': [
       // 内网 / 本地
@@ -374,7 +376,8 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     ],
     // 解析时优先查询 /etc/hosts，适合内网自定义域名场景
     'use-hosts': true,
-    'respect-rules': false,
+    // nameserver-policy 命中 geolocation-!cn 后 respect-rules 才能正确路由 DNS 查询
+    'respect-rules': true,
     // 仅用于引导阶段：解析 nameserver 中 DoH/DoT 服务器的域名（如 dns.google）
     // 必须填国内可直连的纯 IP DNS，否则 DoH 地址无法解析导致启动失败
     'default-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
@@ -384,7 +387,29 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     // 默认 DNS：处理未被 nameserver-policy 命中的所有域名查询
     nameserver: ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
     'nameserver-policy': {
+      // 国内域名 + 私有域名走国内 DNS，直连无污染
       'geosite:cn,private': ['223.5.5.5', '119.29.29.29'],
+      '+.apple.com': ['223.5.5.5', '119.29.29.29'],
+      '+.icloud.com': ['223.5.5.5', '119.29.29.29'],
+      // 境外域名走国内加密 DoH（doh.pub/alidns），直连防污染，不依赖节点
+      // 要求 MetaCubeX/meta-rules-dat 完整版 geosite.dat（geolocation-!cn 可用）
+      'geosite:geolocation-!cn': [
+        'https://doh.pub/dns-query',
+        'https://dns.alidns.com/dns-query',
+      ],
+    },
+    // fallback：当 nameserver 结果被 fallback-filter 判定为污染时重新解析
+    // 使用国内加密 DoH，直连不依赖节点
+    fallback: [
+      'https://doh.pub/dns-query',
+      'https://dns.alidns.com/dns-query',
+    ],
+    'fallback-filter': {
+      geoip: true,
+      'geoip-code': 'CN',
+      geosite: ['gfw'],
+      ipcidr: [],
+      domain: [],
     },
   },
 }
@@ -495,6 +520,10 @@ export const MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS: ClashGlobalSettings = {
     'default-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
     nameserver: ['119.29.29.29', '223.5.5.5', '114.114.114.114'],
     'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29'],
+    // Merlin 路由器 geosite.dat 不含 geolocation-!cn，显式覆盖以避免 not found 错误
+    'nameserver-policy': {
+      'geosite:cn,private': ['223.5.5.5', '119.29.29.29'],
+    },
     'use-hosts': true,
     'respect-rules': true,
     fallback: [

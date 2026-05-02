@@ -379,16 +379,12 @@ function mergeGlobalSettings(persisted?: Partial<ClashGlobalSettings>): ClashGlo
                 ...persisted.dns['fallback-filter'],
               }
             : defaults.dns['fallback-filter'],
-          'nameserver-policy': (() => {
-            const merged = persisted.dns['nameserver-policy']
-              ? {
-                  ...defaults.dns['nameserver-policy'],
-                  ...persisted.dns['nameserver-policy'],
-                }
-              : { ...defaults.dns['nameserver-policy'] }
-            delete merged['geosite:geolocation-!cn']
-            return merged
-          })(),
+          'nameserver-policy': persisted.dns['nameserver-policy']
+            ? {
+                ...defaults.dns['nameserver-policy'],
+                ...persisted.dns['nameserver-policy'],
+              }
+            : { ...defaults.dns['nameserver-policy'] },
         }
       : defaults.dns,
   }

@@ -173,16 +173,12 @@ export function generateClashConfig(
             ...settings.dns['fallback-filter'],
           }
         : DEFAULT_GLOBAL_SETTINGS.dns['fallback-filter'],
-      'nameserver-policy': (() => {
-        const merged = settings.dns?.['nameserver-policy']
-          ? {
-              ...DEFAULT_GLOBAL_SETTINGS.dns['nameserver-policy'],
-              ...settings.dns['nameserver-policy'],
-            }
-          : { ...DEFAULT_GLOBAL_SETTINGS.dns['nameserver-policy'] }
-        delete merged['geosite:geolocation-!cn']
-        return merged
-      })(),
+      'nameserver-policy': settings.dns?.['nameserver-policy']
+        ? {
+            ...DEFAULT_GLOBAL_SETTINGS.dns['nameserver-policy'],
+            ...settings.dns['nameserver-policy'],
+          }
+        : { ...DEFAULT_GLOBAL_SETTINGS.dns['nameserver-policy'] },
     },
   }
 
