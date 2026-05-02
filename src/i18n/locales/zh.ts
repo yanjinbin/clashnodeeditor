@@ -80,6 +80,8 @@ export const zh = {
     ipVersionTitle: 'ip-version',
     ipQualityTitle_idle: '查询 IP 质量（{{server}}）',
     ipQualityTitle_done: 'IP: {{ip}} — 点击重新查询',
+    globalIpVersionLabel: '全局 ip-version',
+    applyGlobalIpVersion: '应用到全部节点',
   },
 
   // ── NodeManager ───────────────────────────────────────────────────────────
@@ -425,6 +427,7 @@ rules:
         tcpConcurrent: '同时向多个目标 IP 发起连接，取最快响应（类 Happy Eyeballs），减少因单路握手超时造成的等待。',
         unifiedDelay: '延迟测试时显示 本地→中转→落地 的端到端总延迟，而非只测本地到代理的一段。',
         ipv6: '全局 IPv6 开关。关闭后不处理 IPv6 流量，适合避免 IPv6 直连绕过代理。',
+        globalIpVersion: '为所有节点设置默认 ip-version（ipv4 / ipv6 / dual）。每个节点单独设置的 ip-version 优先级更高。推荐设为 ipv4，避免 IPv6 直连绕过代理。',
         udp: '全局 UDP 开关。关闭后可消除 QUIC 流量绕过代理导致的 IP 漂移（TCP/UDP 同时可见时 Google 等平台会触发风控）。',
         udpTimeout: 'UDP 会话静默超时（秒）。超过此时间无流量则释放 NAT 映射。300 秒适合游戏和视频场景。',
         keepAliveInterval: 'TCP/UDP 保活探测间隔（秒）。定期发送探活包，防止中间 NAT/路由器在无流量时静默断开连接。15 秒适合移动网络场景。',

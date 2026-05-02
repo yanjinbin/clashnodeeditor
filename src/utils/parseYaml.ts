@@ -219,7 +219,9 @@ export function generateClashConfig(
     dns: normalizedSettings.dns,
     sniffer: normalizedSettings.sniffer,
     ...('routing-mark' in normalizedSettings && normalizedSettings['routing-mark'] !== undefined ? { 'routing-mark': normalizedSettings['routing-mark'] } : {}),
-    proxies,
+    proxies: normalizedSettings['ip-version']
+      ? proxies.map((p) => (p['ip-version'] ? p : { ...p, 'ip-version': normalizedSettings['ip-version'] }))
+      : proxies,
     'proxy-groups': proxyGroups,
   }
 

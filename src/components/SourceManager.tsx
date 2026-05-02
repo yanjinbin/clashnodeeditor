@@ -329,7 +329,7 @@ function SubscriptionInfoBar({ info }: { info: SubscriptionInfo }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function SourceManager() {
   const { t } = useTranslation()
-  const { sources, proxyGroups, addSource, updateSource, removeSource, resetSources } = useAppStore()
+  const { sources, proxyGroups, addSource, updateSource, removeSource, resetSources, updateProxy } = useAppStore()
   const [newUrl, setNewUrl] = useState('')
   const [newName, setNewName] = useState('')
   const [newUa, setNewUa] = useState(DEFAULT_USER_AGENT)
@@ -339,6 +339,13 @@ export default function SourceManager() {
   const [refreshProgress, setRefreshProgress] = useState<{ done: number; total: number } | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
   const confirmResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [globalIpVersion, setGlobalIpVersion] = useState('ipv4')
+
+  const handleApplyGlobalIpVersion = () => {
+    for (const source of sources) {
+      source.proxies.forEach((_, i) => updateProxy(source.id, i, { 'ip-version': globalIpVersion }))
+    }
+  }
 
   const handleResetClick = () => {
     if (confirmReset) {
@@ -439,6 +446,29 @@ export default function SourceManager() {
             {t('source.heading')}
           </h2>
           <div className="flex items-center gap-2">
+          {sources.some((s) => s.proxies.length > 0) && (
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 whitespace-nowrap">
+                {t('source.globalIpVersionLabel')}
+              </span>
+              <select
+                value={globalIpVersion}
+                onChange={(e) => setGlobalIpVersion(e.target.value)}
+                className="text-xs px-1.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              >
+                {IP_VERSION_OPTS.filter((o) => o.value !== '').map((o) => (
+                  <option key={o.value} value={o.value}>{o.value}</option>
+                ))}
+              </select>
+              <button
+                onClick={handleApplyGlobalIpVersion}
+                title={t('source.applyGlobalIpVersion')}
+                className="text-xs px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 font-medium transition-all whitespace-nowrap"
+              >
+                {t('source.applyGlobalIpVersion')}
+              </button>
+            </div>
+          )}
           {sources.length > 0 && (
             <button
               onClick={handleResetClick}

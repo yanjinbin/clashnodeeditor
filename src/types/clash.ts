@@ -194,6 +194,8 @@ export interface ClashGlobalSettings {
   ipv6?: boolean
   /** 全局禁用 UDP，链式代理 / Google / Gemini 场景推荐设 false */
   udp?: boolean
+  /** 应用级全局 ip-version 默认值，导出时注入到未单独设置该字段的节点；不输出为顶层字段 */
+  'ip-version'?: string
   'find-process-mode'?: string
   'geodata-mode'?: boolean
   /** 自动更新 GeoData 文件 */

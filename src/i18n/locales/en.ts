@@ -80,6 +80,8 @@ export const en = {
     ipVersionTitle: 'ip-version',
     ipQualityTitle_idle: 'Check IP quality ({{server}})',
     ipQualityTitle_done: 'IP: {{ip}} — click to re-check',
+    globalIpVersionLabel: 'Global ip-version',
+    applyGlobalIpVersion: 'Apply to all nodes',
   },
 
   // ── NodeManager ───────────────────────────────────────────────────────────
@@ -425,6 +427,7 @@ rules:
         tcpConcurrent: 'Connect to multiple target IPs concurrently and use the fastest response, reducing waits caused by single-path handshake timeouts.',
         unifiedDelay: 'Show end-to-end latency from local to relay to exit, instead of only measuring local to proxy.',
         ipv6: 'Global IPv6 switch. Disable to avoid IPv6 traffic bypassing the proxy.',
+        globalIpVersion: 'Set a default ip-version for all nodes (ipv4 / ipv6 / dual). Per-node ip-version takes precedence. Setting ipv4 is recommended to prevent IPv6 direct bypass.',
         udp: 'Global UDP switch. Disable to reduce QUIC bypass and IP drift when TCP/UDP can expose different exits.',
         udpTimeout: 'UDP session idle timeout in seconds. Mappings are released after this period without traffic. 300 seconds suits games and video.',
         keepAliveInterval: 'TCP/UDP keep-alive probe interval in seconds. Periodic probes prevent NAT/router idle disconnects. 15 seconds suits mobile networks.',

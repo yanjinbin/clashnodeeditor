@@ -283,6 +283,18 @@ function SettingsPanel() {
         <Row label="ipv6" hint={h('ipv6')}>
           <Toggle checked={gs.ipv6 ?? false} onChange={(v) => updateGlobalSettings({ ipv6: v })} />
         </Row>
+        <Row label="ip-version" hint={h('globalIpVersion')}>
+          <select
+            value={gs['ip-version'] ?? ''}
+            onChange={(e) => updateGlobalSettings({ 'ip-version': e.target.value || undefined })}
+            className={sel}
+          >
+            <option value="">{t('source.defaultIpVersion')}</option>
+            {['ipv4', 'ipv6', 'dual', 'ipv4-prefer', 'ipv6-prefer'].map((v) => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        </Row>
         <Row label="udp" hint={h('udp')}>
           <Toggle checked={gs.udp ?? false} onChange={(v) => updateGlobalSettings({ udp: v })} />
         </Row>
