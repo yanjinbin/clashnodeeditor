@@ -146,7 +146,7 @@ export interface SnifferConfig {
   'force-dns-mapping'?: boolean
   /** 嗅探结果覆盖原始目标地址（影响路由匹配） */
   'override-destination'?: boolean
-  sniff: Record<string, { ports: (number | string)[] }>
+  sniff: Record<string, { ports: (number | string)[]; 'override-destination'?: boolean }>
   'force-domain'?: string[]
   'skip-domain'?: string[]
 }
@@ -159,6 +159,7 @@ export interface TunConfig {
   'auto-redirect'?: boolean
   'auto-detect-interface'?: boolean
   'inet6-address'?: string[]
+  'route-exclude-address'?: string[]
 }
 
 export interface GeoxUrl {
@@ -248,7 +249,7 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   // 延迟测试显示端到端总延迟（本地→中转→落地），而非只测本地到代理的一跳
   'unified-delay': true,
   ipv6: false,
-  udp: true,
+  udp: false,
   'prefer-h3': false,
   // UDP 会话静默超时（秒），超时后释放 NAT 映射；300 适合游戏/视频场景
   'udp-timeout': 300,
@@ -267,6 +268,12 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
     'auto-detect-interface': true,
     // IPv6 TUN 地址段；开启后 TUN 网卡同时监听 IPv6，避免 IPv6 流量绕过
     'inet6-address': [],
+    // 不接管 Tailscale CGNAT / MagicDNS 路由，避免内网设备访问异常
+    'route-exclude-address': [
+      '100.64.0.0/10',
+      '100.100.100.100/32',
+      '2001:67c:2b0::4/128',
+    ],
   },
   hosts: {},
   profile: {
@@ -414,37 +421,39 @@ export const DEFAULT_GLOBAL_SETTINGS: ClashGlobalSettings = {
   },
 }
 
-export const MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS: ClashGlobalSettings = {
+export const MACBOOK_MIHOMO_CLIENT_GLOBAL_SETTINGS: ClashGlobalSettings = DEFAULT_GLOBAL_SETTINGS
+
+export const MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS: ClashGlobalSettings = {
   ...DEFAULT_GLOBAL_SETTINGS,
-  'mixed-port': 7890,
+  'mixed-port': 23456,
   'redir-port': 23457,
   'allow-lan': true,
   mode: 'rule',
   'log-level': 'error',
-  'external-controller': '192.168.50.1:9990',
+  'external-controller': '192.168.50.1:9090',
   'external-ui': 'dashboard',
   'external-ui-name': 'zashboard',
   'external-ui-url': 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip',
-  secret: 'clash',
+  secret: '',
   'unified-delay': true,
+  'tcp-concurrent': true,
+  'udp-timeout': 300,
+  'keep-alive-interval': 15,
+  udp: true,
+  'prefer-h3': false,
   ipv6: false,
   'find-process-mode': 'off',
   profile: {
     'store-selected': false,
-    'store-fake-ip': false,
+    'store-fake-ip': true,
   },
   'geodata-mode': true,
-  'geo-auto-update': true,
-  'geo-update-interval': 72,
   'geox-url': {
-    geoip: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat',
+    geoip: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip-lite.dat',
     geosite: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat',
-    mmdb: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb',
   },
-  hosts: {
-    'services.googleapis.cn': '74.125.193.94',
-    'time.android.com': '203.107.6.88',
-  },
+  tun: { ...DEFAULT_GLOBAL_SETTINGS.tun, enable: false },
+  hosts: {},
   sniffer: {
     enable: true,
     'parse-pure-ip': true,
@@ -457,89 +466,69 @@ export const MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS: ClashGlobalSettings = {
     'force-domain': ['+.v2ex.com'],
     'skip-domain': [
       'Mijia Cloud',
-      '+.push.apple.com',
-      '+.apple.com',
-      '+.mi.com',
-      '+.xiaomi.com',
-      '+.local',
-      'msftconnecttest.com',
-      'time.*.com',
-      '+.ntp.org',
-      '+.weixin.qq.com',
-      '+.wx.qq.com',
-      '+.wechat.com',
-      '+.mmobject.com',
-      '+.mmfile.com',
-      '+.qpic.cn',
-      '+.qlogo.cn',
-      '+.qq.com',
-      '+.tencent.com',
-      '+.tencent.cn',
-    ],
-  },
-  dns: {
-    ...DEFAULT_GLOBAL_SETTINGS.dns,
-    enable: true,
-    ipv6: false,
-    listen: ':23453',
-    'enhanced-mode': 'fake-ip',
-    'fake-ip-range': '198.18.0.1/16',
-    'fake-ip-filter-mode': 'whitelist',
-    'fake-ip-filter': [
-      '*.lan',
-      '*.local',
-      '*.localdomain',
-      '*.internal',
-      'time.*.com',
-      'time.*.gov',
-      'ntp.*.com',
-      '*.ntp.org',
-      'pool.ntp.org',
-      '+.stun.*.*',
-      '+.stun.*.*.*',
-      'stun.*.*',
-      '+.push.apple.com',
+      'dlg.io.mi.com',
       '+.apple.com',
       '+.icloud.com',
       '+.mi.com',
       '+.xiaomi.com',
-      '+.mijia.com',
-      '+.io.mi.com',
-      'home.miot-spec.com',
-      '+.tuya.com',
-      '+.aqara.com',
-      '+.weixin.qq.com',
-      '+.wx.qq.com',
-      '+.wechat.com',
-      '+.qq.com',
-      '+.tencent.com',
-      '+.tencent.cn',
-      'msftconnecttest.com',
-      'connectivitycheck.gstatic.com',
+      '*.ts.net',
+      '*.tailscale.com',
+      '*.tailscale.io',
     ],
-    'default-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
-    nameserver: ['119.29.29.29', '223.5.5.5', '114.114.114.114'],
-    'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29'],
-    // Merlin 路由器 geosite.dat 不含 geolocation-!cn，显式覆盖以避免 not found 错误
-    'nameserver-policy': {
-      'geosite:cn,private': ['223.5.5.5', '119.29.29.29'],
-    },
+  },
+  dns: {
+    enable: true,
+    ipv6: false,
+    listen: ':23453',
     'use-hosts': true,
     'respect-rules': true,
-    fallback: [
-      'https://1.1.1.1/dns-query#♻️ 自动选择',
-      'https://8.8.8.8/dns-query#♻️ 自动选择',
+    'enhanced-mode': 'fake-ip',
+    'fake-ip-range': '198.18.0.1/16',
+    nameserver: [
+      'https://1.1.1.1/dns-query',
+      'https://8.8.8.8/dns-query',
     ],
-    'fallback-filter': {
-      geoip: true,
-      'geoip-code': 'CN',
-      geosite: ['gfw'],
-      ipcidr: [],
-      domain: [],
+    'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29'],
+    'nameserver-policy': {
+      'geosite:cn': ['223.5.5.5', '119.29.29.29'],
+      'geosite:geolocation-!cn': [
+        'https://1.1.1.1/dns-query',
+        'https://8.8.8.8/dns-query',
+      ],
     },
   },
-  'routing-mark': 255,
 }
+
+export const MERLIN_LUMAO_WHITELIST_GLOBAL_SETTINGS: ClashGlobalSettings = {
+  ...MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS,
+  sniffer: {
+    ...MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS.sniffer!,
+    'force-dns-mapping': false,
+    sniff: {
+      TLS: { ports: [443, 8443] },
+      HTTP: {
+        ports: [80, 8080],
+        'override-destination': false,
+      },
+    },
+  },
+  dns: {
+    enable: true,
+    ipv6: false,
+    listen: ':23453',
+    'default-nameserver': ['223.5.5.5', '119.29.29.29'],
+    'enhanced-mode': 'fake-ip',
+    'fake-ip-range': '198.18.0.1/16',
+    'fake-ip-filter-mode': 'whitelist',
+    'fake-ip-filter': ['geosite:gfw'],
+    nameserver: ['223.5.5.5', '119.29.29.29'],
+    'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29'],
+    'use-hosts': true,
+    'respect-rules': false,
+  },
+}
+
+export const MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS: ClashGlobalSettings = MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS
 
 export interface ClashConfig {
   'mixed-port'?: number

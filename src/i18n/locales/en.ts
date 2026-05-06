@@ -395,10 +395,12 @@ rules:
     // Settings panel
     settings: {
       docBanner: 'Full parameter reference: ',
-      merlinSection: 'Merlin Clash Router',
-      merlinNote: 'One-click apply common Merlin Clash router plugin global settings, including `redir-port`, `routing-mark`, `dns.listen`, dashboard address, and compatible fake-ip policy. You can still fine-tune individual settings after applying.',
-      merlinApply: 'Apply Merlin Template',
-      merlinApplyNote: 'Pre-fills based on Merlin Clash plugin parameters',
+      presetSection: 'Device Global Templates',
+      presetNote: 'One-click apply global parameters for the MacBook mihomo client or ASUS Merlin LuMao Magic Cloud. New users default to the MacBook mihomo template.',
+      macbookApply: 'MacBook mihomo',
+      merlinRegionalApply: 'Merlin Regional DNS',
+      merlinWhitelistApply: 'Merlin Whitelist',
+      presetApplyNote: 'A template replaces port, dashboard, TUN, DNS, Sniffer, GeoData, and cache settings as a whole. Proxy groups and rules are unchanged.',
       basicSection: 'Basic Settings',
       snifferSection: 'Sniffer',
       tunSection: 'TUN',

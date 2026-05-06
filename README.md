@@ -61,7 +61,7 @@
 - 🔧 Edit `mixed-port`, `allow-lan`, `bind-address`, `mode`, `log-level`, `external-controller`
 - 🌐 Full DNS config: fake-ip / redir-host, nameserver, fallback, fallback-filter, and all other fields
 - 🕵️ Sniffer, GeoData mode, global fingerprint, and other advanced options
-- 🛜 Merlin Clash router template — one click to fill `redir-port`, `routing-mark`, `dns.listen`, `hosts`, and other compatible parameters
+- 🛜 Device global templates: MacBook mihomo is the default, with ASUS Merlin LuMao Magic Cloud regional DNS and whitelist presets for ports, dashboard, DNS, Sniffer, TUN, and cache settings
 
 ### 📄 Preview & Export
 - 👁️ Live YAML preview; proxy entries output in single-line flow format (Mihomo-compatible)

@@ -1,5 +1,5 @@
 import yaml from 'js-yaml'
-import type { ClashConfig, Proxy, RuleProvider, ClashGlobalSettings, ImportedProxyGroup, SubscriptionInfo } from '../types/clash'
+import type { ClashConfig, Proxy, RuleProvider, ClashGlobalSettings, DnsConfig, ImportedProxyGroup, SubscriptionInfo } from '../types/clash'
 import { DEFAULT_GLOBAL_SETTINGS } from '../types/clash'
 
 export function parseSubscriptionInfo(header: string): SubscriptionInfo | undefined {
@@ -131,6 +131,14 @@ export function generateClashConfig(
   settings: ClashGlobalSettings = DEFAULT_GLOBAL_SETTINGS,
   flowArrays = false
 ): string {
+  const settingsDns = settings.dns ?? DEFAULT_GLOBAL_SETTINGS.dns
+  const dnsDefaults = { ...DEFAULT_GLOBAL_SETTINGS.dns }
+  for (const key of Object.keys(dnsDefaults) as Array<keyof DnsConfig>) {
+    if (!(key in settingsDns)) {
+      delete dnsDefaults[key]
+    }
+  }
+
   const normalizedSettings: ClashGlobalSettings = {
     ...DEFAULT_GLOBAL_SETTINGS,
     ...settings,
@@ -144,7 +152,7 @@ export function generateClashConfig(
         }
       : DEFAULT_GLOBAL_SETTINGS['external-controller-cors'],
     'geox-url': settings['geox-url']
-      ? { ...DEFAULT_GLOBAL_SETTINGS['geox-url'], ...settings['geox-url'] }
+      ? { ...settings['geox-url'] }
       : DEFAULT_GLOBAL_SETTINGS['geox-url'],
     profile: settings.profile
       ? { ...DEFAULT_GLOBAL_SETTINGS.profile, ...settings.profile }
@@ -165,20 +173,23 @@ export function generateClashConfig(
         }
       : DEFAULT_GLOBAL_SETTINGS.sniffer,
     dns: {
-      ...DEFAULT_GLOBAL_SETTINGS.dns,
-      ...settings.dns,
-      'fallback-filter': settings.dns?.['fallback-filter']
+      ...dnsDefaults,
+      ...settingsDns,
+      ...(settingsDns['fallback-filter']
         ? {
-            ...DEFAULT_GLOBAL_SETTINGS.dns['fallback-filter'],
-            ...settings.dns['fallback-filter'],
+            'fallback-filter': {
+              ...DEFAULT_GLOBAL_SETTINGS.dns['fallback-filter'],
+              ...settingsDns['fallback-filter'],
+            },
           }
-        : DEFAULT_GLOBAL_SETTINGS.dns['fallback-filter'],
-      'nameserver-policy': settings.dns?.['nameserver-policy']
+        : {}),
+      ...(settingsDns['nameserver-policy']
         ? {
-            ...DEFAULT_GLOBAL_SETTINGS.dns['nameserver-policy'],
-            ...settings.dns['nameserver-policy'],
+            'nameserver-policy': {
+              ...settingsDns['nameserver-policy'],
+            },
           }
-        : { ...DEFAULT_GLOBAL_SETTINGS.dns['nameserver-policy'] },
+        : {}),
     },
   }
 

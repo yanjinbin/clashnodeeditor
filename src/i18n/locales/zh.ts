@@ -395,10 +395,12 @@ rules:
     // Settings panel
     settings: {
       docBanner: '完整参数说明：',
-      merlinSection: 'Merlin Clash 路由器',
-      merlinNote: '一键套用 Merlin Clash 路由器插件常见全局参数，包括 `redir-port`、`routing-mark`、`dns.listen`、`dashboard` 面板地址和兼容的 fake-ip 策略；应用后仍可继续逐项微调。',
-      merlinApply: '应用 Merlin 模板',
-      merlinApplyNote: '按用户提供的 Merlin Clash 插件参数预填',
+      presetSection: '设备全局模板',
+      presetNote: '一键套用 MacBook mihomo 客户端或华硕梅林固件撸猫魔法云的全局参数。新用户默认使用 MacBook mihomo 模板。',
+      macbookApply: 'MacBook mihomo',
+      merlinRegionalApply: '梅林分地域分流',
+      merlinWhitelistApply: '梅林白名单',
+      presetApplyNote: '模板会整体替换端口、面板、TUN、DNS、Sniffer、GeoData 与缓存设置，代理组和规则不受影响。',
       basicSection: '基本设置',
       snifferSection: 'Sniffer（嗅探）',
       tunSection: 'TUN',

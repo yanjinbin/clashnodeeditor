@@ -5,8 +5,12 @@ import yaml from 'js-yaml'
 import { useAppStore } from '../store/useAppStore'
 import { generateClashConfig } from '../utils/parseYaml'
 import ValidationPanel from './ValidationPanel'
-import { MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS } from '../types/clash'
-import type { ClashConfig, DnsConfig, DnsFallbackFilter } from '../types/clash'
+import {
+  MACBOOK_MIHOMO_CLIENT_GLOBAL_SETTINGS,
+  MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS,
+  MERLIN_LUMAO_WHITELIST_GLOBAL_SETTINGS,
+} from '../types/clash'
+import type { ClashConfig, ClashGlobalSettings, DnsConfig, DnsFallbackFilter } from '../types/clash'
 
 // ── Tiny helpers ──────────────────────────────────────────────────────────────
 
@@ -131,7 +135,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 function SettingsPanel() {
   const { t } = useTranslation()
   const h = (key: string) => t(`preview.settings.hints.${key}`)
-  const { globalSettings, updateGlobalSettings, updateDnsSettings, updateDnsFallbackFilter } = useAppStore()
+  const { globalSettings, updateGlobalSettings, replaceGlobalSettings, updateDnsSettings, updateDnsFallbackFilter } = useAppStore()
   const gs = globalSettings
   const dns = gs.dns
   const ff = dns['fallback-filter']
@@ -143,14 +147,8 @@ function SettingsPanel() {
     updateDnsFallbackFilter({ [k]: v } as Partial<DnsFallbackFilter>)
 
   const sel = 'text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none'
-  const applyMerlinPreset = () => {
-    const merlin = JSON.parse(JSON.stringify(MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS)) as typeof MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS
-    const { dns: merlinDns, ...merlinTopLevel } = merlin
-    updateGlobalSettings(merlinTopLevel)
-    updateDnsSettings(merlinDns)
-    if (merlinDns['fallback-filter']) {
-      updateDnsFallbackFilter(merlinDns['fallback-filter'])
-    }
+  const applyGlobalPreset = (settings: ClashGlobalSettings) => {
+    replaceGlobalSettings(settings)
   }
 
   return (
@@ -169,21 +167,33 @@ function SettingsPanel() {
         </a>
       </div>
 
-      <Section title={t('preview.settings.merlinSection')} defaultOpen={false}>
+      <Section title={t('preview.settings.presetSection')}>
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] leading-relaxed text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300">
-          {t('preview.settings.merlinNote')}
+          {t('preview.settings.presetNote')}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={applyMerlinPreset}
+            onClick={() => applyGlobalPreset(MACBOOK_MIHOMO_CLIENT_GLOBAL_SETTINGS)}
+            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700"
+          >
+            {t('preview.settings.macbookApply')}
+          </button>
+          <button
+            onClick={() => applyGlobalPreset(MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS)}
             className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
           >
-            {t('preview.settings.merlinApply')}
+            {t('preview.settings.merlinRegionalApply')}
           </button>
-          <span className="text-[11px] text-gray-500 dark:text-gray-400">
-            {t('preview.settings.merlinApplyNote')}
-          </span>
+          <button
+            onClick={() => applyGlobalPreset(MERLIN_LUMAO_WHITELIST_GLOBAL_SETTINGS)}
+            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
+          >
+            {t('preview.settings.merlinWhitelistApply')}
+          </button>
         </div>
+        <p className="text-[11px] text-gray-500 dark:text-gray-400">
+          {t('preview.settings.presetApplyNote')}
+        </p>
         <Row label="redir-port" hint={h('redirPort')}>
           <BlurInput
             type="number"

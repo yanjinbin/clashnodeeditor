@@ -61,7 +61,7 @@
 - 🔧 可编辑 `mixed-port`、`allow-lan`、`bind-address`、`mode`、`log-level`、`external-controller`
 - 🌐 完整 DNS 配置：fake-ip / redir-host、nameserver、fallback、fallback-filter 等所有字段
 - 🕵️ Sniffer 嗅探器、GeoData 模式、全局指纹等高级选项
-- 🛜 新增 Merlin Clash 路由器插件模板，一键填充 `redir-port`、`routing-mark`、`dns.listen`、`hosts` 等兼容参数
+- 🛜 设备全局模板：默认 MacBook mihomo 客户端，并支持华硕梅林固件撸猫魔法云（分地域分流 / 白名单）一键填充端口、面板、DNS、Sniffer、TUN 等参数
 
 ### 📄 预览导出
 - 👁️ 实时 YAML 预览，代理节点以单行 flow 格式输出（兼容 mihomo 解析）

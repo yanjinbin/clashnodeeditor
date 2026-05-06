@@ -59,6 +59,7 @@ interface AppState {
 
   // Global settings actions
   updateGlobalSettings: (updates: Partial<Omit<ClashGlobalSettings, 'dns'>>) => void
+  replaceGlobalSettings: (settings: ClashGlobalSettings) => void
   updateDnsSettings: (updates: Partial<Omit<DnsConfig, 'fallback-filter'>>) => void
   updateDnsFallbackFilter: (updates: Partial<DnsFallbackFilter>) => void
 
@@ -721,6 +722,12 @@ export const useAppStore = create<AppState>()(
 
     updateGlobalSettings: (updates) => {
       set((state) => { Object.assign(state.globalSettings, updates) })
+    },
+
+    replaceGlobalSettings: (settings) => {
+      set((state) => {
+        state.globalSettings = JSON.parse(JSON.stringify(settings)) as ClashGlobalSettings
+      })
     },
 
     updateDnsSettings: (updates) => {
