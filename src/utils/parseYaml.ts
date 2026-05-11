@@ -1,5 +1,5 @@
 import yaml from 'js-yaml'
-import type { ClashConfig, Proxy, RuleProvider, ClashGlobalSettings, DnsConfig, ImportedProxyGroup, SubscriptionInfo } from '../types/clash'
+import type { ClashConfig, Proxy, RuleProvider, ClashGlobalSettings, DnsConfig, ImportedProxyGroup, SubscriptionInfo, ProxyProvider } from '../types/clash'
 import { DEFAULT_GLOBAL_SETTINGS } from '../types/clash'
 
 export function parseSubscriptionInfo(header: string): SubscriptionInfo | undefined {
@@ -43,9 +43,10 @@ export function parseYamlFull(text: string): { proxies: Proxy[], groups: Importe
         interval: g.interval,
         tolerance: g.tolerance,
         ...(g.lazy !== undefined ? { lazy: g.lazy } : {}),
-        ...(g.hidden ? { hidden: g.hidden } : {}),
+        ...(g.hidden ? { hidden: (g as { hidden?: boolean }).hidden } : {}),
+        ...(g.icon ? { icon: g.icon } : {}),
         ...(g.filter ? { filter: g.filter } : {}),
-        ...(g['exclude-filter'] ? { 'exclude-filter': g['exclude-filter'] } : {}),
+        ...(g['exclude-filter'] ? { 'exclude-filter': (g as { 'exclude-filter'?: string })['exclude-filter'] } : {}),
         ...(g.strategy ? { strategy: g.strategy } : {}),
       }))
     : []
@@ -112,12 +113,17 @@ export function generateClashConfig(
     name: string
     type: string
     proxies: string[]
+    use?: string[]
     timeout?: number
     url?: string
     interval?: number
     tolerance?: number
     lazy?: boolean
     hidden?: boolean
+    icon?: string
+    filter?: string
+    'exclude-filter'?: string
+    strategy?: string
   }>,
   /** All rule providers — RULE-SET rules generated from enabled ones */
   ruleProviders: RuleProvider[],
@@ -129,7 +135,8 @@ export function generateClashConfig(
     noResolve?: boolean
   }>,
   settings: ClashGlobalSettings = DEFAULT_GLOBAL_SETTINGS,
-  flowArrays = false
+  flowArrays = false,
+  proxyProviders: ProxyProvider[] = []
 ): string {
   const settingsDns = settings.dns ?? DEFAULT_GLOBAL_SETTINGS.dns
   const dnsDefaults = { ...DEFAULT_GLOBAL_SETTINGS.dns }
@@ -230,6 +237,14 @@ export function generateClashConfig(
       ? proxies.map((p) => (p['ip-version'] ? p : { ...p, 'ip-version': normalizedSettings['ip-version'] }))
       : proxies,
     'proxy-groups': proxyGroups,
+  }
+
+  if (proxyProviders.length > 0) {
+    config['proxy-providers'] = {}
+    for (const provider of proxyProviders) {
+      const { id: _id, name, ...rest } = provider
+      config['proxy-providers'][name] = rest
+    }
   }
 
   const enabledProviders = ruleProviders.filter((p) => p.enabled)

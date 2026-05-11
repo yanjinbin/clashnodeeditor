@@ -190,6 +190,12 @@ function SettingsPanel() {
           >
             {t('preview.settings.merlinWhitelistApply')}
           </button>
+          <button
+            onClick={() => applyGlobalPreset(YUNYUFEN_GLOBAL_SETTINGS)}
+            className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-orange-700"
+          >
+            {t('preview.settings.routerOptimizedApply')}
+          </button>
         </div>
         <p className="text-[11px] text-gray-500 dark:text-gray-400">
           {t('preview.settings.presetApplyNote')}
@@ -371,6 +377,21 @@ function SettingsPanel() {
           <Toggle
             checked={gs.sniffer?.['override-destination'] ?? false}
             onChange={(v) => updateGlobalSettings({ sniffer: { ...gs.sniffer!, 'override-destination': v } })}
+          />
+        </Row>
+        <Row label="force-domain" hint={h('snifferForceDomain')}>
+          <textarea
+            value={joinArr(gs.sniffer?.['force-domain'] ?? [])}
+            onChange={(e) => updateGlobalSettings({ sniffer: { ...gs.sniffer!, 'force-domain': parseArr(e.target.value) } })}
+            placeholder="+.v2ex.com"
+            className="min-h-[40px] w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs font-mono dark:border-gray-600 dark:bg-gray-800"
+          />
+        </Row>
+        <Row label="skip-domain" hint={h('snifferSkipDomain')}>
+          <textarea
+            value={joinArr(gs.sniffer?.['skip-domain'] ?? [])}
+            onChange={(e) => updateGlobalSettings({ sniffer: { ...gs.sniffer!, 'skip-domain': parseArr(e.target.value) } })}
+            className="min-h-[68px] w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs font-mono dark:border-gray-600 dark:bg-gray-800"
           />
         </Row>
       </Section>
@@ -563,6 +584,21 @@ function SettingsPanel() {
             className="w-full"
           />
         </Row>
+        <Row label="ns-policy" hint={h('nameserverPolicy')}>
+          <textarea
+            value={Object.entries(dns['nameserver-policy'] ?? {}).map(([k, v]) => `${k}: ${joinArr(v)}`).join('\n')}
+            onChange={(e) => {
+              const policy: Record<string, string[]> = {}
+              e.target.value.split('\n').forEach((line) => {
+                const [k, v] = line.split(':').map((s) => s.trim())
+                if (k && v) policy[k] = parseArr(v)
+              })
+              updDns('nameserver-policy', policy)
+            }}
+            placeholder={'geosite:cn: 223.5.5.5\n+.google.com: 8.8.8.8'}
+            className="min-h-[68px] w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs font-mono dark:border-gray-600 dark:bg-gray-800"
+          />
+        </Row>
       </Section>
 
       <Section title={t('preview.settings.fallbackFilterSection')} defaultOpen={false}>
@@ -607,7 +643,7 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
   const [tab, setTab] = useState<'file' | 'paste'>('file')
   const [pasteText, setPasteText] = useState('')
   const [dragOver, setDragOver] = useState(false)
-  const [preview, setPreview] = useState<{ proxies: number; groups: number; rules: number; providers: number } | null>(null)
+  const [preview, setPreview] = useState<{ proxies: number; proxyProviders: number; groups: number; rules: number; providers: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [parsed, setParsed] = useState<ClashConfig | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -620,6 +656,7 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
       setError(null)
       setPreview({
         proxies: Array.isArray(config.proxies) ? config.proxies.length : 0,
+        proxyProviders: config['proxy-providers'] ? Object.keys(config['proxy-providers']).length : 0,
         groups: Array.isArray(config['proxy-groups']) ? config['proxy-groups'].length : 0,
         rules: Array.isArray(config.rules) ? config.rules.length : 0,
         providers: config['rule-providers'] ? Object.keys(config['rule-providers']).length : 0,
@@ -717,6 +754,7 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
               <p className="text-xs font-medium text-green-700 dark:text-green-400">{t('preview.importModal.parseSuccess')}</p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-green-600 dark:text-green-500">
                 <span dangerouslySetInnerHTML={{ __html: t('preview.importModal.parseNodes', { count: preview.proxies }) }} />
+                <span dangerouslySetInnerHTML={{ __html: t('preview.importModal.parseProxyProviders', { count: preview.proxyProviders }) }} />
                 <span dangerouslySetInnerHTML={{ __html: t('preview.importModal.parseGroups', { count: preview.groups }) }} />
                 <span dangerouslySetInnerHTML={{ __html: t('preview.importModal.parseRules', { count: preview.rules }) }} />
                 <span dangerouslySetInnerHTML={{ __html: t('preview.importModal.parseProviders', { count: preview.providers }) }} />
@@ -756,7 +794,7 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (co
 // ── ConfigPreview ─────────────────────────────────────────────────────────────
 export default function ConfigPreview() {
   const { t } = useTranslation()
-  const { sources, manualProxies, proxyGroups, ruleProviders, rules, globalSettings, importFullConfig } = useAppStore()
+  const { sources, manualProxies, proxyProviders, proxyGroups, ruleProviders, rules, globalSettings, importFullConfig } = useAppStore()
   const [copied, setCopied] = useState(false)
   const [filename, setFilename] = useState('config.yaml')
   const [editingFilename, setEditingFilename] = useState(false)
@@ -785,6 +823,7 @@ export default function ConfigPreview() {
       tolerance: g.tolerance,
       lazy: g.lazy,
       ...(g.hidden ? { hidden: true } : {}),
+      ...(g.icon ? { icon: g.icon } : {}),
       ...(g.filter ? { filter: g.filter } : {}),
       ...(g['exclude-filter'] ? { 'exclude-filter': g['exclude-filter'] } : {}),
       ...(g.strategy ? { strategy: g.strategy } : {}),
@@ -792,7 +831,8 @@ export default function ConfigPreview() {
     ruleProviders,
     rules.map((r) => ({ type: r.type, payload: r.payload, target: r.target, noResolve: r.noResolve })),
     globalSettings,
-    flowArrays
+    flowArrays,
+    proxyProviders
   )
 
   const displayYaml = manualYaml ?? configYaml

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { type TouchEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from './store/useAppStore'
 import { useUIStore } from './store/useUIStore'
@@ -10,16 +10,47 @@ import ConfigPreview from './components/ConfigPreview'
 import AirportInviteBanner from './components/AirportInviteBanner'
 import NovproxyBanner from './components/NovproxyBanner'
 import { useVersionCheck } from './hooks/useVersionCheck'
+import { loadRemoteSource } from './utils/sourceLoader'
+import { refreshRemoteSources } from './utils/sourceRefresh'
 import { Globe, Server, Users, Shield, FileText, RefreshCw, Sun, Moon } from 'lucide-react'
 
 // 左右 banner 列宽 — xl:144px，与 max-w-5xl(1024px) 合计 1312px ≤ 1280px 时自动隐藏
 const AD_COL = 'w-36' // 144px
+const PULL_TRIGGER_PX = 74
+const PULL_MAX_PX = 104
+
+type PullStatus = 'idle' | 'pulling' | 'ready' | 'checking' | 'refreshing' | 'updated' | 'done' | 'empty' | 'error'
+
+function canUseMobilePull() {
+  return typeof window !== 'undefined'
+    && window.matchMedia('(pointer: coarse) and (max-width: 767px)').matches
+}
+
+function findScrollParent(target: EventTarget | null): HTMLElement | null {
+  let el = target instanceof HTMLElement ? target : null
+  while (el && el !== document.body) {
+    const style = window.getComputedStyle(el)
+    if (/(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight) return el
+    el = el.parentElement
+  }
+  return null
+}
+
+function isTouchAtScrollTop(target: EventTarget | null) {
+  const scrollParent = findScrollParent(target)
+  return !scrollParent || scrollParent.scrollTop <= 0
+}
 
 export default function App() {
   const { t } = useTranslation()
-  const { activeTab, setActiveTab, syncPresetLanguage } = useAppStore()
-  const { needsUpdate, countdown, reloadNow } = useVersionCheck()
+  const { activeTab, setActiveTab, syncPresetLanguage, sources, updateSource } = useAppStore()
+  const { needsUpdate, countdown, reloadNow, checkNow } = useVersionCheck()
   const { theme, toggleTheme, language, toggleLanguage } = useUIStore()
+  const [pullStatus, setPullStatus] = useState<PullStatus>('idle')
+  const [pullDistance, setPullDistance] = useState(0)
+  const pullStartY = useRef(0)
+  const isPullTracking = useRef(false)
+  const resetPullTimer = useRef<number | null>(null)
 
   useEffect(() => {
     syncPresetLanguage(language)
@@ -30,6 +61,98 @@ export default function App() {
     document.title = t('app.htmlTitle')
   }, [language, t])
 
+  useEffect(() => () => {
+    if (resetPullTimer.current) window.clearTimeout(resetPullTimer.current)
+  }, [])
+
+  const refreshAllRemoteSources = useCallback(() => refreshRemoteSources({
+    sources,
+    loadSource: (source) => loadRemoteSource(source, updateSource),
+  }), [sources, updateSource])
+
+  const finishPull = useCallback((status: PullStatus, delay = 1200) => {
+    setPullStatus(status)
+    if (resetPullTimer.current) window.clearTimeout(resetPullTimer.current)
+    resetPullTimer.current = window.setTimeout(() => {
+      setPullStatus('idle')
+      setPullDistance(0)
+    }, delay)
+  }, [])
+
+  const runPullRefresh = useCallback(async () => {
+    setPullDistance(PULL_TRIGGER_PX)
+    setPullStatus('checking')
+    const versionResult = await checkNow()
+
+    if (versionResult === 'updated') {
+      finishPull('updated', 900)
+      return
+    }
+
+    if (versionResult === 'error') {
+      finishPull('error')
+      return
+    }
+
+    setPullStatus('refreshing')
+    const result = await refreshAllRemoteSources()
+    finishPull(result.total > 0 ? 'done' : 'empty')
+  }, [checkNow, finishPull, refreshAllRemoteSources])
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (!canUseMobilePull() || needsUpdate || pullStatus === 'checking' || pullStatus === 'refreshing') return
+    if (event.touches.length !== 1 || !isTouchAtScrollTop(event.target)) return
+    pullStartY.current = event.touches[0].clientY
+    isPullTracking.current = true
+  }
+
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    if (!isPullTracking.current) return
+    const deltaY = event.touches[0].clientY - pullStartY.current
+    if (deltaY <= 0) {
+      isPullTracking.current = false
+      setPullStatus('idle')
+      setPullDistance(0)
+      return
+    }
+    if (!isTouchAtScrollTop(event.target)) return
+
+    event.preventDefault()
+    const nextDistance = Math.min(PULL_MAX_PX, deltaY * 0.48)
+    setPullDistance(nextDistance)
+    setPullStatus(nextDistance >= PULL_TRIGGER_PX ? 'ready' : 'pulling')
+  }
+
+  const handleTouchEnd = () => {
+    if (!isPullTracking.current) return
+    isPullTracking.current = false
+    if (pullDistance >= PULL_TRIGGER_PX) {
+      runPullRefresh()
+      return
+    }
+    setPullStatus('idle')
+    setPullDistance(0)
+  }
+
+  const pullLabel = pullStatus === 'ready'
+    ? t('app.pull.release')
+    : pullStatus === 'checking'
+      ? t('app.pull.checkingVersion')
+      : pullStatus === 'refreshing'
+        ? t('app.pull.refreshingSources')
+        : pullStatus === 'updated'
+          ? t('app.pull.updated')
+          : pullStatus === 'done'
+            ? t('app.pull.refreshed')
+            : pullStatus === 'empty'
+              ? t('app.pull.noSources')
+              : pullStatus === 'error'
+                ? t('app.pull.failed')
+                : t('app.pull.pull')
+
+  const pullBusy = pullStatus === 'checking' || pullStatus === 'refreshing'
+  const showPullIndicator = pullStatus !== 'idle'
+
   const TABS = [
     { id: 'sources' as const, label: t('app.tabs.sources'), icon: Globe },
     { id: 'nodes'   as const, label: t('app.tabs.nodes'),   icon: Server },
@@ -39,7 +162,13 @@ export default function App() {
   ]
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div
+      className="relative flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100"
+      onTouchStartCapture={handleTouchStart}
+      onTouchMoveCapture={handleTouchMove}
+      onTouchEndCapture={handleTouchEnd}
+      onTouchCancelCapture={handleTouchEnd}
+    >
 
       {/* ── 版本更新横幅 ────────────────────────────────────────────────── */}
       {needsUpdate && (
@@ -52,6 +181,23 @@ export default function App() {
           >
             {t('app.update.reloadNow')}
           </button>
+        </div>
+      )}
+
+      {showPullIndicator && (
+        <div
+          className="md:hidden pointer-events-none absolute left-0 right-0 top-2 z-40 flex justify-center transition-transform duration-150"
+          style={{ transform: `translateY(${Math.max(0, pullDistance - 48)}px)` }}
+        >
+          <div className={[
+            'flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur-md transition-colors',
+            pullStatus === 'error'
+              ? 'border-red-200 bg-red-50/95 text-red-600 dark:border-red-800 dark:bg-red-950/85 dark:text-red-300'
+              : 'border-indigo-200 bg-white/95 text-indigo-600 dark:border-indigo-800 dark:bg-gray-900/90 dark:text-indigo-300',
+          ].join(' ')}>
+            <RefreshCw size={13} className={pullBusy ? 'animate-spin' : ''} />
+            <span>{pullLabel}</span>
+          </div>
         </div>
       )}
 

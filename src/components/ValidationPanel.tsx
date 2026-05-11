@@ -10,7 +10,7 @@ interface ValidationIssue {
 }
 
 function useValidationResults(): ValidationIssue[] {
-  const { sources, proxyGroups, rules, ruleProviders } = useAppStore()
+  const { sources, proxyProviders, proxyGroups, rules, ruleProviders } = useAppStore()
   const { t, i18n } = useTranslation()
 
   return useMemo(() => {
@@ -45,7 +45,7 @@ function useValidationResults(): ValidationIssue[] {
     }
 
     // ── 2. Empty proxy groups ─────────────────────────────────────────────────
-    const emptyGroups = proxyGroups.filter((g) => !g.autoAllNodes && g.proxies.length === 0)
+    const emptyGroups = proxyGroups.filter((g) => !g.autoAllNodes && g.proxies.length === 0 && (!g.use || g.use.length === 0))
     if (emptyGroups.length > 0) {
       issues.push({
         level: 'warning',
@@ -120,7 +120,7 @@ function useValidationResults(): ValidationIssue[] {
 
     // ── 6. No sources loaded ─────────────────────────────────────────────────
     const successSources = sources.filter((s) => s.status === 'success' && s.proxies.length > 0)
-    if (sources.length > 0 && successSources.length === 0) {
+    if (sources.length > 0 && successSources.length === 0 && proxyProviders.length === 0) {
       issues.push({
         level: 'warning',
         message: t('validation.noSources'),
@@ -129,7 +129,7 @@ function useValidationResults(): ValidationIssue[] {
     }
 
     return issues
-  }, [sources, proxyGroups, rules, ruleProviders, t, i18n.language])
+  }, [sources, proxyProviders, proxyGroups, rules, ruleProviders, t, i18n.language])
 }
 
 export default function ValidationPanel() {

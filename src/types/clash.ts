@@ -39,6 +39,32 @@ export interface ProxyGroup {
   autoAllNodes?: boolean
 }
 
+export interface ProxyProviderHealthCheck {
+  enable?: boolean
+  url?: string
+  interval?: number
+  timeout?: number
+  lazy?: boolean
+  [key: string]: unknown
+}
+
+export interface ProxyProvider {
+  id: string
+  name: string
+  type: string
+  url?: string
+  path?: string
+  interval?: number
+  proxy?: string
+  'size-limit'?: number
+  header?: Record<string, string[]>
+  'health-check'?: ProxyProviderHealthCheck
+  override?: Record<string, unknown>
+  filter?: string
+  'exclude-filter'?: string
+  [key: string]: unknown
+}
+
 export interface RuleProvider {
   id: string
   name: string
@@ -98,6 +124,8 @@ export interface SourceConfig {
   proxies: Proxy[]
   importedGroups?: ImportedProxyGroup[]
   subscriptionInfo?: SubscriptionInfo
+  /** 订阅源图标 URL */
+  icon?: string
 }
 
 export const DEFAULT_USER_AGENT = 'clash-verge/v2.2.3'
@@ -530,6 +558,83 @@ export const MERLIN_LUMAO_WHITELIST_GLOBAL_SETTINGS: ClashGlobalSettings = {
 
 export const MERLIN_CLASH_ROUTER_GLOBAL_SETTINGS: ClashGlobalSettings = MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS
 
+export const YUNYUFEN_GLOBAL_SETTINGS: ClashGlobalSettings = {
+  ...MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS,
+  'geox-url': {
+    geoip: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip-lite.dat",
+    geosite: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat",
+  },
+  dns: {
+    ...MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS.dns,
+    'default-nameserver': ['223.5.5.5', '119.29.29.29'],
+    nameserver: ['223.5.5.5', '119.29.29.29'],
+    fallback: [
+      'https://cloudflare-dns.com/dns-query',
+      'https://dns.google/dns-query',
+    ],
+    'fallback-filter': {
+      geoip: true,
+      'geoip-code': 'CN',
+      geosite: ['gfw', 'geolocation-!cn'],
+      ipcidr: ['240.0.0.0/4'],
+      domain: [],
+    },
+    'proxy-server-nameserver': ['223.5.5.5', '119.29.29.29'],
+    'fake-ip-filter': [
+      '*.lan',
+      '*.local',
+      '*.localdomain',
+      '*.internal',
+      '+.stun.*.*',
+      'stun.*.*',
+      '*.ts.net',
+      '*.tailscale.com',
+      '*.tailscale.io',
+      '100.100.100.100',
+      'time.*.com',
+      'time.*.gov',
+      '*.ntp.org',
+      'pool.ntp.org',
+    ],
+  },
+  sniffer: {
+    ...MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS.sniffer!,
+    'force-domain': ['+.v2ex.com'],
+    'skip-domain': [
+      'Mijia Cloud',
+      '+.mi.com',
+      '+.xiaomi.com',
+      '+.mijia.com',
+      '+.push.apple.com',
+      '+.apple.com',
+      '+.icloud.com',
+      '+.mzstatic.com',
+      '+.local',
+      'geosite:private',
+      'geosite:connectivity-check',
+      'msftconnecttest.com',
+      'time.*.com',
+      '+.ntp.org',
+      'geosite:category-ntp',
+      '+.weixin.qq.com',
+      '+.wx.qq.com',
+      '+.wechat.com',
+      '+.mmobject.com',
+      '+.mmfile.com',
+      '+.qpic.cn',
+      '+.qlogo.cn',
+      '+.qq.com',
+      '+.tencent.com',
+      '+.tencent.cn',
+      '*.ts.net',
+      '*.tailscale.com',
+      '*.tailscale.io',
+      '+.stun.*.*',
+      'stun.*.*',
+    ],
+  },
+}
+
 export interface ClashConfig {
   'mixed-port'?: number
   'redir-port'?: number
@@ -565,6 +670,7 @@ export interface ClashConfig {
   dns?: DnsConfig
   'routing-mark'?: number
   proxies?: Proxy[]
+  'proxy-providers'?: Record<string, Omit<ProxyProvider, 'id' | 'name'>>
   'proxy-groups'?: Array<{
     name: string
     type: string

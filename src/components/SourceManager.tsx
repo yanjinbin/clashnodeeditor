@@ -11,7 +11,9 @@ import {
   Activity, Database, Clock, MapPin,
 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
-import { fetchAndParseYaml, parseYamlFull } from '../utils/parseYaml'
+import { parseYamlFull } from '../utils/parseYaml'
+import { loadRemoteSource } from '../utils/sourceLoader'
+import { getRefreshableSources, refreshRemoteSources } from '../utils/sourceRefresh'
 import EmojiPicker from './EmojiPicker'
 import { PRESET_USER_AGENTS, DEFAULT_USER_AGENT } from '../types/clash'
 import type { SourceConfig, SubscriptionInfo } from '../types/clash'
@@ -380,37 +382,32 @@ export default function SourceManager() {
   const resolvedUa = newUa === '__custom__' ? customUa : newUa
 
   const loadSource = useCallback(async (id: string, url: string, ua?: string) => {
-    updateSource(id, { status: 'loading', error: undefined })
-    try {
-      const { proxies, groups, subscriptionInfo } = await fetchAndParseYaml(url, ua)
-      updateSource(id, { status: 'success', proxies, importedGroups: groups, subscriptionInfo })
-    } catch (err) {
-      updateSource(id, { status: 'error', error: (err as Error).message, proxies: [] })
-    }
+    await loadRemoteSource({ id, url, userAgent: ua }, updateSource)
   }, [updateSource])
 
   const handleAddSource = () => {
     if (!newUrl.trim()) return
     let name = newName.trim()
     try { name = name || new URL(newUrl).hostname } catch { name = name || newUrl }
-    const id = addSource({ name, url: newUrl.trim(), userAgent: resolvedUa || DEFAULT_USER_AGENT })
+    const id = addSource({
+      name,
+      url: newUrl.trim(),
+      userAgent: resolvedUa || DEFAULT_USER_AGENT,
+    })
     setNewUrl('')
     setNewName('')
     loadSource(id, newUrl.trim(), resolvedUa || DEFAULT_USER_AGENT)
   }
 
   const handleRefreshAll = async () => {
-    const activeSources = sources.filter((s) => s.url && !s.url.startsWith('file://'))
+    const activeSources = getRefreshableSources(sources)
     if (activeSources.length === 0) return
     setRefreshingAll(true)
-    setRefreshProgress({ done: 0, total: activeSources.length })
-
-    await Promise.allSettled(
-      activeSources.map(async (src) => {
-        await loadSource(src.id, src.url, src.userAgent)
-        setRefreshProgress((prev) => prev ? { ...prev, done: prev.done + 1 } : null)
-      })
-    )
+    await refreshRemoteSources({
+      sources,
+      loadSource: (src) => loadSource(src.id, src.url, src.userAgent),
+      onProgress: setRefreshProgress,
+    })
     setRefreshingAll(false)
     setTimeout(() => setRefreshProgress(null), 1500)
   }
@@ -434,7 +431,7 @@ export default function SourceManager() {
     e.target.value = ''
   }
 
-  const hasRefreshableSources = sources.some((s) => s.url && !s.url.startsWith('file://'))
+  const hasRefreshableSources = getRefreshableSources(sources).length > 0
 
   return (
     <div className="h-full overflow-y-auto">

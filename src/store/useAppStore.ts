@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { SourceConfig, ProxyGroup, RuleProvider, Rule, Proxy, ClashConfig, ClashGlobalSettings, DnsConfig, DnsFallbackFilter } from '../types/clash'
+import type { SourceConfig, ProxyGroup, RuleProvider, Rule, Proxy, ClashConfig, ClashGlobalSettings, DnsConfig, DnsFallbackFilter, ProxyProvider } from '../types/clash'
 import { PRESET_RULE_PROVIDERS, BLACKMATRIX7_RULE_PROVIDERS, CUSTOM_RULE_PROVIDERS, DEFAULT_GLOBAL_SETTINGS } from '../types/clash'
 import { getInitialLanguage, type Language } from '../i18n/language'
 
@@ -9,6 +9,8 @@ interface AppState {
   sources: SourceConfig[]
   /** Manually added proxy nodes (persist fully, unlike subscription sources) */
   manualProxies: Proxy[]
+  /** Top-level Mihomo proxy-providers imported from full configs */
+  proxyProviders: ProxyProvider[]
   proxyGroups: ProxyGroup[]
   /** All rule providers: preset + user-added, ordered, each with enabled/target */
   ruleProviders: RuleProvider[]
@@ -396,6 +398,7 @@ export const useAppStore = create<AppState>()(
     immer((set, get) => ({
     sources: [],
     manualProxies: [],
+    proxyProviders: [],
     globalSettings: createDefaultGlobalSettings(),
 
     proxyGroups: createDefaultProxyGroups(),
@@ -768,7 +771,20 @@ export const useAppStore = create<AppState>()(
           })
         }
 
-        // 2. Proxy groups
+        // 2. Proxy providers
+        if (config['proxy-providers'] && typeof config['proxy-providers'] === 'object') {
+          state.proxyProviders = Object.entries(config['proxy-providers']).map(([name, provider]) => ({
+            id: generateId(),
+            name,
+            ...provider,
+            type: String(provider.type ?? 'http'),
+            ...(provider.icon ? { icon: provider.icon } : {}),
+          }))
+        } else {
+          state.proxyProviders = []
+        }
+
+        // 3. Proxy groups
         if (Array.isArray(config['proxy-groups'])) {
           state.proxyGroups = config['proxy-groups'].map((g) => ({
             id: generateId(),
@@ -782,13 +798,14 @@ export const useAppStore = create<AppState>()(
             tolerance: g.tolerance,
             lazy: g.lazy,
             hidden: (g as { hidden?: boolean }).hidden,
+            ...(g.icon ? { icon: g.icon } : {}),
             ...(g.filter ? { filter: g.filter } : {}),
             ...((g as { 'exclude-filter'?: string })['exclude-filter'] ? { 'exclude-filter': (g as { 'exclude-filter'?: string })['exclude-filter'] } : {}),
             ...(g.strategy ? { strategy: g.strategy } : {}),
           }))
         }
 
-        // 3. Rule providers
+        // 4. Rule providers
         if (config['rule-providers'] && typeof config['rule-providers'] === 'object') {
           state.ruleProviders = Object.entries(config['rule-providers']).map(([name, rp]: [string, { type: string; behavior: string; url?: string; path?: string; interval?: number }]) => ({
             id: generateId(),
@@ -803,7 +820,7 @@ export const useAppStore = create<AppState>()(
           }))
         }
 
-        // 4. Rules — process in order; RULE-SET entries update provider targets AND are stored
+        // 5. Rules — process in order; RULE-SET entries update provider targets AND are stored
         //    as inline RULE-SET rules to preserve their position in the output.
         if (Array.isArray(config.rules)) {
           const rules: Rule[] = []
@@ -837,7 +854,7 @@ export const useAppStore = create<AppState>()(
           state.rules = rules
         }
 
-        // 5. Global settings — only override fields present in the config
+        // 6. Global settings — only override fields present in the config
         if (config['mixed-port'] !== undefined) state.globalSettings['mixed-port'] = config['mixed-port']
         if (config['redir-port'] !== undefined) state.globalSettings['redir-port'] = config['redir-port']
         if (config['allow-lan'] !== undefined) state.globalSettings['allow-lan'] = config['allow-lan']
@@ -916,6 +933,7 @@ export const useAppStore = create<AppState>()(
         importedGroups: [],
       })),
       manualProxies:  state.manualProxies,
+      proxyProviders: state.proxyProviders,
       proxyGroups:    state.proxyGroups,
       ruleProviders:  state.ruleProviders,
       rules:          state.rules,

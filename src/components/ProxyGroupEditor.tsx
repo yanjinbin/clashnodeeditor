@@ -41,7 +41,7 @@ import { resolveToIp, fetchIpInfoBatch, type IpData } from '../utils/ipUtils'
 
 export default function ProxyGroupEditor() {
   const { t } = useTranslation()
-  const { sources, manualProxies, proxyGroups, addProxyGroup, removeProxyGroup, updateProxyGroup, addProxyToGroup, removeProxyFromGroup, reorderProxiesInGroup, reorderProxyGroups, resetProxyGroups } =
+  const { sources, manualProxies, proxyProviders, proxyGroups, addProxyGroup, removeProxyGroup, updateProxyGroup, addProxyToGroup, removeProxyFromGroup, reorderProxiesInGroup, reorderProxyGroups, resetProxyGroups } =
     useAppStore()
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [editingGroup, setEditingGroup] = useState<string | null>(null)
@@ -256,6 +256,7 @@ export default function ProxyGroupEditor() {
                 expanded={expandedGroups.has(group.id)}
                 editing={editingGroup === group.id}
                 proxySections={proxySections}
+                providerNames={proxyProviders.map((p) => p.name)}
                 existingNames={proxyGroups.filter((g) => g.id !== group.id).map((g) => g.name)}
                 onToggleExpand={() => toggleExpand(group.id)}
                 onEdit={() => setEditingGroup(editingGroup === group.id ? null : group.id)}
@@ -297,6 +298,7 @@ interface GroupCardProps {
   expanded: boolean
   editing: boolean
   proxySections: ProxySection[]
+  providerNames: string[]
   /** 其他代理组的名称列表，用于重名校验 */
   existingNames: string[]
   onToggleExpand: () => void
@@ -334,6 +336,7 @@ function GroupCard({
   expanded,
   editing,
   proxySections,
+  providerNames,
   existingNames,
   onToggleExpand,
   onEdit,
@@ -462,6 +465,20 @@ function GroupCard({
     })
   }
 
+  const toggleProvider = (name: string) => {
+    const current = group.use ?? []
+    onUpdate({
+      use: current.includes(name)
+        ? current.filter((p) => p !== name)
+        : [...current, name],
+    })
+  }
+
+  const toggleAllProviders = () => {
+    const allSelected = providerNames.length > 0 && providerNames.every((name) => group.use?.includes(name))
+    onUpdate({ use: allSelected ? [] : providerNames })
+  }
+
   const handleBatchAdd = () => {
     for (const name of pickerSelected) onAddProxy(name)
     setPickerSelected(new Set())
@@ -542,6 +559,9 @@ function GroupCard({
         <button onClick={onToggleExpand} className="text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors p-0.5">
           {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
         </button>
+        {group.icon && (
+          <img src={group.icon} alt="" className="w-5 h-5 rounded object-contain shrink-0" />
+        )}
         <span className={`text-xs px-2 py-0.5 rounded-lg font-medium font-mono ${typeColor[group.type]}`}>
           {group.type}
         </span>
@@ -551,6 +571,8 @@ function GroupCard({
         )}
         {group.autoAllNodes ? (
           <span className="text-xs px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 shrink-0 font-medium border border-emerald-200 dark:border-emerald-800/50">{t('group.autoAllNodes')}</span>
+        ) : group.use && group.use.length > 0 ? (
+          <span className="text-xs px-2 py-0.5 rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 shrink-0 font-medium border border-sky-200 dark:border-sky-800/50">{t('group.providerCount', { count: group.use.length })}</span>
         ) : (
           <span className="text-xs text-gray-400 font-mono">{t('group.nodeCount', { count: group.proxies.length })}</span>
         )}
@@ -597,6 +619,18 @@ function GroupCard({
               )}
             </div>
             <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Icon URL</label>
+              <input
+                type="text"
+                value={group.icon ?? ''}
+                onChange={(e) => onUpdate({ icon: e.target.value })}
+                placeholder="https://.../icon.png"
+                className="w-full text-sm px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('group.labelType')}</label>
               <select
                 value={group.type}
@@ -666,6 +700,70 @@ function GroupCard({
               <span className="text-[10px] text-gray-400">{t('group.hiddenHint')}</span>
             </label>
           </div>
+
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-800/60 overflow-hidden">
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-700/60">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('group.providerUse')}</span>
+              <span className="text-[10px] text-gray-400">{t('group.providerUseHint')}</span>
+              {providerNames.length > 0 && (
+                <button
+                  onClick={toggleAllProviders}
+                  className="ml-auto flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition-colors"
+                >
+                  {providerNames.every((name) => group.use?.includes(name))
+                    ? <CheckSquare size={12} />
+                    : <Square size={12} />}
+                  {t('group.selectAll')}
+                </button>
+              )}
+            </div>
+            {providerNames.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-gray-400">{t('group.noProxyProviders')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5 px-3 py-2">
+                {providerNames.map((name) => {
+                  const checked = group.use?.includes(name) ?? false
+                  return (
+                    <button
+                      key={name}
+                      onClick={() => toggleProvider(name)}
+                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs transition-all ${
+                        checked
+                          ? 'bg-sky-50 dark:bg-sky-900/25 border-sky-300 dark:border-sky-700 text-sky-700 dark:text-sky-300'
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-sky-300 dark:hover:border-sky-700'
+                      }`}
+                    >
+                      {checked ? <CheckSquare size={11} /> : <Square size={11} />}
+                      <span>{name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('group.labelFilter')}</label>
+              <input
+                type="text"
+                value={group.filter ?? ''}
+                onChange={(e) => onUpdate({ filter: e.target.value || undefined })}
+                placeholder={t('group.filterRegexPlaceholder')}
+                className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('group.labelExcludeFilter')}</label>
+              <input
+                type="text"
+                value={group['exclude-filter'] ?? ''}
+                onChange={(e) => onUpdate({ 'exclude-filter': e.target.value || undefined })}
+                placeholder={t('group.excludeFilterRegexPlaceholder')}
+                className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+              />
+            </div>
+          </div>
         </div>
       )}
 
@@ -681,6 +779,13 @@ function GroupCard({
             </div>
           )}
           {/* Batch remove toolbar */}
+          {group.use && group.use.length > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-sky-50/60 dark:bg-sky-900/10 border-b border-gray-100 dark:border-gray-700/50">
+              <CheckSquare size={12} className="text-sky-500" />
+              <span className="text-xs text-sky-700 dark:text-sky-300 font-medium">{t('group.providerUse')}</span>
+              <span className="text-xs text-gray-400 ml-auto truncate">{group.use.join(', ')}</span>
+            </div>
+          )}
           {!group.autoAllNodes && group.proxies.length > 0 && (
             <div className="flex items-center gap-2.5 px-4 py-2 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/60 dark:bg-gray-700/20">
               <button onClick={toggleRemoveAll} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
@@ -711,7 +816,7 @@ function GroupCard({
           >
             <SortableContext items={group.proxies} strategy={verticalListSortingStrategy}>
               <div className="max-h-56 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
-                {group.proxies.length === 0 && !group.autoAllNodes && (
+                {group.proxies.length === 0 && !group.autoAllNodes && (!group.use || group.use.length === 0) && (
                   <p className="text-center py-4 text-xs text-gray-400">{t('group.emptyGroup')}</p>
                 )}
                 {group.autoAllNodes && sourceOnlySections.length === 0 && (
