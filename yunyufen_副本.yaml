@@ -1,0 +1,1037 @@
+# 》》》》》ax82u 撸猫魔法云 专用 全局 dns sniffer 配置 》》》》》》
+#本文件很重要，不懂勿动
+#端口
+mixed-port: 23456
+redir-port: 23457
+#面板设置
+external-controller: 192.168.50.1:9090
+external-controller-cors:
+  allow-origins:
+    - '*'
+  allow-private-network: true
+secret: ""
+external-ui: dashboard
+external-ui-name: zashboard
+external-ui-url: https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip
+#缓存设置
+profile:
+  store-selected: true
+  store-fake-ip: false
+#GEO数据库
+geodata-mode: true
+geox-url:
+  geoip: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip-lite.dat"
+  geosite: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+#启动参数
+find-process-mode: off
+allow-lan: true
+mode: rule
+log-level: error
+ipv6: false
+unified-delay: true
+global-client-fingerprint: chrome
+tcp-concurrent: true
+udp-timeout: 300
+keep-alive-interval: 15
+udp: true
+prefer-h3: false
+
+# 《《《《《 ax82u 撸猫魔法云 专用 全局 dns sniffer 配置 《《《《
+
+
+# # ================================================================
+# # 渔舍 良心云 赔钱 三个机场合并
+# # macOS 本地客户端 — TUN 接管终端流量 / Claude & Gemini 专用分流
+# # UDP 全局关闭 / IPv6 全局关闭 / HTTP3 关闭 — 防真实 IP 泄露
+# # ================================================================
+
+# mixed-port: 7890
+# allow-lan: true
+# bind-address: "*"
+# mode: rule
+# log-level: warning
+# find-process-mode: strict
+
+# geodata-mode: true
+# geo-auto-update: true
+# geo-update-interval: 72
+# geox-url:
+#   geoip: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat
+#   geosite: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat
+#   mmdb: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb
+
+# global-client-fingerprint: chrome
+# tcp-concurrent: true
+# unified-delay: true
+# udp-timeout: 300
+# keep-alive-interval: 15
+
+# # ── 防泄露三件套 ──────────────────────────────────────────────
+# ipv6: false                        # 全局关闭 IPv6，防 IPv6 真实 IP 泄露
+# udp: false                         # 全局关闭 UDP，hy2/TUIC 节点在 proxy 里局部 udp: true
+# prefer-h3: false                   # 关闭 HTTP/3 (QUIC)，强制走 TCP
+
+# profile:
+#   store-selected: true
+#   store-fake-ip: false
+
+# # ── TUN ───────────────────────────────────────────────────────
+# tun:
+#   enable: true
+#   stack: mixed                     # macOS 首选
+#   auto-route: true
+#   auto-detect-interface: true
+#   dns-hijack:
+#     - any:53
+#     - tcp://any:53
+#   inet6-address: []                # TUN 不分配 IPv6 地址
+#   # 新增：不劫持 Tailscale 流量
+#   route-exclude-address:
+#     - 100.64.0.0/10
+#     - 100.100.100.100/32
+#     - 2001:67c:2b0::4/128
+# # ── 外部控制 ──────────────────────────────────────────────────
+# external-controller: 127.0.0.1:9090
+# external-controller-cors:
+#   allow-origins:
+#     - "*"
+#   allow-private-network: true
+# secret: ""
+# external-ui: ./ui
+# external-ui-name: zashboard
+# external-ui-url: "https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip"
+
+
+
+dns:
+  enable: true
+  ipv6: false
+  listen: :23453
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  use-hosts: true
+  respect-rules: true
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  # 国内 DNS 优先
+  nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  # 国外 DoH fallback
+  fallback:
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    geosite:
+      - gfw
+      - geolocation-!cn
+    ipcidr:
+      - 240.0.0.0/4
+  proxy-server-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  fake-ip-filter:
+    - '*.lan'
+    - '*.local'
+    - '*.localdomain'
+    - '*.internal'
+    # STUN / WebRTC
+    - '+.stun.*.*'
+    - 'stun.*.*'
+    # Tailscale
+    - '*.ts.net'
+    - '*.tailscale.com'
+    - '*.tailscale.io'
+    - '100.100.100.100'
+    # NTP
+    - 'time.*.com'
+    - 'time.*.gov'
+    - '*.ntp.org'
+    - 'pool.ntp.org'
+
+sniffer:
+  enable: true
+  force-dns-mapping: true
+  parse-pure-ip: true
+  override-destination: true
+  sniff:
+    TLS:
+      ports: [443, 8443]
+    HTTP:
+      ports: [80, 8080]
+      override-destination: true
+  force-domain:
+    - '+.v2ex.com'
+  skip-domain:
+    # 米家 / IoT，避免设备连接被错误改写
+    - 'Mijia Cloud'
+    - '+.mi.com'
+    - '+.xiaomi.com'
+    - '+.mijia.com'
+    # Apple 推送 / iCloud / App Store
+    - '+.push.apple.com'
+    - '+.apple.com'
+    - '+.icloud.com'
+    - '+.mzstatic.com'
+    # 本地 / 私有 / 连通性检测
+    - '+.local'
+    - 'geosite:private'
+    - 'geosite:connectivity-check'
+    - 'msftconnecttest.com'
+    # 时间同步
+    - 'time.*.com'
+    - '+.ntp.org'
+    - 'geosite:category-ntp'
+    # 微信 / QQ / 腾讯
+    - '+.weixin.qq.com'
+    - '+.wx.qq.com'
+    - '+.wechat.com'
+    - '+.mmobject.com'
+    - '+.mmfile.com'
+    - '+.qpic.cn'
+    - '+.qlogo.cn'
+    - '+.qq.com'
+    - '+.tencent.com'
+    - '+.tencent.cn'
+    # Tailscale
+    - '*.ts.net'
+    - '*.tailscale.com'
+    - '*.tailscale.io'
+    # STUN / WebRTC
+    - '+.stun.*.*'
+    - 'stun.*.*'
+
+
+
+
+############    节点信息
+# ================================================================
+# Proxy Providers — 订阅源
+# ================================================================
+proxy-providers:
+  极风:
+    type: http
+    url: "https://jf.mibu.eu.org/sublink/29f105682ffc9a47b8173128f90767b5"
+    path: ./proxy_providers/jifeng.yaml
+    interval: 3600
+    proxy: "♻️ 自动选择"
+    header:
+      User-Agent:
+        - "clash.meta"
+    health-check:
+      enable: true
+      url: https://www.gstatic.com/generate_204
+      interval: 300
+      timeout: 3000
+      lazy: true
+    override:
+      udp: true
+      ip-version: ipv4
+    exclude-filter: "(?i)直连|中转|官网|收藏|超时|重新导入|剩余流量|下次重置|套餐到期"
+    hidden: true
+
+  渔舍:
+    type: http
+    url: "https://sub.cucloud.top/api/v1/client/subscribe?token=MjA5NzA6MTI1MzY2YjYxNDlkOGFiYzRmNGZhNjcxOTlhZTM5OTFhNzMzM2VmNg"
+    path: ./proxy_providers/yushe.yaml
+    interval: 3600
+    proxy: DIRECT
+    header:
+      User-Agent:
+        - "clash.meta"
+    health-check:
+      enable: true
+      url: https://www.gstatic.com/generate_204
+      interval: 300
+      timeout: 3000
+      lazy: true
+    override:
+      udp: true
+      ip-version: ipv4
+
+  良心云:
+    type: http
+    url: "https://liangxin.xyz/api/v1/liangxin?OwO=e3bc31cbf8666dd00a27754496310543"
+    path: ./proxy_providers/liangxin.yaml
+    interval: 3600
+    proxy: DIRECT
+    header:
+      User-Agent:
+        - "clash.meta"
+    health-check:
+      enable: true
+      url: https://www.gstatic.com/generate_204
+      interval: 300
+      timeout: 3000
+      lazy: true
+    override:
+      udp: true
+      ip-version: ipv4
+    filter: "🇭🇰|🇸🇬|🇯🇵|🇰🇷|🇲🇴|台湾|韩国|澳门|韩国|新加坡"
+    exclude-filter: "(?i)直连|中转|官网|收藏|超时|重新导入|剩余流量|下次重置|套餐到期|距离下次|0.1倍|0.01倍|晚高峰|下载"
+
+  赔钱:
+    type: http
+    url: "https://dash.pqjc.site/api/v1/pq/67fc01652ebd6f881d9aac4bbe29a0a9"
+    path: ./proxy_providers/peiqian.yaml
+    interval: 3600
+    proxy: DIRECT
+    header:
+      User-Agent:
+        - "clash.meta"
+    health-check:
+      enable: true
+      url: https://www.gstatic.com/generate_204
+      interval: 300
+      timeout: 3000
+      lazy: true
+    override:
+      udp: true
+      ip-version: ipv4
+    filter: "^(?!.*?(0\\.1倍|0\\.01倍|下载|剩余|重置|到期|流量|套餐|官网)).*(新加坡|澳门|香港|台湾|日本|韩国|泰国|澳大利亚|瑞士|🇸🇬|🇲🇴|🇭🇰|🇯🇵|🇰🇷|🇹🇭|🇦🇺|🇨🇭).*(推荐|hy2).*$"
+
+
+
+
+############    本地节点
+proxies:
+
+  # 链式出口：住宅 IP
+  - { name: "圣何塞住宅IP", type: socks5, server: "66.93.67.221", port: 443, username: "yanjinbin", password: "yjb+9902", udp: false, dialer-proxy: "🔌 🇺🇸", ip-version: ipv4, tfo: true }
+  - { name: "东京住宅IP", type: socks5, server: "103.244.220.99", port: 443, username: "yanjinbin", password: "yjb+9902", udp: false, dialer-proxy: "🔌 🇯🇵", ip-version: ipv4, tfo: true }
+
+proxy-groups:
+
+
+  - name: 油管
+    type: select
+    proxies:
+      - hy2-赔钱-良心云
+      - vless-赔钱-良心云
+      - 良心云-hy2
+      - 良心云-vless
+      - 赔钱-vless
+      - 赔钱-hy2
+      - 渔舍
+    url: https://redirector.googlevideo.com/generate_204
+    interval: 30
+    timeout: 2000
+    lazy: false
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles/mihomo/rules/icons/youtube-02.png"
+
+  - name: 社交媒体
+    type: select
+    proxies:
+      - 🗼 日本出口
+      - 🗽 美国出口
+    use:
+      - 渔舍
+      - 极风
+    exclude-filter: "(?i)香港|HK|Hong ?Kong|🇭🇰|🇲🇴|澳门"
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles/mihomo/rules/icons/twitter.webp"
+
+  - name: TikTok媒体
+    type: select
+    proxies:
+      - 🗼 日本出口
+      - 🗽 美国出口
+    use:
+      - 渔舍
+      - 极风
+    exclude-filter: "(?i)香港|HK|Hong ?Kong|🇭🇰|🇲🇴|澳门"
+    url: https://www.gstatic.com/generate_204
+    interval: 300
+    timeout: 3000
+    lazy: true
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles/mihomo/rules/icons/tiktok.png"
+
+
+  - name: Emby-观影代理
+    type: select
+    proxies:
+      - 🇭🇰｜香港-赔钱-良心云
+      - 🇯🇵｜日本-赔钱-良心云
+      - 赔钱-良心云
+      - DIRECT
+    url: https://www.gstatic.com/generate_204
+    interval: 180
+    timeout: 2000
+    lazy: true
+    # icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/netflix.svg"
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/tv.svg"
+
+  - name: 流媒体
+    type: select
+    proxies:
+      - 🇭🇰｜香港-赔钱-良心云
+      - 🇯🇵｜日本-赔钱-良心云
+    use:
+      - 渔舍
+      - 赔钱
+    url: https://www.gstatic.com/generate_204
+    interval: 180
+    timeout: 2000
+    lazy: true
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/netflix.svg"
+
+
+  - name: Spotify-音乐
+    type: select
+    proxies:
+      - 🇭🇰｜香港-赔钱-良心云
+      - 🇯🇵｜日本-赔钱-良心云
+    use:
+      - 渔舍
+      - 赔钱
+    url: https://www.gstatic.com/generate_204
+    interval: 180
+    timeout: 2000
+    lazy: true
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/Spotify-Big-Sur-Icon-Dark.webp"
+
+
+  - name: 🌐 节点选择
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - 🛡️ 故障转移
+      - 油管
+      - 赔钱
+      - 🗽 美国出口
+      - 🗼 日本出口
+      - 渔舍
+      - Emby-观影代理
+      - DIRECT
+      - REJECT
+    url: https://www.gstatic.com/generate_204
+    interval: 120
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/e.png"
+
+  - name: ♻️ 自动选择
+    type: url-test
+    proxies:
+        - 良心云
+        - 赔钱
+        - 渔舍
+        - 极风
+    filter: "(?i)港|hk|hong ?kong|香港|🇭🇰|新加坡|🇸🇬|狮城|sg|singapore|日本|jp|japan|🇯🇵|美国|us|usa|american|🇺🇸"
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 1500
+    tolerance: 100
+    lazy: false
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/recycle.svg"
+
+
+  - name: 🛡️ 故障转移
+    type: fallback
+    proxies:
+      - 良心云
+      - 赔钱
+      - 渔舍
+      - 极风
+    url: https://www.gstatic.com/generate_204
+    interval: 120
+    timeout: 3000
+    tolerance: 150
+    lazy: false
+
+  - name: AI双链路
+    type: select
+    proxies:
+      - 🗽 美国出口
+      - 🗼 日本出口
+    url: https://www.gstatic.com/generate_204
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/openai.png"
+
+  - name: 🪬 Claude专用
+    type: select
+    proxies:
+      - 🗼 日本出口
+    url: https://www.gstatic.com/generate_204
+    icon: "https://unpkg.com/@lobehub/icons-static-png@1.88.0/light/claude.png"
+
+  - name: Gemini专用
+    type: select
+    proxies:
+      - 🗽 美国出口
+    url: https://www.gstatic.com/generate_204
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/antigravity-color.webp"
+
+  - name: 🗽 美国出口
+    type: select
+    proxies:
+      - 圣何塞住宅IP
+    url: https://www.gstatic.com/generate_204
+    interval: 120
+    timeout: 2000
+    lazy: true
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/usa.png"
+
+  - name: 🗼 日本出口
+    type: select
+    proxies:
+      - 东京住宅IP
+    url: https://www.gstatic.com/generate_204
+    interval: 120
+    tolerance: 100
+    lazy: true
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/japan.png"
+
+
+  - name: 渔舍
+    type: select
+    use:
+      - 渔舍
+    url: https://www.gstatic.com/generate_204
+    interval: 300
+    timeout: 3000
+    lazy: true
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/yushe.png"
+    hidden: true
+  - name: 极风
+    type: select
+    use:
+      - 极风
+    url: https://www.gstatic.com/generate_204
+    interval: 300
+    timeout: 3000
+    lazy: true
+    hidden: true
+
+  - name: 赔钱-vless
+    type: url-test
+    use:
+      - 赔钱
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/peiqian.png"
+    # 只保留 Reality 节点（按你机场命名规律，Reality 节点不带"0.1倍"且带"推荐"或具体地区）
+    filter: "^(?!.*?(0\\.1倍|0\\.01倍|下载|剩余|重置|到期|hy2)).*推荐.*$"
+    hidden: true
+
+  - name: 赔钱-hy2
+    type: url-test
+    use:
+      - 赔钱
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/peiqian.png"
+    filter: "^(?!.*?(0\\.1倍|0\\.01倍|下载|剩余|重置|到期)).*hy2.*$"
+    hidden: true
+
+  - name: 赔钱
+    type: url-test
+    use:
+      - 赔钱
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/peiqian.png"
+    hidden: true
+
+  - name: 良心云-vless
+    type: url-test
+    use:
+      - 良心云
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/liangxinyun.png"
+    filter: "高速"
+    hidden: true
+  - name: 良心云-hy2
+    type: url-test
+    use:
+      - 良心云
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: " https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/liangxinyun.png"
+    filter: "专线"
+    hidden: true
+
+  - name: 良心云
+    type: url-test
+    use:
+      - 良心云
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: " https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/liangxinyun.png"
+    hidden: true
+  - name: hy2-赔钱-良心云
+    type: url-test
+    proxies:
+      - 赔钱-hy2
+      - 良心云-hy2
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: " https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/liangxinyun.png"
+    hidden: true
+
+  - name: vless-赔钱-良心云
+    type: url-test
+    proxies:
+      - 赔钱-vless
+      - 良心云-vless
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: " https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/liangxinyun.png"
+    hidden: true
+
+  - name: 赔钱-良心云
+    type: url-test
+    use:
+      - 赔钱
+      - 良心云
+    url: https://www.gstatic.com/generate_204
+    interval: 60
+    timeout: 3000
+    lazy: false
+    icon: " https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/liangxinyun.png"
+    hidden: true
+
+  - name: 🇭🇰｜香港-赔钱-良心云
+    # type: fallback
+    type: url-test
+    proxies:
+      - 赔钱-hy2
+      - 赔钱-vless
+      - 良心云-hy2
+      - 良心云-vless
+    url: https://www.gstatic.com/generate_204
+    filter: "(?i)香港|HK|Hong ?Kong|🇭🇰"
+    exclude-filter: "(?i)剩余流量|下次重置|距离下次|套餐到期|直连|中转|官网|收藏|超时|0.01倍"
+    interval: 30
+    timeout: 1500
+    tolerance: 120
+    lazy: false
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/peiqian.png"
+    hidden: true
+
+  - name: 🇯🇵｜日本-赔钱-良心云
+    # type: fallback
+    type: url-test
+    proxies:
+      - 赔钱-hy2
+      - 赔钱-vless
+      - 良心云-hy2
+      - 良心云-vless
+    url: https://www.gstatic.com/generate_204
+    filter: "(?i)日本|东京|大阪|jp|japan|🇯🇵"
+    exclude-filter: "(?i)剩余流量|下次重置|距离下次|套餐到期|直连|中转|官网|收藏|超时|0.01倍"
+    interval: 30
+    timeout: 1500
+    tolerance: 120
+    lazy: false
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/peiqian.png"
+    hidden: true
+
+  - name: 🔌 🇺🇸
+    type: fallback
+    use:
+      - 渔舍
+      - 极风
+    filter: "(?i)美国|us|usa|american|united ?states|🇺🇸"
+    url: https://connect.rom.miui.com/generate_204
+    interval: 60
+    timeout: 2000
+    lazy: false
+    hidden: true
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/battery.png"
+
+  - name: 🔌 🇯🇵
+    type: fallback
+    use:
+      - 渔舍
+      - 极风
+    filter: "(?i)日本|jp|japan|🇯🇵"
+    url: https://connect.rom.miui.com/generate_204
+    interval: 60
+    timeout: 2000
+    lazy: false
+    hidden: true
+    icon: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/icons/battery.png"
+
+
+# ================================================================
+# rule provider
+# ================================================================
+rule-providers:
+  # --- 私人规则 ---
+  private:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
+    path: ./ruleset/private.yaml
+    interval: 43200
+  # --- 广告屏蔽 ---
+  秋风广告规则:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/TG-Twilight/AWAvenue-Ads-Rule@latest/Filters/AWAvenue-Ads-Rule-Clash-Classical.yaml"
+    path: ./ruleset/AWAvenue-Ads-Rule-Clash.yaml
+    interval: 43200
+  adblock-lite:
+    type: http
+    behavior: domain
+    url: "https://gcore.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomolite.yaml"
+    path: ./ruleset/adblock-lite.yaml
+    interval: 43200
+  # ── 社交媒体 ──
+  telegram:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Telegram/Telegram.yaml"
+    path: ./ruleset/telegram.yaml
+    interval: 43200
+  twitter:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Twitter/Twitter.yaml"
+    path: ./ruleset/twitter.yaml
+    interval: 43200
+  Tiktok:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/TikTok/TikTok.yaml"
+    path: ./ruleset/tiktok.yaml
+    interval: 43200
+
+  linkedin:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/LinkedIn/LinkedIn.yaml"
+    path: ./ruleset/linkedin.yaml
+    interval: 43200
+
+  # ── 开发工具 ──
+  microsoft:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Microsoft/Microsoft.yaml"
+    path: ./ruleset/microsoft.yaml
+    interval: 43200
+  docker:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Docker/Docker.yaml"
+    path: ./ruleset/docker.yaml
+    interval: 43200
+  github:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/GitHub/GitHub.yaml"
+    path: ./ruleset/github.yaml
+    interval: 43200
+
+  # ── 国内 ──
+  tencent:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Tencent/Tencent.yaml"
+    path: ./ruleset/tencent.yaml
+    interval: 43200
+
+  # ── Apple ──
+
+
+# SOURCE: apple apple-music apple-tv apple-proxy apple-id apple-store apple-ota
+
+  apple:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Apple/Apple.yaml"
+    path: ./ruleset/apple.yaml
+    interval: 43200
+
+  apple-music:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/AppleMusic/AppleMusic.yaml"
+    path: ./ruleset/apple-music.yaml
+    interval: 43200
+  apple-tv:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/AppleTV/AppleTV.yaml"
+    path: ./ruleset/apple-tv.yaml
+    interval: 43200
+  apple-proxy:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/AppleProxy/AppleProxy.yaml"
+    path: ./ruleset/apple-proxy.yaml
+    interval: 43200
+  apple-id:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/AppleID/AppleID.yaml"
+    path: ./ruleset/apple-id.yaml
+    interval: 43200
+  apple-store:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/AppStore/AppStore.yaml"
+    path: ./ruleset/apple-store.yaml
+    interval: 43200
+  apple-ota:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/SystemOTA/SystemOTA.yaml"
+    path: ./ruleset/apple-ota.yaml
+    interval: 43200
+
+  # ── AI ──
+  google:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Google/Google.yaml"
+    path: ./ruleset/google.yaml
+    interval: 43200
+  openai:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/OpenAI/OpenAI.yaml"
+    path: ./ruleset/openai.yaml
+    interval: 43200
+  gemini:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Gemini/Gemini.yaml"
+    path: ./ruleset/gemini.yaml
+    interval: 43200
+  copilot:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Copilot/Copilot.yaml"
+    path: ./ruleset/copilot.yaml
+    interval: 43200
+  anthropic:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Anthropic/Anthropic.yaml"
+    path: ./ruleset/anthropic.yaml
+    interval: 43200
+  claude:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Claude/Claude.yaml"
+    path: ./ruleset/claude.yaml
+    interval: 43200
+
+  # ── 流媒体 ──
+  youtube-music:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/YouTubeMusic/YouTubeMusic.yaml"
+    path: ./ruleset/youtube-music.yaml
+    interval: 43200
+  youtube:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/YouTube/YouTube.yaml"
+    path: ./ruleset/youtube.yaml
+    interval: 43200
+
+  # ── 自维护 ──
+
+  apns:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/apns.yaml"
+    path: ./ruleset/apns.yaml
+    interval: 2592000
+  auto-proxy:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/auto-proxy.yaml"
+    path: ./ruleset/auto-proxy.yaml
+    interval: 2592000
+  bypass:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/bypass.yaml"
+    path: ./ruleset/bypass.yaml
+    interval: 2592000
+  claude-pro:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/claude-pro.yaml"
+    path: ./ruleset/claude-pro.yaml
+    interval: 2592000
+  doubaoime-block:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/doubaoime-block.yaml"
+    path: ./ruleset/doubaoime-block.yaml
+    interval: 2592000
+  gemini-plus:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/gemini-plus.yaml"
+    path: ./ruleset/gemini-plus.yaml
+    interval: 2592000
+  tailscale:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/tailscale.yaml"
+    path: ./ruleset/tailscale.yaml
+    interval: 2592000
+  twitter-video:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/twitter-video.yaml"
+    path: ./ruleset/twitter-video.yaml
+    interval: 2592000
+  emby-direct:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/emby-direct.yaml"
+    path: ./ruleset/emby-direct.yaml
+    interval: 2592000
+  emby-proxy:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/yanjinbin/dotfiles@latest/mihomo/rules/emby-proxy.yaml"
+    path: ./ruleset/emby-proxy.yaml
+    interval: 2592000
+  # 流媒体
+  Netflix:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Netflix/Netflix.yaml"
+    path: ./ruleset/netflix.yaml
+    interval: 43200
+  HBO:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/HBO/HBO.yaml"
+    path: ./ruleset/hbo.yaml
+    interval: 43200
+
+  AppleTV:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/AppleTV/AppleTV.yaml"
+    path: ./ruleset/AppleTV.yaml
+    interval: 43200
+  Disney:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Disney/Disney.yaml"
+    path: ./ruleset/disney.yaml
+    interval: 43200
+  Spotify:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@latest/rule/Clash/Spotify/Spotify.yaml"
+    path: ./ruleset/spotify.yaml
+    interval: 43200
+# ================================================================
+# Rules
+# ================================================================
+rules:
+  # ── 本地/私有 ──
+  - IP-CIDR6,::/0,REJECT,no-resolve
+  - RULE-SET,private,DIRECT
+  - RULE-SET,bypass,DIRECT
+  - RULE-SET,auto-proxy,🌐 节点选择
+  - RULE-SET,tailscale,DIRECT
+
+  # ── 屏蔽 ──
+  # # 提前，避免被 CN/MATCH 兜底
+  - RULE-SET,adblock-lite,REJECT
+  - RULE-SET,秋风广告规则,REJECT
+  - RULE-SET,doubaoime-block,REJECT
+  - RULE-SET,apple-ota,REJECT
+   # 全局拦 QUIC，后面不用重复
+  - AND,((DST-PORT,443),(NETWORK,UDP)),REJECT
+
+  # ── 进程规则（macOS only）──
+  - PROCESS-NAME,WeChat,DIRECT
+  - PROCESS-NAME,Claude Helper,🪬 Claude专用
+  - PROCESS-NAME,Claude Helper (Renderer),🪬 Claude专用
+  - PROCESS-NAME,Claude,🪬 Claude专用
+  - PROCESS-NAME,Antigravity Helper,🗽 美国出口
+  - PROCESS-NAME,Antigravity Helper (Renderer),🗽 美国出口
+
+  # ── Emby ──
+  - RULE-SET,emby-direct,DIRECT
+  - RULE-SET,emby-proxy,Emby-观影代理
+
+  # ── Apple ──
+  - RULE-SET,apns,🌐 节点选择
+  - RULE-SET,apple-music,🌐 节点选择
+  - RULE-SET,apple-tv,🌐 节点选择
+  - RULE-SET,apple-proxy,🌐 节点选择
+  - RULE-SET,apple-id,🌐 节点选择
+  - RULE-SET,apple-store,🌐 节点选择
+  - RULE-SET,apple,🌐 节点选择            # 兜底 Apple，放最后
+
+  # ── 流媒体 ──
+  - RULE-SET,youtube-music,油管
+  - RULE-SET,youtube,油管
+  - RULE-SET,twitter-video,油管
+
+  # ── AI ──
+  - RULE-SET,claude-pro,🪬 Claude专用
+  - RULE-SET,claude,🪬 Claude专用
+  - RULE-SET,anthropic,🪬 Claude专用
+  - RULE-SET,openai,AI双链路
+  - RULE-SET,gemini-plus,AI双链路
+  - RULE-SET,gemini,AI双链路
+  - RULE-SET,copilot,AI双链路
+  - DOMAIN-SUFFIX,nel.goog,AI双链路
+  - RULE-SET,google,AI双链路
+
+  # ── 社交媒体 ──
+  - RULE-SET,twitter,社交媒体
+  - RULE-SET,telegram,TikTok媒体
+  - RULE-SET,Tiktok,TikTok媒体
+  - RULE-SET,linkedin,社交媒体
+
+  # --- 流媒体 ---
+  - RULE-SET,Netflix,流媒体
+  - RULE-SET,HBO,流媒体
+  - RULE-SET,Disney,流媒体
+  - RULE-SET,AppleTV,流媒体
+  - RULE-SET,Spotify,Spotify-音乐
+
+  # ── 开发工具 ──
+  - RULE-SET,github,♻️ 自动选择
+  - RULE-SET,microsoft,♻️ 自动选择
+  - RULE-SET,docker,♻️ 自动选择
+
+  # ── 自定义域名 ──
+  - DOMAIN-SUFFIX,ipleak.net,🗽 美国出口
+  - DOMAIN-SUFFIX,dnsleaktest.com,🗽 美国出口
+  - DOMAIN-SUFFIX,ipapi.co,🗽 美国出口
+  - DOMAIN-SUFFIX,ugtop.com,🗼 日本出口
+  - DOMAIN-SUFFIX,antigravity-unleash.goog,🗽 美国出口
+
+  # ── 兜底 ──
+  - GEOIP,CN,DIRECT,no-resolve
+  - GEOIP,LAN,DIRECT,no-resolve
+
+  - MATCH,🌐 节点选择

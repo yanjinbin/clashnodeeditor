@@ -33,7 +33,7 @@ export function parseYamlFull(text: string): { proxies: Proxy[], groups: Importe
   if (!config || typeof config !== 'object') throw new Error('Invalid YAML: not an object')
   const proxies: Proxy[] = Array.isArray(config.proxies) ? config.proxies : []
   const groups: ImportedProxyGroup[] = Array.isArray(config['proxy-groups'])
-    ? config['proxy-groups'].map((g) => ({
+    ? (config['proxy-groups'] as Array<any>).map((g) => ({
         name: g.name,
         type: g.type,
         proxies: Array.isArray(g.proxies) ? g.proxies : [],
@@ -44,7 +44,7 @@ export function parseYamlFull(text: string): { proxies: Proxy[], groups: Importe
         tolerance: g.tolerance,
         ...(g.lazy !== undefined ? { lazy: g.lazy } : {}),
         ...(g.hidden ? { hidden: (g as { hidden?: boolean }).hidden } : {}),
-        ...(g.icon ? { icon: g.icon } : {}),
+        ...(g.icon ? { icon: String(g.icon) } : {}),
         ...(g.filter ? { filter: g.filter } : {}),
         ...(g['exclude-filter'] ? { 'exclude-filter': (g as { 'exclude-filter'?: string })['exclude-filter'] } : {}),
         ...(g.strategy ? { strategy: g.strategy } : {}),
@@ -236,14 +236,32 @@ export function generateClashConfig(
     proxies: normalizedSettings['ip-version']
       ? proxies.map((p) => (p['ip-version'] ? p : { ...p, 'ip-version': normalizedSettings['ip-version'] }))
       : proxies,
-    'proxy-groups': proxyGroups,
+    'proxy-groups': proxyGroups.map((g) => ({
+      name: g.name,
+      type: g.type,
+      proxies: g.proxies,
+      ...(g.use && g.use.length > 0 ? { use: g.use } : {}),
+      ...(g.timeout !== undefined ? { timeout: g.timeout } : {}),
+      url: g.url,
+      interval: g.interval,
+      tolerance: g.tolerance,
+      lazy: g.lazy,
+      ...(g.hidden ? { hidden: true } : {}),
+      ...(g.icon ? { icon: g.icon } : {}),
+      ...(g.filter ? { filter: g.filter } : {}),
+      ...(g['exclude-filter'] ? { 'exclude-filter': g['exclude-filter'] } : {}),
+      ...(g.strategy ? { strategy: g.strategy } : {}),
+    })),
   }
 
   if (proxyProviders.length > 0) {
     config['proxy-providers'] = {}
     for (const provider of proxyProviders) {
       const { id: _id, name, ...rest } = provider
-      config['proxy-providers'][name] = rest
+      config['proxy-providers'][name] = {
+        ...rest,
+        ...(provider.icon ? { icon: provider.icon } : {}),
+      }
     }
   }
 

@@ -778,7 +778,7 @@ export const useAppStore = create<AppState>()(
             name,
             ...provider,
             type: String(provider.type ?? 'http'),
-            ...(provider.icon ? { icon: provider.icon } : {}),
+            ...(provider.icon ? { icon: String(provider.icon) } : {}),
           }))
         } else {
           state.proxyProviders = []
@@ -786,7 +786,7 @@ export const useAppStore = create<AppState>()(
 
         // 3. Proxy groups
         if (Array.isArray(config['proxy-groups'])) {
-          state.proxyGroups = config['proxy-groups'].map((g) => ({
+          state.proxyGroups = (config['proxy-groups'] as Array<any>).map((g) => ({
             id: generateId(),
             name: g.name,
             type: (g.type as ProxyGroup['type']) || 'select',
@@ -798,7 +798,7 @@ export const useAppStore = create<AppState>()(
             tolerance: g.tolerance,
             lazy: g.lazy,
             hidden: (g as { hidden?: boolean }).hidden,
-            ...(g.icon ? { icon: g.icon } : {}),
+            ...(g.icon ? { icon: String(g.icon) } : {}),
             ...(g.filter ? { filter: g.filter } : {}),
             ...((g as { 'exclude-filter'?: string })['exclude-filter'] ? { 'exclude-filter': (g as { 'exclude-filter'?: string })['exclude-filter'] } : {}),
             ...(g.strategy ? { strategy: g.strategy } : {}),

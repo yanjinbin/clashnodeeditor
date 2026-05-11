@@ -9,6 +9,7 @@ import {
   MACBOOK_MIHOMO_CLIENT_GLOBAL_SETTINGS,
   MERLIN_LUMAO_REGIONAL_GLOBAL_SETTINGS,
   MERLIN_LUMAO_WHITELIST_GLOBAL_SETTINGS,
+  YUNYUFEN_GLOBAL_SETTINGS,
 } from '../types/clash'
 import type { ClashConfig, ClashGlobalSettings, DnsConfig, DnsFallbackFilter } from '../types/clash'
 

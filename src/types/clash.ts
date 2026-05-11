@@ -37,6 +37,8 @@ export interface ProxyGroup {
   strategy?: string
   /** 生成配置时自动填入所有订阅节点（不含代理组） */
   autoAllNodes?: boolean
+  /** 代理组图标 URL */
+  icon?: string
 }
 
 export interface ProxyProviderHealthCheck {
@@ -62,6 +64,8 @@ export interface ProxyProvider {
   override?: Record<string, unknown>
   filter?: string
   'exclude-filter'?: string
+  /** 代理源图标 URL */
+  icon?: string
   [key: string]: unknown
 }
 
@@ -105,6 +109,7 @@ export interface ImportedProxyGroup {
   filter?: string
   'exclude-filter'?: string
   strategy?: string
+  icon?: string
 }
 
 export interface SubscriptionInfo {
