@@ -13,16 +13,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v3
         with:
-          version: 9.15.4
+          version: 9
+      
+      - name: Check pnpm version
+        run: pnpm -v
 
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
 
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile
 
       - name: Deploy to Vercel (production)
         run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
