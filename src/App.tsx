@@ -8,6 +8,7 @@ import ProxyGroupEditor from './components/ProxyGroupEditor'
 import RuleSetManager from './components/RuleSetManager'
 import ConfigPreview from './components/ConfigPreview'
 import AirportInviteBanner from './components/AirportInviteBanner'
+import MiyaIPBanner from './components/MiyaIPBanner'
 import { useVersionCheck } from './hooks/useVersionCheck'
 import { loadRemoteSource } from './utils/sourceLoader'
 import { refreshRemoteSources } from './utils/sourceRefresh'
@@ -304,11 +305,7 @@ export default function App() {
 
         {/* 右侧广告列 */}
         <aside className={`hidden xl:flex flex-col ${AD_COL} shrink-0 overflow-y-auto pt-3 px-2 gap-4 bg-gray-50 dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800`}>
-          <AirportInviteBanner
-            href="https://www.miyaip.com/?invitecode=5722145"
-            imageSrc="https://www.miyaip.com/banner/160cn.png"
-            title={t('app.airport.miyaip')}
-          />
+          <MiyaIPBanner />
         </aside>
 
       </main>
