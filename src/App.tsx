@@ -7,12 +7,13 @@ import NodeManager from './components/NodeManager'
 import ProxyGroupEditor from './components/ProxyGroupEditor'
 import RuleSetManager from './components/RuleSetManager'
 import ConfigPreview from './components/ConfigPreview'
+import MihomoYamlConverter from './components/MihomoYamlConverter'
 import AirportInviteBanner from './components/AirportInviteBanner'
 import MiyaIPBanner from './components/MiyaIPBanner'
 import { useVersionCheck } from './hooks/useVersionCheck'
 import { loadRemoteSource } from './utils/sourceLoader'
 import { refreshRemoteSources } from './utils/sourceRefresh'
-import { Globe, Server, Users, Shield, FileText, RefreshCw, Sun, Moon } from 'lucide-react'
+import { ArrowLeftRight, Globe, Server, Users, Shield, FileText, RefreshCw, Sun, Moon } from 'lucide-react'
 
 // 左右 banner 列宽 — xl:144px，与 max-w-5xl(1024px) 合计 1312px ≤ 1280px 时自动隐藏
 const AD_COL = 'w-36' // 144px
@@ -158,6 +159,7 @@ export default function App() {
     { id: 'nodes'   as const, label: t('app.tabs.nodes'),   icon: Server },
     { id: 'groups'  as const, label: t('app.tabs.groups'),  icon: Users },
     { id: 'rules'   as const, label: t('app.tabs.rules'),   icon: Shield },
+    { id: 'converter' as const, label: t('app.tabs.converter'), icon: ArrowLeftRight },
     { id: 'preview' as const, label: t('app.tabs.preview'), icon: FileText },
   ]
 
@@ -299,6 +301,7 @@ export default function App() {
             {activeTab === 'nodes'   && <NodeManager />}
             {activeTab === 'groups'  && <ProxyGroupEditor />}
             {activeTab === 'rules'   && <RuleSetManager />}
+            {activeTab === 'converter' && <MihomoYamlConverter />}
             {activeTab === 'preview' && <ConfigPreview />}
           </div>
         </div>

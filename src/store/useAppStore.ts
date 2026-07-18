@@ -16,7 +16,7 @@ interface AppState {
   ruleProviders: RuleProvider[]
   /** Non-RULE-SET routing rules (DOMAIN, GEOIP, MATCH, etc.) */
   rules: Rule[]
-  activeTab: 'sources' | 'nodes' | 'groups' | 'rules' | 'preview'
+  activeTab: 'sources' | 'nodes' | 'groups' | 'rules' | 'converter' | 'preview'
   globalSettings: ClashGlobalSettings
 
   // Source actions

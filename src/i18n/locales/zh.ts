@@ -8,6 +8,7 @@ export const zh = {
       nodes: '手动节点',
       groups: '代理组',
       rules: '规则',
+      converter: 'YAML 转换',
       preview: '预览导出',
     },
     update: {

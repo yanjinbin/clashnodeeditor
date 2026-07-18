@@ -8,6 +8,7 @@ export const en = {
       nodes: 'Manual Nodes',
       groups: 'Proxy Groups',
       rules: 'Rules',
+      converter: 'YAML Convert',
       preview: 'Preview & Export',
     },
     update: {
