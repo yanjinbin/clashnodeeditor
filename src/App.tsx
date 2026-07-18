@@ -154,14 +154,16 @@ export default function App() {
   const pullBusy = pullStatus === 'checking' || pullStatus === 'refreshing'
   const showPullIndicator = pullStatus !== 'idle'
 
-  const TABS = [
+  const MAIN_TABS = [
     { id: 'sources' as const, label: t('app.tabs.sources'), icon: Globe },
     { id: 'nodes'   as const, label: t('app.tabs.nodes'),   icon: Server },
     { id: 'groups'  as const, label: t('app.tabs.groups'),  icon: Users },
     { id: 'rules'   as const, label: t('app.tabs.rules'),   icon: Shield },
-    { id: 'converter' as const, label: t('app.tabs.converter'), icon: ArrowLeftRight },
     { id: 'preview' as const, label: t('app.tabs.preview'), icon: FileText },
   ]
+  const CONVERTER_TAB = { id: 'converter' as const, label: t('app.tabs.converter'), icon: ArrowLeftRight }
+  const ConverterIcon = CONVERTER_TAB.icon
+  const converterActive = activeTab === CONVERTER_TAB.id
 
   return (
     <div
@@ -248,31 +250,51 @@ export default function App() {
                 </div>
               </div>
 
-              <nav className="flex gap-0.5 px-5 pt-2" role="tablist">
-                {TABS.map((tab) => {
-                  const Icon = tab.icon
-                  const active = activeTab === tab.id
-                  return (
-                    <button
-                      key={tab.id}
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={[
-                        'relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl transition-all select-none',
-                        active
-                          ? 'text-indigo-600 dark:text-indigo-400 bg-gray-50 dark:bg-gray-950'
-                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50/60 dark:hover:bg-gray-800/60',
-                      ].join(' ')}
-                    >
-                      <Icon size={15} />
-                      <span>{tab.label}</span>
-                      {active && (
-                        <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-indigo-500 dark:bg-indigo-400 rounded-t-full" />
-                      )}
-                    </button>
-                  )
-                })}
+              <nav className="flex items-end gap-3 px-5 pt-2" role="tablist">
+                <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto">
+                  {MAIN_TABS.map((tab) => {
+                    const Icon = tab.icon
+                    const active = activeTab === tab.id
+                    return (
+                      <button
+                        key={tab.id}
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={[
+                          'relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl transition-all select-none whitespace-nowrap',
+                          active
+                            ? 'text-indigo-600 dark:text-indigo-400 bg-gray-50 dark:bg-gray-950'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50/60 dark:hover:bg-gray-800/60',
+                        ].join(' ')}
+                      >
+                        <Icon size={15} />
+                        <span>{tab.label}</span>
+                        {active && (
+                          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-indigo-500 dark:bg-indigo-400 rounded-t-full" />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="shrink-0 pb-1">
+                  <button
+                    key={CONVERTER_TAB.id}
+                    role="tab"
+                    aria-selected={converterActive}
+                    onClick={() => setActiveTab(CONVERTER_TAB.id)}
+                    className={[
+                      'flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all select-none whitespace-nowrap shadow-sm',
+                      converterActive
+                        ? 'border-indigo-500 bg-indigo-600 text-white shadow-indigo-200 dark:shadow-indigo-950'
+                        : 'border-gray-200 bg-white text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 dark:border-gray-700 dark:bg-gray-900 dark:text-indigo-300 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40',
+                    ].join(' ')}
+                  >
+                    <ConverterIcon size={15} />
+                    <span>{CONVERTER_TAB.label}</span>
+                  </button>
+                </div>
               </nav>
             </div>
           </div>
