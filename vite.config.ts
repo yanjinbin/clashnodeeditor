@@ -59,6 +59,8 @@ export default defineConfig({
       // `**/.omx/**` covers all files inside it (same for .codex).
       ignored: ['**/.omx', '**/.omx/**', '**/.codex', '**/.codex/**'],
     },
+
   },
+
   plugins: [react(), tailwindcss(), devProxyPlugin(), versionPlugin()],
 })
