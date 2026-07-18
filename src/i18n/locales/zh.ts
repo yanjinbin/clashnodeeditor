@@ -31,6 +31,7 @@ export const zh = {
     airport: {
       shanhai: '山海✈️ 机场邀请链接',
       yushe: '渔舍✈️ 机场邀请链接',
+      miyaip: 'MiyaIP 高质量高信誉住宅 IP，IPPure 和 Ping0.cc 高评分，真实家宽节点，可在 ippure.com / ping0.cc 查询',
     },
   },
 

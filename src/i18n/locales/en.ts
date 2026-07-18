@@ -31,6 +31,7 @@ export const en = {
     airport: {
       shanhai: 'Shanhai airport invite link',
       yushe: 'Yushe airport invite link',
+      miyaip: 'MiyaIP high-quality reputable residential IPs, highly rated on IPPure and Ping0.cc, real home broadband nodes verifiable on ippure.com / ping0.cc',
     },
   },
 
